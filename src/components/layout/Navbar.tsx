@@ -22,7 +22,7 @@ export const Navbar = () => {
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
-                    <Link to="/">
+                    <Link to="/dashboard">
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                         Dashboard
                       </NavigationMenuLink>
@@ -31,14 +31,7 @@ export const Navbar = () => {
                   <NavigationMenuItem>
                     <Link to="/alunos">
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        Cadastrar Aluno
-                      </NavigationMenuLink>
-                    </Link>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <Link to="/alunos/editar">
-                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                        Editar Aluno
+                        Alunos
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
@@ -46,6 +39,27 @@ export const Navbar = () => {
                     <Link to="/frequencia">
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                         Frequência
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link to="/notas">
+                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Notas
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link to="/relatorios">
+                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Relatórios
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link to="/historico">
+                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                        Histórico
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>

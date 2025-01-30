@@ -1,15 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,143 +9,119 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
 
-const formSchema = z.object({
-  studentId: z.string().min(1, "Selecione um aluno"),
-  project: z.string().min(1, "Selecione um projeto"),
-  grade: z.string().min(1, "Nota é obrigatória"),
-  period: z.string().min(1, "Período é obrigatório"),
-});
-
-// Mock data - substituir por dados reais do backend
-const mockStudents = [
-  { id: "1", name: "João Silva" },
-  { id: "2", name: "Maria Santos" },
-];
-
-const projects = [
-  { id: "capoeira", label: "Capoeira" },
-  { id: "futebol", label: "Futebol" },
-  { id: "judo", label: "Judô" },
-  { id: "musica", label: "Música" },
-  { id: "informatica", label: "Informática" },
-  { id: "zumba", label: "Zumba" },
-  { id: "reforco", label: "Reforço Escolar" },
-];
-
-export default function NotasPage() {
+const Notas = () => {
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-  });
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
+  const [grade, setGrade] = useState("");
+  const [period, setPeriod] = useState("");
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Nota registrada!",
-      description: "A nota foi registrada com sucesso.",
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate grade
+    const numericGrade = parseFloat(grade);
+    if (isNaN(numericGrade) || numericGrade < 0 || numericGrade > 10) {
+      toast({
+        title: "Erro",
+        description: "A nota deve ser um número entre 0 e 10",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Mock API call
+    console.log({
+      student: selectedStudent,
+      project: selectedProject,
+      grade: numericGrade,
+      period,
     });
-    form.reset();
-  }
+
+    toast({
+      title: "Sucesso!",
+      description: "Nota registrada com sucesso",
+    });
+
+    // Reset form
+    setGrade("");
+    setPeriod("");
+  };
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-8">Sistema de Notas</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Registro de Notas</h1>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-md">
-          <FormField
-            control={form.control}
-            name="studentId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Aluno</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um aluno" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {mockStudents.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Aluno</label>
+            <Select
+              value={selectedStudent}
+              onValueChange={setSelectedStudent}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o aluno" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">João Silva</SelectItem>
+                <SelectItem value="2">Maria Santos</SelectItem>
+                <SelectItem value="3">Pedro Oliveira</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="project"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Projeto</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um projeto" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Projeto</label>
+            <Select
+              value={selectedProject}
+              onValueChange={setSelectedProject}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="capoeira">Capoeira</SelectItem>
+                <SelectItem value="musica">Música</SelectItem>
+                <SelectItem value="danca">Dança</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="grade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nota</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" max="10" step="0.5" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Período</label>
+            <Input
+              type="text"
+              placeholder="Ex: 2024.1"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="period"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Período</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o período" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="1">1º Bimestre</SelectItem>
-                    <SelectItem value="2">2º Bimestre</SelectItem>
-                    <SelectItem value="3">3º Bimestre</SelectItem>
-                    <SelectItem value="4">4º Bimestre</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Nota</label>
+            <Input
+              type="number"
+              min="0"
+              max="10"
+              step="0.1"
+              placeholder="Digite a nota (0-10)"
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              required
+            />
+          </div>
 
-          <Button type="submit">Registrar Nota</Button>
+          <Button type="submit" className="w-full">
+            Registrar Nota
+          </Button>
         </form>
-      </Form>
+      </Card>
     </div>
   );
-}
+};
+
+export default Notas;

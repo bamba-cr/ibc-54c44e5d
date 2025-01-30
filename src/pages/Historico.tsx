@@ -1,104 +1,74 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
-// Mock data - substituir por dados reais do backend
-const mockHistory = {
-  student: {
-    name: "João Silva",
-    id: "12345",
-  },
-  projects: [
-    {
-      name: "Capoeira",
-      period: "2023.2",
-      status: "Concluído",
-      attendance: "85%",
-      grade: "8.5",
-    },
-    {
-      name: "Música",
-      period: "2024.1",
-      status: "Em andamento",
-      attendance: "90%",
-      grade: "9.0",
-    },
-  ],
-};
-
-export default function HistoricoPage() {
+const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [studentHistory, setStudentHistory] = useState(mockHistory);
+  const [historico, setHistorico] = useState<any[]>([]);
 
-  const handleSearch = () => {
-    // Implementar busca real
-    console.log("Buscando histórico...", searchTerm);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Mock API call
+    setHistorico([
+      {
+        id: 1,
+        project: "Capoeira",
+        period: "2024.1",
+        frequency: "85%",
+        grade: "8.5",
+        status: "Concluído",
+      },
+      {
+        id: 2,
+        project: "Música",
+        period: "2023.2",
+        frequency: "92%",
+        grade: "9.0",
+        status: "Concluído",
+      },
+      // Add more mock data as needed
+    ]);
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-8">Histórico de Participação</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Histórico de Participação</h1>
 
-      <div className="flex gap-4 mb-8">
-        <Input
-          placeholder="Buscar por nome ou matrícula"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md"
-        />
-        <Button onClick={handleSearch}>
-          <Search className="mr-2 h-4 w-4" />
-          Buscar
-        </Button>
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-4">
+          <Input
+            type="text"
+            placeholder="Buscar por nome ou matrícula"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit">Buscar</Button>
+        </div>
+      </form>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {historico.map((item) => (
+          <Card key={item.id} className="p-4">
+            <h3 className="font-semibold text-lg mb-2">{item.project}</h3>
+            <div className="space-y-2 text-sm">
+              <p>Período: {item.period}</p>
+              <p>Frequência: {item.frequency}</p>
+              <p>Nota Final: {item.grade}</p>
+              <p>Status: {item.status}</p>
+            </div>
+          </Card>
+        ))}
       </div>
 
-      {studentHistory && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{studentHistory.student.name}</CardTitle>
-              <CardDescription>Matrícula: {studentHistory.student.id}</CardDescription>
-            </CardHeader>
-          </Card>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {studentHistory.projects.map((project, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
-                  <CardDescription>{project.period}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Status:</span>
-                      <span className={project.status === "Concluído" ? "text-green-600" : "text-blue-600"}>
-                        {project.status}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Frequência:</span>
-                      <span>{project.attendance}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Média Final:</span>
-                      <span>{project.grade}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+      {historico.length === 0 && searchTerm && (
+        <p className="text-center text-gray-500 mt-6">
+          Nenhum histórico encontrado para esta busca.
+        </p>
       )}
     </div>
   );
-}
+};
+
+export default Historico;
