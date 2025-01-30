@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
+import { useState } from "react";
 
 const projects = [
   { id: "capoeira", label: "Capoeira" },
@@ -33,6 +36,9 @@ const projects = [
 ] as const;
 
 const formSchema = z.object({
+  // Photo (optional)
+  photo: z.any().optional(),
+  
   // Student Data
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   age: z.string().min(1, "Idade é obrigatória"),
@@ -60,6 +66,8 @@ const formSchema = z.object({
 });
 
 export default function AlunosPage() {
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,6 +76,17 @@ export default function AlunosPage() {
     },
   });
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     toast({
@@ -75,6 +94,7 @@ export default function AlunosPage() {
       description: "Aluno cadastrado com sucesso!",
     });
     form.reset();
+    setPhotoPreview(null);
   }
 
   return (
@@ -83,6 +103,25 @@ export default function AlunosPage() {
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* Photo Upload Section */}
+          <div className="space-y-4">
+            <FormLabel>Foto do Aluno (Opcional)</FormLabel>
+            <div className="flex items-center gap-4">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={photoPreview || ""} />
+                <AvatarFallback>
+                  <User className="w-12 h-12" />
+                </AvatarFallback>
+              </Avatar>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="max-w-[300px]"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2">
             {/* Student Data */}
             <div className="space-y-6">
