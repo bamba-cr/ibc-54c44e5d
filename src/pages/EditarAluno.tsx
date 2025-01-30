@@ -14,6 +14,22 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const projects = [
+  { id: "capoeira", label: "Capoeira" },
+  { id: "musica", label: "Música" },
+  { id: "danca", label: "Dança" },
+  { id: "teatro", label: "Teatro" },
+];
 
 // Usando o mesmo schema do cadastro de alunos para manter consistência
 const formSchema = z.object({
@@ -34,12 +50,14 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const EditarAluno = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<FormValues | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       projects: [],
@@ -51,7 +69,7 @@ const EditarAluno = () => {
     // Simulação de busca - em produção, isso seria uma chamada à API
     console.log("Buscando aluno:", searchTerm);
     // Simular um aluno encontrado
-    const mockStudent = {
+    const mockStudent: FormValues = {
       name: "João Silva",
       age: "15",
       birthDate: "2009-01-01",
@@ -72,7 +90,7 @@ const EditarAluno = () => {
     form.reset(mockStudent);
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormValues) => {
     console.log(values);
     toast({
       title: "Sucesso!",
@@ -100,7 +118,6 @@ const EditarAluno = () => {
       {selectedStudent && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Reutilizar o mesmo formulário do cadastro de alunos */}
             <FormField
               control={form.control}
               name="name"
