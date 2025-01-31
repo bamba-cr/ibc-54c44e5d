@@ -25,12 +25,14 @@ const subjects = [
   "Geografia",
 ] as const;
 
-// Usando os mesmos projetos definidos na inscrição
 const projects = [
-  { id: "capoeira", label: "Capoeira" },
-  { id: "musica", label: "Música" },
-  { id: "danca", label: "Dança" },
-  { id: "teatro", label: "Teatro" },
+  { id: "capoeira", label: "Capoeira (Roda do Bem)" },
+  { id: "futebol", label: "Futebol (Show de Bola)" },
+  { id: "judo", label: "Judô (Campeões do Futuro)" },
+  { id: "musica", label: "Música (CulturArt)" },
+  { id: "informatica", label: "Informática (Conecte-se)" },
+  { id: "zumba", label: "Zumba em Movimento" },
+  { id: "reforco", label: "Reforço Escolar (Mentes Brilhantes)" },
 ];
 
 // Mock data - substituir com dados reais do backend
@@ -39,17 +41,29 @@ const studentsByProject = {
     { id: "1", name: "João Silva" },
     { id: "2", name: "Maria Santos" },
   ],
-  musica: [
+  futebol: [
     { id: "3", name: "Pedro Oliveira" },
     { id: "4", name: "Ana Souza" },
   ],
-  danca: [
+  judo: [
     { id: "5", name: "Lucas Ferreira" },
     { id: "6", name: "Julia Costa" },
   ],
-  teatro: [
+  musica: [
     { id: "7", name: "Carlos Mendes" },
     { id: "8", name: "Paula Lima" },
+  ],
+  informatica: [
+    { id: "9", name: "Roberto Santos" },
+    { id: "10", name: "Clara Silva" },
+  ],
+  zumba: [
+    { id: "11", name: "Fernanda Lima" },
+    { id: "12", name: "Ricardo Souza" },
+  ],
+  reforco: [
+    { id: "13", name: "Patricia Oliveira" },
+    { id: "14", name: "Marcos Costa" },
   ],
 };
 
