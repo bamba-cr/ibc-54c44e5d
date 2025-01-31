@@ -25,6 +25,34 @@ const subjects = [
   "Geografia",
 ] as const;
 
+// Usando os mesmos projetos definidos na inscrição
+const projects = [
+  { id: "capoeira", label: "Capoeira" },
+  { id: "musica", label: "Música" },
+  { id: "danca", label: "Dança" },
+  { id: "teatro", label: "Teatro" },
+];
+
+// Mock data - substituir com dados reais do backend
+const studentsByProject = {
+  capoeira: [
+    { id: "1", name: "João Silva" },
+    { id: "2", name: "Maria Santos" },
+  ],
+  musica: [
+    { id: "3", name: "Pedro Oliveira" },
+    { id: "4", name: "Ana Souza" },
+  ],
+  danca: [
+    { id: "5", name: "Lucas Ferreira" },
+    { id: "6", name: "Julia Costa" },
+  ],
+  teatro: [
+    { id: "7", name: "Carlos Mendes" },
+    { id: "8", name: "Paula Lima" },
+  ],
+};
+
 const Notas = () => {
   const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState("");
@@ -34,29 +62,6 @@ const Notas = () => {
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
-
-  // Mock data - replace with actual data from your backend
-  const projects = [
-    { id: "1", name: "Projeto A" },
-    { id: "2", name: "Projeto B" },
-    { id: "3", name: "Projeto C" },
-  ];
-
-  // Mock data - replace with actual data filtered by project
-  const studentsByProject = {
-    "1": [
-      { id: "1", name: "João Silva" },
-      { id: "2", name: "Maria Santos" },
-    ],
-    "2": [
-      { id: "3", name: "Pedro Oliveira" },
-      { id: "4", name: "Ana Souza" },
-    ],
-    "3": [
-      { id: "5", name: "Lucas Ferreira" },
-      { id: "6", name: "Julia Costa" },
-    ],
-  };
 
   const handleGradeChange = (subject: string, value: string) => {
     const numericValue = value === "" ? "" : Number(value);
@@ -113,7 +118,7 @@ const Notas = () => {
       return;
     }
 
-    // Mock API call - replace with actual database update
+    // Mock API call - substituir com atualização real no banco de dados
     console.log({
       project: selectedProject,
       student: selectedStudent,
@@ -155,7 +160,7 @@ const Notas = () => {
                 <SelectContent>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
-                      {project.name}
+                      {project.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
