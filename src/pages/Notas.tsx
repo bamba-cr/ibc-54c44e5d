@@ -27,12 +27,36 @@ const subjects = [
 
 const Notas = () => {
   const { toast } = useToast();
+  const [selectedProject, setSelectedProject] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [period, setPeriod] = useState("");
   const [observations, setObservations] = useState("");
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
+
+  // Mock data - replace with actual data from your backend
+  const projects = [
+    { id: "1", name: "Projeto A" },
+    { id: "2", name: "Projeto B" },
+    { id: "3", name: "Projeto C" },
+  ];
+
+  // Mock data - replace with actual data filtered by project
+  const studentsByProject = {
+    "1": [
+      { id: "1", name: "João Silva" },
+      { id: "2", name: "Maria Santos" },
+    ],
+    "2": [
+      { id: "3", name: "Pedro Oliveira" },
+      { id: "4", name: "Ana Souza" },
+    ],
+    "3": [
+      { id: "5", name: "Lucas Ferreira" },
+      { id: "6", name: "Julia Costa" },
+    ],
+  };
 
   const handleGradeChange = (subject: string, value: string) => {
     const numericValue = value === "" ? "" : Number(value);
@@ -71,6 +95,15 @@ const Notas = () => {
       return;
     }
 
+    if (!selectedProject) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione um projeto",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!period) {
       toast({
         title: "Erro",
@@ -82,6 +115,7 @@ const Notas = () => {
 
     // Mock API call - replace with actual database update
     console.log({
+      project: selectedProject,
       student: selectedStudent,
       period,
       grades,
@@ -107,18 +141,44 @@ const Notas = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
+              <label className="block text-sm font-medium mb-1">Projeto</label>
+              <Select
+                value={selectedProject}
+                onValueChange={(value) => {
+                  setSelectedProject(value);
+                  setSelectedStudent(""); // Reset student when project changes
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1">Aluno</label>
               <Select
                 value={selectedStudent}
                 onValueChange={setSelectedStudent}
+                disabled={!selectedProject}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">João Silva</SelectItem>
-                  <SelectItem value="2">Maria Santos</SelectItem>
-                  <SelectItem value="3">Pedro Oliveira</SelectItem>
+                  {selectedProject &&
+                    studentsByProject[selectedProject as keyof typeof studentsByProject]?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
