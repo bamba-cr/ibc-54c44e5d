@@ -9,7 +9,165 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      grades: {
+        Row: {
+          created_at: string
+          grade: number | null
+          id: string
+          observations: string | null
+          period: string
+          project_id: string | null
+          student_id: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          grade?: number | null
+          id?: string
+          observations?: string | null
+          period: string
+          project_id?: string | null
+          student_id?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          grade?: number | null
+          id?: string
+          observations?: string | null
+          period?: string
+          project_id?: string | null
+          student_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      student_projects: {
+        Row: {
+          project_id: string
+          student_id: string
+        }
+        Insert: {
+          project_id: string
+          student_id: string
+        }
+        Update: {
+          project_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_projects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          address: string | null
+          age: number | null
+          birth_date: string | null
+          city: string | null
+          cpf: string | null
+          created_at: string
+          guardian_cpf: string | null
+          guardian_email: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          guardian_relationship: string | null
+          guardian_rg: string | null
+          id: string
+          name: string
+          notes: string | null
+          rg: string | null
+        }
+        Insert: {
+          address?: string | null
+          age?: number | null
+          birth_date?: string | null
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          guardian_cpf?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          guardian_rg?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          rg?: string | null
+        }
+        Update: {
+          address?: string | null
+          age?: number | null
+          birth_date?: string | null
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          guardian_cpf?: string | null
+          guardian_email?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          guardian_relationship?: string | null
+          guardian_rg?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          rg?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
