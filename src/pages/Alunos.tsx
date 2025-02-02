@@ -24,6 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const projects = [
   { id: "capoeira", label: "Capoeira" },
@@ -67,6 +68,7 @@ const formSchema = z.object({
 
 export default function AlunosPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -87,14 +89,65 @@ export default function AlunosPage() {
     }
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Sucesso!",
-      description: "Aluno cadastrado com sucesso!",
-    });
-    form.reset();
-    setPhotoPreview(null);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setIsSubmitting(true);
+      
+      // First, insert the student
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .insert({
+          name: values.name,
+          age: parseInt(values.age),
+          birth_date: values.birthDate,
+          rg: values.rg,
+          cpf: values.cpf,
+          address: values.address,
+          city: values.city,
+          guardian_name: values.guardianName,
+          guardian_relationship: values.relationship,
+          guardian_cpf: values.guardianCpf,
+          guardian_rg: values.guardianRg,
+          guardian_phone: values.guardianPhone,
+          guardian_email: values.guardianEmail,
+          notes: values.notes,
+        })
+        .select()
+        .single();
+
+      if (studentError) throw studentError;
+
+      // Then, insert the student-project relationships
+      if (values.projects.length > 0) {
+        const { error: projectError } = await supabase
+          .from('student_projects')
+          .insert(
+            values.projects.map(projectId => ({
+              student_id: studentData.id,
+              project_id: projectId
+            }))
+          );
+
+        if (projectError) throw projectError;
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Aluno cadastrado com sucesso!",
+      });
+      
+      form.reset();
+      setPhotoPreview(null);
+    } catch (error) {
+      console.error('Error saving student:', error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
