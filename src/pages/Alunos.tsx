@@ -23,8 +23,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const projects = [
   { id: "capoeira", label: "Capoeira" },
@@ -69,7 +70,25 @@ const formSchema = z.object({
 export default function AlunosPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
   
+  useEffect(() => {
+    // Check authentication status when component mounts
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para cadastrar alunos.",
+          variant: "destructive",
+        });
+        navigate("/login");
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -93,6 +112,18 @@ export default function AlunosPage() {
     try {
       setIsSubmitting(true);
       
+      // Check authentication before submitting
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para cadastrar alunos.",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       // First, insert the student
       const { data: studentData, error: studentError } = await supabase
         .from('students')
@@ -149,6 +180,8 @@ export default function AlunosPage() {
       setIsSubmitting(false);
     }
   }
+
+  // ... keep existing code (form JSX)
 
   return (
     <div className="container mx-auto py-10">
@@ -447,8 +480,8 @@ export default function AlunosPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full md:w-auto">
-            Cadastrar Aluno
+          <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+            {isSubmitting ? "Cadastrando..." : "Cadastrar Aluno"}
           </Button>
         </form>
       </Form>
