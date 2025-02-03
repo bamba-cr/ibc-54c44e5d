@@ -1,101 +1,72 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  birthDate: z.string(),
-  photo: z.string().optional(),
-  registrationNumber: z.string().min(1, "Número de matrícula é obrigatório"),
-  parentName: z.string().min(2, "Nome do responsável deve ter pelo menos 2 caracteres"),
-  parentPhone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  address: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres"),
-  observations: z.string().optional(),
-});
+interface FormValues {
+  name: string;
+  birthDate: string;
+  address: string;
+  parentName: string;
+  parentPhone: string;
+  observations: string;
+}
 
-export default function AlunosPage() {
-  const { toast } = useToast();
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const Alunos = () => {
   const navigate = useNavigate();
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      birthDate: "",
-      photo: "",
-      registrationNumber: "",
-      parentName: "",
-      parentPhone: "",
-      address: "",
-      observations: "",
-    },
+  const { toast } = useToast();
+  const [session, setSession] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formValues, setFormValues] = useState<FormValues>({
+    name: "",
+    birthDate: "",
+    address: "",
+    parentName: "",
+    parentPhone: "",
+    observations: "",
   });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
         navigate("/login");
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        navigate("/login");
+      }
+    });
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-        form.setValue("photo", reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
+    try {
       if (!session) {
         toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente.",
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para cadastrar alunos",
           variant: "destructive",
         });
         navigate("/login");
@@ -104,12 +75,12 @@ export default function AlunosPage() {
 
       // Map form values to match the database schema
       const studentData = {
-        name: values.name,
-        birth_date: values.birthDate,
-        address: values.address,
-        guardian_name: values.parentName,
-        guardian_phone: values.parentPhone,
-        notes: values.observations,
+        name: formValues.name,
+        birth_date: formValues.birthDate,
+        address: formValues.address,
+        guardian_name: formValues.parentName,
+        guardian_phone: formValues.parentPhone,
+        notes: formValues.observations,
       };
 
       const { error: studentError } = await supabase
@@ -122,167 +93,107 @@ export default function AlunosPage() {
 
       toast({
         title: "Sucesso!",
-        description: "Aluno cadastrado com sucesso.",
+        description: "Aluno cadastrado com sucesso",
       });
 
-      form.reset();
-      setPhotoPreview(null);
+      // Reset form
+      setFormValues({
+        name: "",
+        birthDate: "",
+        address: "",
+        parentName: "",
+        parentPhone: "",
+        observations: "",
+      });
     } catch (error: any) {
-      console.error('Error in form submission:', error);
-      
-      if (error.message?.includes('JWT')) {
-        toast({
-          title: "Sessão expirada",
-          description: "Por favor, faça login novamente.",
-          variant: "destructive",
-        });
-        navigate("/login");
-      } else {
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Erro ao cadastrar aluno",
+        description: error.message || "Ocorreu um erro ao cadastrar o aluno",
+        variant: "destructive",
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Cadastro de Alunos</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do Aluno</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome completo" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <Card className="max-w-2xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Cadastro de Aluno</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Nome do Aluno</Label>
+            <Input
+              id="name"
+              name="name"
+              value={formValues.name}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data de Nascimento</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <Label htmlFor="birthDate">Data de Nascimento</Label>
+            <Input
+              id="birthDate"
+              name="birthDate"
+              type="date"
+              value={formValues.birthDate}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="photo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Foto</FormLabel>
-                <FormControl>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                  />
-                </FormControl>
-                {photoPreview && (
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="mt-2 w-32 h-32 object-cover rounded-lg"
-                  />
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <Label htmlFor="address">Endereço</Label>
+            <Input
+              id="address"
+              name="address"
+              value={formValues.address}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="registrationNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Número de Matrícula</FormLabel>
-                <FormControl>
-                  <Input placeholder="Número de matrícula" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <Label htmlFor="parentName">Nome do Responsável</Label>
+            <Input
+              id="parentName"
+              name="parentName"
+              value={formValues.parentName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="parentName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome do Responsável</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome do responsável" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <Label htmlFor="parentPhone">Telefone do Responsável</Label>
+            <Input
+              id="parentPhone"
+              name="parentPhone"
+              value={formValues.parentPhone}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="parentPhone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Telefone do Responsável</FormLabel>
-                <FormControl>
-                  <Input placeholder="(00) 00000-0000" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <Label htmlFor="observations">Observações</Label>
+            <Input
+              id="observations"
+              name="observations"
+              value={formValues.observations}
+              onChange={handleInputChange}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Endereço</FormLabel>
-                <FormControl>
-                  <Input placeholder="Endereço completo" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="observations"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Observações</FormLabel>
-                <FormControl>
-                  <Input placeholder="Observações adicionais" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Cadastrando..." : "Cadastrar Aluno"}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Cadastrando..." : "Cadastrar Aluno"}
           </Button>
         </form>
-      </Form>
+      </Card>
     </div>
   );
-}
+};
+
+export default Alunos;
