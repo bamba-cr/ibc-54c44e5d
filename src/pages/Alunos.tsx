@@ -38,10 +38,7 @@ const projects = [
 ] as const;
 
 const formSchema = z.object({
-  // Photo (optional)
   photo: z.any().optional(),
-  
-  // Student Data
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   age: z.string().min(1, "Idade é obrigatória"),
   birthDate: z.string().min(1, "Data de nascimento é obrigatória"),
@@ -51,19 +48,13 @@ const formSchema = z.object({
   city: z.enum(["Laranjal do Jari", "Vitória do Jari"], {
     required_error: "Cidade é obrigatória",
   }),
-
-  // Guardian Data
   guardianName: z.string().min(2, "Nome do responsável é obrigatório"),
   relationship: z.string().min(1, "Grau de parentesco é obrigatório"),
   guardianCpf: z.string().length(11, "CPF deve ter 11 dígitos"),
   guardianRg: z.string().min(1, "RG do responsável é obrigatório"),
   guardianPhone: z.string().min(1, "Telefone é obrigatório"),
   guardianEmail: z.string().email("Email inválido"),
-
-  // Projects
   projects: z.array(z.string()).min(1, "Selecione pelo menos um projeto"),
-
-  // Optional Notes
   notes: z.string().optional(),
 });
 
@@ -72,23 +63,6 @@ export default function AlunosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    // Check authentication status when component mounts
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Erro de autenticação",
-          description: "Você precisa estar logado para cadastrar alunos.",
-          variant: "destructive",
-        });
-        navigate("/login");
-      }
-    };
-    
-    checkAuth();
-  }, [navigate]);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,6 +70,22 @@ export default function AlunosPage() {
       notes: "",
     },
   });
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para cadastrar alunos.",
+        variant: "destructive",
+      });
+      navigate("/login");
+    }
+  };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,7 +102,6 @@ export default function AlunosPage() {
     try {
       setIsSubmitting(true);
       
-      // Check authentication before submitting
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -124,7 +113,7 @@ export default function AlunosPage() {
         return;
       }
 
-      // First, insert the student
+      // Insert student data
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .insert({
@@ -146,9 +135,16 @@ export default function AlunosPage() {
         .select()
         .single();
 
-      if (studentError) throw studentError;
+      if (studentError) {
+        console.error('Error saving student:', studentError);
+        throw new Error('Erro ao salvar dados do aluno');
+      }
 
-      // Then, insert the student-project relationships
+      if (!studentData) {
+        throw new Error('Nenhum dado retornado ao criar aluno');
+      }
+
+      // Insert project relationships
       if (values.projects.length > 0) {
         const { error: projectError } = await supabase
           .from('student_projects')
@@ -159,7 +155,10 @@ export default function AlunosPage() {
             }))
           );
 
-        if (projectError) throw projectError;
+        if (projectError) {
+          console.error('Error saving student projects:', projectError);
+          throw new Error('Erro ao vincular projetos ao aluno');
+        }
       }
 
       toast({
@@ -170,10 +169,10 @@ export default function AlunosPage() {
       form.reset();
       setPhotoPreview(null);
     } catch (error) {
-      console.error('Error saving student:', error);
+      console.error('Error in form submission:', error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -181,7 +180,7 @@ export default function AlunosPage() {
     }
   }
 
-  // ... keep existing code (form JSX)
+  // ... keep existing code (form JSX for the student registration form)
 
   return (
     <div className="container mx-auto py-10">
