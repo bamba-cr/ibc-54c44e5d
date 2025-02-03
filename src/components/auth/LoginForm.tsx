@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -16,22 +17,30 @@ export const LoginForm = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Implement actual authentication
-    if (email === "admin@ibc.com" && password === "admin") {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao IBC CONNECT",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      navigate("/dashboard");
-    } else {
+
+      if (error) throw error;
+
+      if (data.session) {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo ao IBC CONNECT",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
       toast({
         title: "Erro no login",
-        description: "Usuário ou senha incorretos",
+        description: error.message || "Usuário ou senha incorretos",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
