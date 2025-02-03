@@ -102,9 +102,19 @@ export default function AlunosPage() {
         return;
       }
 
+      // Map form values to match the database schema
+      const studentData = {
+        name: values.name,
+        birth_date: values.birthDate,
+        address: values.address,
+        guardian_name: values.parentName,
+        guardian_phone: values.parentPhone,
+        notes: values.observations,
+      };
+
       const { error: studentError } = await supabase
         .from("students")
-        .insert([values]);
+        .insert(studentData);
 
       if (studentError) {
         throw studentError;
