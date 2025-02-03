@@ -61,6 +61,7 @@ const formSchema = z.object({
 export default function AlunosPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [session, setSession] = useState(null);
   const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -72,20 +73,24 @@ export default function AlunosPage() {
   });
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        navigate("/login");
+      }
+    });
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para cadastrar alunos.",
-        variant: "destructive",
-      });
-      navigate("/login");
-    }
-  };
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        navigate("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,19 +104,18 @@ export default function AlunosPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!session) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para cadastrar alunos.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Erro de autenticação",
-          description: "Você precisa estar logado para cadastrar alunos.",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
 
       // Insert student data
       const { data: studentData, error: studentError } = await supabase
@@ -170,11 +174,20 @@ export default function AlunosPage() {
       setPhotoPreview(null);
     } catch (error) {
       console.error('Error in form submission:', error);
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
-        variant: "destructive",
-      });
+      if (error.message?.includes('violates row-level security policy')) {
+        toast({
+          title: "Erro de permissão",
+          description: "Você não tem permissão para cadastrar alunos. Por favor, faça login novamente.",
+          variant: "destructive",
+        });
+        navigate("/login");
+      } else {
+        toast({
+          title: "Erro",
+          description: error instanceof Error ? error.message : "Ocorreu um erro ao cadastrar o aluno. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
