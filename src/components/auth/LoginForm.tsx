@@ -23,7 +23,23 @@ export const LoginForm = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          toast({
+            title: "Erro no login",
+            description: "Email ou senha incorretos. Por favor, verifique suas credenciais.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro no login",
+            description: "Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.",
+            variant: "destructive",
+          });
+        }
+        console.error("Login error:", error);
+        return;
+      }
 
       if (data.session) {
         toast({
@@ -33,9 +49,10 @@ export const LoginForm = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error("Unexpected error:", error);
       toast({
         title: "Erro no login",
-        description: error.message || "Usuário ou senha incorretos",
+        description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
