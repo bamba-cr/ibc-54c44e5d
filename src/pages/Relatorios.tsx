@@ -235,16 +235,11 @@ const Relatorios = () => {
                     onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                   />
                   <Input
-                    placeholder="Email"
-                    value={filters.email}
-                    onChange={(e) => setFilters({ ...filters, email: e.target.value })}
-                  />
-                  <Input
                     placeholder="Idade"
                     value={filters.age}
                     onChange={(e) => setFilters({ ...filters, age: e.target.value })}
                   />
-                  <Button variant="outline" onClick={() => setFilters({ name: "", email: "", age: "" })}>
+                  <Button variant="outline" onClick={() => setFilters({ name: "", age: "" })}>
                     Limpar Filtros
                   </Button>
                 </div>

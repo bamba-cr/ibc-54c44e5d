@@ -95,7 +95,7 @@ const EditarAluno = () => {
       <h1 className="text-2xl font-bold mb-4">Lista de Alunos</h1>
       {editingStudent ? (
         <StudentForm
-          student={editingStudent}
+          initialValues={editingStudent}
           onSubmit={handleUpdate}
           onCancel={() => setEditingStudent(null)}
         />
