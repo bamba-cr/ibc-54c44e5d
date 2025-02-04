@@ -9,6 +9,15 @@ import { PhotoUpload } from "./PhotoUpload";
 import { StudentPersonalInfo } from "./StudentPersonalInfo";
 import { GuardianInfo } from "./GuardianInfo";
 import { ProjectSelection } from "./ProjectSelection";
+import type { Database } from "@/integrations/supabase/types";
+
+type Student = Database['public']['Tables']['students']['Row'];
+
+interface StudentFormProps {
+  initialValues?: Student;
+  onSubmit?: (student: Partial<Student>) => Promise<void>;
+  onCancel?: () => void;
+}
 
 interface StudentFormValues {
   name: string;
@@ -29,27 +38,27 @@ interface StudentFormValues {
   photo: File | null;
 }
 
-export const StudentForm = () => {
+export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]); 
   
   const [formValues, setFormValues] = useState<StudentFormValues>({
-    name: "",
-    age: "",
-    birthDate: "",
-    rg: "",
-    cpf: "",
-    address: "",
-    city: "",
-    guardianName: "",
-    guardianRelationship: "",
-    guardianCpf: "",
-    guardianRg: "",
-    guardianPhone: "",
-    guardianEmail: "",
+    name: initialValues?.name || "",
+    age: initialValues?.age?.toString() || "",
+    birthDate: initialValues?.birth_date || "",
+    rg: initialValues?.rg || "",
+    cpf: initialValues?.cpf || "",
+    address: initialValues?.address || "",
+    city: initialValues?.city || "",
+    guardianName: initialValues?.guardian_name || "",
+    guardianRelationship: initialValues?.guardian_relationship || "",
+    guardianCpf: initialValues?.guardian_cpf || "",
+    guardianRg: initialValues?.guardian_rg || "",
+    guardianPhone: initialValues?.guardian_phone || "",
+    guardianEmail: initialValues?.guardian_email || "",
     projects: [],
-    observations: "",
+    observations: initialValues?.notes || "",
     photo: null,
   });
 
@@ -144,8 +153,13 @@ export const StudentForm = () => {
         guardian_phone: formValues.guardianPhone,
         guardian_email: formValues.guardianEmail,
         notes: formValues.observations,
-        photo_url: photoUrl,
+        photo_url: photoUrl || initialValues?.photo_url,
       };
+
+      if (onSubmit) {
+        await onSubmit(studentData);
+        return;
+      }
 
       const { data: student, error: studentError } = await supabase
         .from("students")
@@ -205,7 +219,9 @@ export const StudentForm = () => {
 
   return (
     <Card className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Cadastro de Aluno</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        {initialValues ? "Editar Aluno" : "Cadastro de Aluno"}
+      </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -243,9 +259,16 @@ export const StudentForm = () => {
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Cadastrando..." : "Cadastrar Aluno"}
-        </Button>
+        <div className="flex gap-4 justify-end">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Salvando..." : initialValues ? "Salvar Alterações" : "Cadastrar Aluno"}
+          </Button>
+        </div>
       </form>
     </Card>
   );
