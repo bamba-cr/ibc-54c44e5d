@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CSVLink } from "react-csv";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -18,10 +20,11 @@ const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date>(new Date());
-  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     name: "",
-    age: ""
+    age: "",
+    city: "",
+    birth_date: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -33,6 +36,8 @@ const Relatorios = () => {
 
       if (filters.name) query = query.ilike("name", `%${filters.name}%`);
       if (filters.age) query = query.eq("age", parseInt(filters.age));
+      if (filters.city) query = query.ilike("city", `%${filters.city}%`);
+      if (filters.birth_date) query = query.eq("birth_date", filters.birth_date);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -58,6 +63,9 @@ const Relatorios = () => {
     }
   ]);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
   const handleAddEvent = (newEvent: typeof events[0]) => {
     setEvents([...events, newEvent]);
     toast({
@@ -66,7 +74,33 @@ const Relatorios = () => {
     });
   };
 
+  const handleEditModalOpen = (student: Student) => {
+    setSelectedStudent(student);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedStudent(null);
+  };
+
+  const validateStudentData = (data: Partial<Student>) => {
+    if (!data.name) return "O nome é obrigatório.";
+    if (data.age && (data.age < 0 || data.age > 120)) return "Idade inválida.";
+    if (data.birth_date && isNaN(Date.parse(data.birth_date))) return "Data de nascimento inválida.";
+    return null;
+  };
+
   const handleEditStudent = async (studentId: string, updatedData: Partial<Student>) => {
+    const validationError = validateStudentData(updatedData);
+    if (validationError) {
+      toast({
+        title: "Erro",
+        description: validationError
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("students")
@@ -79,6 +113,7 @@ const Relatorios = () => {
         description: "Aluno atualizado com sucesso."
       });
       fetchStudents();
+      handleEditModalClose();
     } catch (error) {
       toast({
         title: "Erro",
@@ -89,7 +124,6 @@ const Relatorios = () => {
 
   const handleDeleteStudent = async (studentId: string) => {
     try {
-      // First delete related records in attendance
       const { error: attendanceError } = await supabase
         .from("attendance")
         .delete()
@@ -97,7 +131,6 @@ const Relatorios = () => {
 
       if (attendanceError) throw attendanceError;
 
-      // Then delete related records in grades
       const { error: gradesError } = await supabase
         .from("grades")
         .delete()
@@ -105,7 +138,6 @@ const Relatorios = () => {
 
       if (gradesError) throw gradesError;
 
-      // Finally delete the student
       const { error } = await supabase
         .from("students")
         .delete()
@@ -129,7 +161,11 @@ const Relatorios = () => {
 
   const exportData = students?.map((student) => ({
     Nome: student.name,
-    Idade: student.age
+    Idade: student.age,
+    Cidade: student.city,
+    "Data de Nascimento": student.birth_date,
+    "Nome do Responsável": student.guardian_name,
+    "Telefone do Responsável": student.guardian_phone
   }));
 
   const handleBackup = async () => {
@@ -158,6 +194,13 @@ const Relatorios = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    toast({
+      title: "Em breve",
+      description: "Exportação para PDF em desenvolvimento."
+    });
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -165,6 +208,8 @@ const Relatorios = () => {
     };
     checkSession();
   }, [navigate]);
+
+  const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
   return (
     <div className="container mx-auto p-6">
@@ -239,7 +284,18 @@ const Relatorios = () => {
                     value={filters.age}
                     onChange={(e) => setFilters({ ...filters, age: e.target.value })}
                   />
-                  <Button variant="outline" onClick={() => setFilters({ name: "", age: "" })}>
+                  <Input
+                    placeholder="Cidade"
+                    value={filters.city}
+                    onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Data de Nascimento"
+                    value={filters.birth_date}
+                    onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
+                    type="date"
+                  />
+                  <Button variant="outline" onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}>
                     Limpar Filtros
                   </Button>
                 </div>
@@ -256,7 +312,7 @@ const Relatorios = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEditStudent(student.id, { name: "Novo Nome" })}
+                          onClick={() => handleEditModalOpen(student)}
                         >
                           Editar
                         </Button>
@@ -279,9 +335,9 @@ const Relatorios = () => {
                   >
                     Anterior
                   </Button>
-                  <span>Página {currentPage}</span>
+                  <span>Página {currentPage} de {totalPages}</span>
                   <Button
-                    disabled={currentPage * itemsPerPage >= students?.length}
+                    disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage((prev) => prev + 1)}
                   >
                     Próxima
@@ -305,6 +361,9 @@ const Relatorios = () => {
                     Exportar Alunos (CSV)
                   </CSVLink>
                 </Button>
+                <Button className="w-full" onClick={handleExportPDF}>
+                  Exportar Alunos (PDF)
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -316,8 +375,100 @@ const Relatorios = () => {
           </Button>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-};
 
-export default Relatorios;
+      <Dialog open={isEditModalOpen} onOpenChange={handleEditModalClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Aluno</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const updatedData = {
+                  name: formData.get("name") as string,
+                  age: parseInt(formData.get("age") as string),
+                  birth_date: formData.get("birth_date") as string,
+                  rg: formData.get("rg") as string,
+                  cpf: formData.get("cpf") as string,
+                  address: formData.get("address") as string,
+                  city: formData.get("city") as string,
+                  guardian_name: formData.get("guardian_name") as string,
+                  guardian_relationship: formData.get("guardian_relationship") as string,
+                  guardian_cpf: formData.get("guardian_cpf") as string,
+                  guardian_rg: formData.get("guardian_rg") as string,
+                  guardian_phone: formData.get("guardian_phone") as string,
+                  guardian_email: formData.get("guardian_email") as string,
+                  notes: formData.get("notes") as string,
+                  photo_url: formData.get("photo_url") as string,
+                  projeto_capoeira: formData.get("projeto_capoeira") === "on",
+                  projeto_futebol: formData.get("projeto_futebol") === "on",
+                  projeto_judo: formData.get("projeto_judo") === "on",
+                  projeto_musica: formData.get("projeto_musica") === "on",
+                  projeto_informatica: formData.get("projeto_informatica") === "on",
+                  projeto_zumba: formData.get("projeto_zumba") === "on",
+                  projeto_reforco_escolar: formData.get("projeto_reforco_escolar") === "on",
+                };
+                handleEditStudent(selectedStudent.id, updatedData);
+              }}
+            >
+              <div className="space-y-4">
+                <div>
+                  <Label>Nome</Label>
+                  <Input name="name" defaultValue={selectedStudent.name} placeholder="Nome" />
+                </div>
+                <div>
+                  <Label>Idade</Label>
+                  <Input name="age" defaultValue={selectedStudent.age} placeholder="Idade" type="number" />
+                </div>
+                <div>
+                  <Label>Data de Nascimento</Label>
+                  <Input name="birth_date" defaultValue={selectedStudent.birth_date} placeholder="Data de Nascimento" type="date" />
+                </div>
+                <div>
+                  <Label>RG</Label>
+                  <Input name="rg" defaultValue={selectedStudent.rg} placeholder="RG" />
+                </div>
+                <div>
+                  <Label>CPF</Label>
+                  <Input name="cpf" defaultValue={selectedStudent.cpf} placeholder="CPF" />
+                </div>
+                <div>
+                  <Label>Endereço</Label>
+                  <Input name="address" defaultValue={selectedStudent.address} placeholder="Endereço" />
+                </div>
+                <div>
+                  <Label>Cidade</Label>
+                  <Input name="city" defaultValue={selectedStudent.city} placeholder="Cidade" />
+                </div>
+                <div>
+                  <Label>Nome do Responsável</Label>
+                  <Input name="guardian_name" defaultValue={selectedStudent.guardian_name} placeholder="Nome do Responsável" />
+                </div>
+                <div>
+                  <Label>Grau de Parentesco</Label>
+                  <Input name="guardian_relationship" defaultValue={selectedStudent.guardian_relationship} placeholder="Grau de Parentesco" />
+                </div>
+                <div>
+                  <Label>CPF do Responsável</Label>
+                  <Input name="guardian_cpf" defaultValue={selectedStudent.guardian_cpf} placeholder="CPF do Responsável" />
+                </div>
+                <div>
+                  <Label>RG do Responsável</Label>
+                  <Input name="guardian_rg" defaultValue={selectedStudent.guardian_rg} placeholder="RG do Responsável" />
+                </div>
+                <div>
+                  <Label>Telefone do Responsável</Label>
+                  <Input name="guardian_phone" defaultValue={selectedStudent.guardian_phone} placeholder="Telefone do Responsável" />
+                </div>
+                <div>
+                  <Label>Email do Responsável</Label>
+                  <Input name="guardian_email" defaultValue={selectedStudent.guardian_email} placeholder="Email do Responsável" />
+                </div>
+                <div>
+                  <Label>Observações</Label>
+                  <Input name="notes" defaultValue={selectedStudent.notes} placeholder="Observações" />
+                </div>
+                <div>
+                  <Label>URL
