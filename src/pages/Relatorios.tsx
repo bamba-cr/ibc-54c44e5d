@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,36 +10,59 @@ import { DatabaseBackup } from "@/components/reports/DatabaseBackup";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { CSVLink } from "react-csv";
 
 const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Fetch students for the search functionality
+  const [filters, setFilters] = useState({ name: "", email: "", age: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const { data: students, isLoading } = useQuery({
-    queryKey: ["students"],
+    queryKey: ["students", filters],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*")
-        .ilike("name", `%${searchTerm}%`);
-      
+      let query = supabase.from("students").select("*");
+
+      if (filters.name) query = query.ilike("name", `%${filters.name}%`);
+      if (filters.email) query = query.ilike("email", `%${filters.email}%`);
+      if (filters.age) query = query.eq("age", filters.age);
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
-    enabled: searchTerm.length > 2,
   });
-  
+
+  const paginatedStudents = students?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const events = [
     { date: new Date(), title: "Reunião Pedagógica", type: "meeting" },
     { date: new Date(new Date().setDate(new Date().getDate() + 1)), title: "Entrega de Notas", type: "deadline" },
   ];
 
-  const handleEditStudent = (studentId: string) => {
+  const handleEditStudent = (studentId) => {
     navigate(`/editar-aluno?id=${studentId}`);
   };
+
+  const exportData = students?.map((student) => ({
+    Nome: student.name,
+    Email: student.email,
+    Idade: student.age,
+  }));
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) navigate("/login");
+    };
+    checkSession();
+  }, [navigate]);
 
   return (
     <div className="container mx-auto p-6">
@@ -105,18 +128,28 @@ const Relatorios = () => {
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Buscar aluno por nome..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Nome"
+                    value={filters.name}
+                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
                   />
-                  <Button variant="outline">
-                    <Search className="h-4 w-4" />
+                  <Input
+                    placeholder="Email"
+                    value={filters.email}
+                    onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Idade"
+                    value={filters.age}
+                    onChange={(e) => setFilters({ ...filters, age: e.target.value })}
+                  />
+                  <Button variant="outline" onClick={() => setFilters({ name: "", email: "", age: "" })}>
+                    Limpar Filtros
                   </Button>
                 </div>
                 
                 <div className="space-y-2">
                   {isLoading && <p>Buscando alunos...</p>}
-                  {students?.map((student) => (
+                  {paginatedStudents?.map((student) => (
                     <div
                       key={student.id}
                       className="flex items-center justify-between p-2 border rounded-lg"
@@ -131,6 +164,22 @@ const Relatorios = () => {
                       </Button>
                     </div>
                   ))}
+                </div>
+
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                  >
+                    Anterior
+                  </Button>
+                  <span>Página {currentPage}</span>
+                  <Button
+                    disabled={currentPage * itemsPerPage >= students?.length}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                  >
+                    Próxima
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -149,13 +198,10 @@ const Relatorios = () => {
                   <FileText className="mr-2 h-4 w-4" />
                   Relatório de Frequência
                 </Button>
-                <Button className="w-full" onClick={() => toast({ title: "Em breve", description: "Função em desenvolvimento" })}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Relatório de Notas
-                </Button>
-                <Button className="w-full" onClick={() => toast({ title: "Em breve", description: "Função em desenvolvimento" })}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Relatório de Projetos
+                <Button className="w-full">
+                  <CSVLink data={exportData} filename="alunos.csv">
+                    Exportar Alunos (CSV)
+                  </CSVLink>
                 </Button>
               </div>
             </CardContent>
