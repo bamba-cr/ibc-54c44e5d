@@ -10,11 +10,41 @@ export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validateForm = () => {
+    const newErrors = { email: "", password: "" };
+    let isValid = true;
+
+    if (!email) {
+      newErrors.email = "Email é obrigatório";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email inválido";
+      isValid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Senha é obrigatória";
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "A senha deve ter pelo menos 6 caracteres";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -77,10 +107,16 @@ export const LoginForm = () => {
             type="email"
             placeholder="seu@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (errors.email) setErrors({ ...errors, email: "" });
+            }}
             required
-            className="input-field"
+            className={`input-field ${errors.email ? "border-red-500" : ""}`}
           />
+          {errors.email && (
+            <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -92,10 +128,16 @@ export const LoginForm = () => {
             type="password"
             placeholder="••••••••"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.password) setErrors({ ...errors, password: "" });
+            }}
             required
-            className="input-field"
+            className={`input-field ${errors.password ? "border-red-500" : ""}`}
           />
+          {errors.password && (
+            <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+          )}
         </div>
 
         <Button
