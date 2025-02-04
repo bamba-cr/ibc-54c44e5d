@@ -1,5 +1,3 @@
-//este codigo deve buscar os aluinos cadastrados no banco de dados para possiveius alteraçoes no registro
-
 "use client";
 
 import { useState } from "react";
@@ -28,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-
+//este codigo deve buscar os aluinos cadastrados no banco de dados para possiveius alteraçoes no registro
 const projects = [
   { id: "capoeira", label: "Capoeira" },
   { id: "musica", label: "Música" },
