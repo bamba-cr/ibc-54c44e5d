@@ -173,6 +173,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          photo_url: string | null
           rg: string | null
         }
         Insert: {
@@ -191,6 +192,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          photo_url?: string | null
           rg?: string | null
         }
         Update: {
@@ -209,6 +211,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          photo_url?: string | null
           rg?: string | null
         }
         Relationships: []
