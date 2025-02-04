@@ -11,11 +11,8 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-
-interface GradeEntry {
-  subject: string;
-  grade: string;
-}
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const subjects = [
   "Matemática",
@@ -25,50 +22,14 @@ const subjects = [
   "Geografia",
 ] as const;
 
-const projects = [
-  { id: "capoeira", label: "Capoeira (Roda do Bem)" },
-  { id: "futebol", label: "Futebol (Show de Bola)" },
-  { id: "judo", label: "Judô (Campeões do Futuro)" },
-  { id: "musica", label: "Música (CulturArt)" },
-  { id: "informatica", label: "Informática (Conecte-se)" },
-  { id: "zumba", label: "Zumba em Movimento" },
-  { id: "reforco", label: "Reforço Escolar (Mentes Brilhantes)" },
-];
-
-// Mock data - substituir com dados reais do backend
-const studentsByProject = {
-  capoeira: [
-    { id: "1", name: "João Silva" },
-    { id: "2", name: "Maria Santos" },
-  ],
-  futebol: [
-    { id: "3", name: "Pedro Oliveira" },
-    { id: "4", name: "Ana Souza" },
-  ],
-  judo: [
-    { id: "5", name: "Lucas Ferreira" },
-    { id: "6", name: "Julia Costa" },
-  ],
-  musica: [
-    { id: "7", name: "Carlos Mendes" },
-    { id: "8", name: "Paula Lima" },
-  ],
-  informatica: [
-    { id: "9", name: "Roberto Santos" },
-    { id: "10", name: "Clara Silva" },
-  ],
-  zumba: [
-    { id: "11", name: "Fernanda Lima" },
-    { id: "12", name: "Ricardo Souza" },
-  ],
-  reforco: [
-    { id: "13", name: "Patricia Oliveira" },
-    { id: "14", name: "Marcos Costa" },
-  ],
-};
+interface GradeEntry {
+  subject: string;
+  grade: string;
+}
 
 const Notas = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [period, setPeriod] = useState("");
@@ -76,6 +37,86 @@ const Notas = () => {
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
+
+  // Fetch projects from Supabase
+  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch students for selected project
+  const { data: students, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ["students", selectedProject],
+    queryFn: async () => {
+      if (!selectedProject) return [];
+      
+      const { data, error } = await supabase
+        .from("students")
+        .select(`
+          id,
+          name,
+          student_projects!inner(project_id)
+        `)
+        .eq("student_projects.project_id", selectedProject)
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedProject,
+  });
+
+  // Mutation to save grades
+  const saveMutation = useMutation({
+    mutationFn: async (gradeData: {
+      studentId: string;
+      projectId: string;
+      period: string;
+      grades: GradeEntry[];
+      observations: string;
+    }) => {
+      const gradePromises = gradeData.grades.map((grade) =>
+        supabase.from("grades").insert({
+          student_id: gradeData.studentId,
+          project_id: gradeData.projectId,
+          subject: grade.subject,
+          grade: grade.grade ? parseFloat(grade.grade) : null,
+          period: gradeData.period,
+          observations: gradeData.observations,
+        })
+      );
+
+      await Promise.all(gradePromises);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso!",
+        description: "Notas registradas com sucesso!",
+      });
+      // Reset form
+      setGrades(subjects.map((subject) => ({ subject, grade: "" })));
+      setObservations("");
+      setPeriod("");
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["grades"] });
+    },
+    onError: (error) => {
+      console.error("Error saving grades:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar as notas. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleGradeChange = (subject: string, value: string) => {
     const numericValue = value === "" ? "" : Number(value);
@@ -132,24 +173,13 @@ const Notas = () => {
       return;
     }
 
-    // Mock API call - substituir com atualização real no banco de dados
-    console.log({
-      project: selectedProject,
-      student: selectedStudent,
+    saveMutation.mutate({
+      studentId: selectedStudent,
+      projectId: selectedProject,
       period,
       grades,
       observations,
     });
-
-    toast({
-      title: "Sucesso!",
-      description: "Notas registradas/alteradas com sucesso!",
-    });
-
-    // Reset form
-    setGrades(subjects.map((subject) => ({ subject, grade: "" })));
-    setObservations("");
-    setPeriod("");
   };
 
   return (
@@ -172,11 +202,12 @@ const Notas = () => {
                   <SelectValue placeholder="Selecione o projeto" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.label}
-                    </SelectItem>
-                  ))}
+                  {!isLoadingProjects &&
+                    projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -186,14 +217,14 @@ const Notas = () => {
               <Select
                 value={selectedStudent}
                 onValueChange={setSelectedStudent}
-                disabled={!selectedProject}
+                disabled={!selectedProject || isLoadingStudents}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o aluno" />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectedProject &&
-                    studentsByProject[selectedProject as keyof typeof studentsByProject]?.map((student) => (
+                  {!isLoadingStudents &&
+                    students?.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
                         {student.name}
                       </SelectItem>
@@ -243,8 +274,12 @@ const Notas = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Salvar Boletim
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? "Salvando..." : "Salvar Boletim"}
           </Button>
         </form>
       </Card>
