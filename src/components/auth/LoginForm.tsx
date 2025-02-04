@@ -10,6 +10,7 @@ export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,7 +97,17 @@ export const LoginForm = () => {
       return;
     }
 
+    if (isRateLimited) {
+      toast({
+        title: "Aguarde um momento",
+        description: "Por favor, aguarde alguns segundos antes de tentar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
+    setIsRateLimited(true);
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -106,11 +117,19 @@ export const LoginForm = () => {
 
       if (error) {
         console.error("Signup error:", error);
-        toast({
-          title: "Erro no cadastro",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (error.status === 429) {
+          toast({
+            title: "Muitas tentativas",
+            description: "Por favor, aguarde alguns segundos antes de tentar novamente.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro no cadastro",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         return;
       }
 
@@ -118,6 +137,11 @@ export const LoginForm = () => {
         title: "Cadastro realizado!",
         description: "Por favor, verifique seu email para confirmar o cadastro.",
       });
+
+      // Reset rate limit after 60 seconds
+      setTimeout(() => {
+        setIsRateLimited(false);
+      }, 60000);
     } catch (error: any) {
       console.error("Unexpected signup error:", error);
       toast({
@@ -194,9 +218,9 @@ export const LoginForm = () => {
             variant="outline"
             className="w-full"
             onClick={handleSignUp}
-            disabled={isLoading}
+            disabled={isLoading || isRateLimited}
           >
-            Criar conta
+            {isRateLimited ? "Aguarde..." : "Criar conta"}
           </Button>
         </div>
 
