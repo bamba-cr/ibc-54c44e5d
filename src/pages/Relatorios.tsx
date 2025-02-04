@@ -10,29 +10,34 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CSVLink } from "react-csv";
+import type { Database } from "@/integrations/supabase/types";
+
+type Student = Database['public']['Tables']['students']['Row'];
 
 const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({ name: "", email: "", age: "" });
+  const [filters, setFilters] = useState({
+    name: "",
+    age: ""
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: students, isLoading } = useQuery({
+  const { data: students, isLoading, refetch: fetchStudents } = useQuery({
     queryKey: ["students", filters],
     queryFn: async () => {
       let query = supabase.from("students").select("*");
 
       if (filters.name) query = query.ilike("name", `%${filters.name}%`);
-      if (filters.email) query = query.ilike("email", `%${filters.email}%`);
-      if (filters.age) query = query.eq("age", filters.age);
+      if (filters.age) query = query.eq("age", parseInt(filters.age));
 
       const { data, error } = await query;
       if (error) throw error;
       return data;
-    },
+    }
   });
 
   const paginatedStudents = students?.slice(
@@ -42,15 +47,22 @@ const Relatorios = () => {
 
   const [events, setEvents] = useState([
     { date: new Date(), title: "Reunião Pedagógica", type: "meeting" },
-    { date: new Date(new Date().setDate(new Date().getDate() + 1)), title: "Entrega de Notas", type: "deadline" },
+    {
+      date: new Date(new Date().setDate(new Date().getDate() + 1)),
+      title: "Entrega de Notas",
+      type: "deadline"
+    }
   ]);
 
-  const handleAddEvent = (newEvent) => {
+  const handleAddEvent = (newEvent: typeof events[0]) => {
     setEvents([...events, newEvent]);
-    toast({ title: "Evento adicionado", description: `"${newEvent.title}" foi adicionado ao calendário.` });
+    toast({
+      title: "Evento adicionado",
+      description: `"${newEvent.title}" foi adicionado ao calendário.`
+    });
   };
 
-  const handleEditStudent = async (studentId, updatedData) => {
+  const handleEditStudent = async (studentId: string, updatedData: Partial<Student>) => {
     try {
       const { error } = await supabase
         .from("students")
@@ -58,14 +70,20 @@ const Relatorios = () => {
         .eq("id", studentId);
 
       if (error) throw error;
-      toast({ title: "Sucesso", description: "Aluno atualizado com sucesso." });
+      toast({
+        title: "Sucesso",
+        description: "Aluno atualizado com sucesso."
+      });
       fetchStudents();
     } catch (error) {
-      toast({ title: "Erro", description: "Falha ao atualizar aluno." });
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar aluno."
+      });
     }
   };
 
-  const handleDeleteStudent = async (studentId) => {
+  const handleDeleteStudent = async (studentId: string) => {
     try {
       const { error } = await supabase
         .from("students")
@@ -73,37 +91,47 @@ const Relatorios = () => {
         .eq("id", studentId);
 
       if (error) throw error;
-      toast({ title: "Sucesso", description: "Aluno excluído com sucesso." });
+      toast({
+        title: "Sucesso",
+        description: "Aluno excluído com sucesso."
+      });
       fetchStudents();
     } catch (error) {
-      toast({ title: "Erro", description: "Falha ao excluir aluno." });
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir aluno."
+      });
     }
   };
 
   const exportData = students?.map((student) => ({
     Nome: student.name,
-    Email: student.email,
-    Idade: student.age,
+    Idade: student.age
   }));
 
   const handleBackup = async () => {
     try {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*");
-
+      const { data, error } = await supabase.from("students").select("*");
       if (error) throw error;
 
-      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(data)], {
+        type: "application/json"
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = "backup-alunos.json";
       link.click();
 
-      toast({ title: "Sucesso", description: "Backup gerado com sucesso." });
+      toast({
+        title: "Sucesso",
+        description: "Backup gerado com sucesso."
+      });
     } catch (error) {
-      toast({ title: "Erro", description: "Falha ao gerar backup." });
+      toast({
+        title: "Erro",
+        description: "Falha ao gerar backup."
+      });
     }
   };
 
@@ -275,4 +303,3 @@ const Relatorios = () => {
 };
 
 export default Relatorios;
-

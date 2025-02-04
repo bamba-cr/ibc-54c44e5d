@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentForm } from "@/components/students/StudentForm";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-const Alunos = () => {
+type Student = Database['public']['Tables']['students']['Row'];
+
+const EditarAluno = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [editingStudent, setEditingStudent] = useState(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,11 +41,11 @@ const Alunos = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("students") // Substitua "students" pelo nome da sua tabela no Supabase
+        .from("students")
         .select("*");
 
       if (error) throw error;
-      setStudents(data);
+      setStudents(data || []);
     } catch (error) {
       console.error("Erro ao buscar alunos:", error);
     } finally {
@@ -50,26 +53,26 @@ const Alunos = () => {
     }
   };
 
-  const handleEdit = (student) => {
+  const handleEdit = (student: Student) => {
     setEditingStudent(student);
   };
 
-  const handleUpdate = async (updatedStudent) => {
+  const handleUpdate = async (updatedStudent: Partial<Student>) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("students")
         .update(updatedStudent)
         .eq("id", updatedStudent.id);
 
       if (error) throw error;
       setEditingStudent(null);
-      fetchStudents(); // Atualiza a lista de alunos após a edição
+      fetchStudents();
     } catch (error) {
       console.error("Erro ao atualizar aluno:", error);
     }
   };
 
-  const handleDelete = async (studentId) => {
+  const handleDelete = async (studentId: string) => {
     try {
       const { error } = await supabase
         .from("students")
@@ -77,7 +80,7 @@ const Alunos = () => {
         .eq("id", studentId);
 
       if (error) throw error;
-      fetchStudents(); // Atualiza a lista de alunos após a exclusão
+      fetchStudents();
     } catch (error) {
       console.error("Erro ao excluir aluno:", error);
     }
@@ -92,14 +95,14 @@ const Alunos = () => {
       <h1 className="text-2xl font-bold mb-4">Lista de Alunos</h1>
       {editingStudent ? (
         <StudentForm
-          initialData={editingStudent}
+          student={editingStudent}
           onSubmit={handleUpdate}
           onCancel={() => setEditingStudent(null)}
         />
       ) : (
         <>
           <button
-            onClick={() => setEditingStudent({})}
+            onClick={() => setEditingStudent({} as Student)}
             className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
           >
             Adicionar Novo Aluno
@@ -108,7 +111,6 @@ const Alunos = () => {
             {students.map((student) => (
               <li key={student.id} className="mb-4 p-4 border rounded">
                 <p><strong>Nome:</strong> {student.name}</p>
-                <p><strong>Email:</strong> {student.email}</p>
                 <p><strong>Idade:</strong> {student.age}</p>
                 <button
                   onClick={() => handleEdit(student)}
@@ -131,4 +133,4 @@ const Alunos = () => {
   );
 };
 
-export default Alunos;
+export default EditarAluno;
