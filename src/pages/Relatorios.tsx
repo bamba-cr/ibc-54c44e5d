@@ -41,13 +41,44 @@ const Relatorios = () => {
     currentPage * itemsPerPage
   );
 
-  const events = [
+  const [events, setEvents] = useState([
     { date: new Date(), title: "Reunião Pedagógica", type: "meeting" },
     { date: new Date(new Date().setDate(new Date().getDate() + 1)), title: "Entrega de Notas", type: "deadline" },
-  ];
+  ]);
 
-  const handleEditStudent = (studentId) => {
-    navigate(`/editar-aluno?id=${studentId}`);
+  const handleAddEvent = (newEvent) => {
+    setEvents([...events, newEvent]);
+    toast({ title: "Evento adicionado", description: `"${newEvent.title}" foi adicionado ao calendário.` });
+  };
+
+  const handleEditStudent = async (studentId, updatedData) => {
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update(updatedData)
+        .eq("id", studentId);
+
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Aluno atualizado com sucesso." });
+      fetchStudents();
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao atualizar aluno." });
+    }
+  };
+
+  const handleDeleteStudent = async (studentId) => {
+    try {
+      const { error } = await supabase
+        .from("students")
+        .delete()
+        .eq("id", studentId);
+
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Aluno excluído com sucesso." });
+      fetchStudents();
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao excluir aluno." });
+    }
   };
 
   const exportData = students?.map((student) => ({
@@ -55,6 +86,27 @@ const Relatorios = () => {
     Email: student.email,
     Idade: student.age,
   }));
+
+  const handleBackup = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*");
+
+      if (error) throw error;
+
+      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "backup-alunos.json";
+      link.click();
+
+      toast({ title: "Sucesso", description: "Backup gerado com sucesso." });
+    } catch (error) {
+      toast({ title: "Erro", description: "Falha ao gerar backup." });
+    }
+  };
 
   useEffect(() => {
     const checkSession = async () => {
@@ -109,7 +161,7 @@ const Relatorios = () => {
                       </span>
                     </div>
                   ))}
-                  <Button className="w-full">
+                  <Button className="w-full" onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}>
                     Adicionar Evento
                   </Button>
                 </div>
@@ -155,13 +207,22 @@ const Relatorios = () => {
                       className="flex items-center justify-between p-2 border rounded-lg"
                     >
                       <span>{student.name}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditStudent(student.id)}
-                      >
-                        Editar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditStudent(student.id, { name: "Novo Nome" })}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteStudent(student.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -169,14 +230,14 @@ const Relatorios = () => {
                 <div className="flex justify-between items-center mt-4">
                   <Button
                     disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(currentPage - 1)}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
                   >
                     Anterior
                   </Button>
                   <span>Página {currentPage}</span>
                   <Button
                     disabled={currentPage * itemsPerPage >= students?.length}
-                    onClick={() => setCurrentPage(currentPage + 1)}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
                   >
                     Próxima
                   </Button>
@@ -194,10 +255,6 @@ const Relatorios = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Button className="w-full" onClick={() => toast({ title: "Em breve", description: "Função em desenvolvimento" })}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Relatório de Frequência
-                </Button>
                 <Button className="w-full">
                   <CSVLink data={exportData} filename="alunos.csv">
                     Exportar Alunos (CSV)
@@ -209,7 +266,9 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="backup" className="space-y-4">
-          <DatabaseBackup />
+          <Button className="w-full" onClick={handleBackup}>
+            Gerar Backup
+          </Button>
         </TabsContent>
       </Tabs>
     </div>
