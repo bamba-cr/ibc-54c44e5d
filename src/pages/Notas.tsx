@@ -53,26 +53,24 @@ const Notas = () => {
   });
 
   // Fetch students for selected project
-  const { data: students, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ["students", selectedProject],
-    queryFn: async () => {
-      if (!selectedProject) return [];
-      
-      const { data, error } = await supabase
-        .from("students")
-        .select(`
-          id,
-          name,
-          student_projects!inner(project_id)
-        `)
-        .eq("student_projects.project_id", selectedProject)
-        .order("name");
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedProject,
-  });
+const { data: students, isLoading: isLoadingStudents } = useQuery({
+  queryKey: ["students", selectedProject],
+  queryFn: async () => {
+    if (!selectedProject) return [];
+    
+    const { data, error } = await supabase
+      .from("student_projects")
+      .select(`
+        students(id, name)
+      `)
+      .eq("project_id", selectedProject);
+
+    if (error) throw error;
+
+    return data?.map((entry) => entry.students) || [];
+  },
+  enabled: !!selectedProject,
+});
 
   // Mutation to save grades
   const saveMutation = useMutation({
