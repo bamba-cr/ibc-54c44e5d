@@ -54,10 +54,12 @@ export const LoginForm = () => {
       });
 
       if (error) {
+        console.error("Login error details:", error);
+        
         if (error.message === "Invalid login credentials") {
           toast({
             title: "Erro no login",
-            description: "Email ou senha incorretos. Por favor, verifique suas credenciais.",
+            description: "Email ou senha incorretos. Se você ainda não tem uma conta, por favor registre-se primeiro.",
             variant: "destructive",
           });
         } else {
@@ -67,7 +69,6 @@ export const LoginForm = () => {
             variant: "destructive",
           });
         }
-        console.error("Login error:", error);
         return;
       }
 
@@ -82,6 +83,45 @@ export const LoginForm = () => {
       console.error("Unexpected error:", error);
       toast({
         title: "Erro no login",
+        description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error("Signup error:", error);
+        toast({
+          title: "Erro no cadastro",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Cadastro realizado!",
+        description: "Por favor, verifique seu email para confirmar o cadastro.",
+      });
+    } catch (error: any) {
+      console.error("Unexpected signup error:", error);
+      toast({
+        title: "Erro no cadastro",
         description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
         variant: "destructive",
       });
@@ -140,13 +180,25 @@ export const LoginForm = () => {
           )}
         </div>
 
-        <Button
-          type="submit"
-          className="w-full btn-primary"
-          disabled={isLoading}
-        >
-          {isLoading ? "Entrando..." : "Entrar"}
-        </Button>
+        <div className="space-y-4">
+          <Button
+            type="submit"
+            className="w-full btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? "Entrando..." : "Entrar"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleSignUp}
+            disabled={isLoading}
+          >
+            Criar conta
+          </Button>
+        </div>
 
         <div className="text-center">
           <a
