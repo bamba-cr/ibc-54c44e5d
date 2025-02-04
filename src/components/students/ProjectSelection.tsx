@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectSelectionProps {
   selectedProjects: string[];
@@ -10,21 +12,28 @@ export const ProjectSelection = ({
   selectedProjects,
   onProjectChange,
 }: ProjectSelectionProps) => {
-  const projects = [
-    { id: 'capoeira', label: 'Capoeira' },
-    { id: 'futebol', label: 'Futebol' },
-    { id: 'judo', label: 'Judô' },
-    { id: 'musica', label: 'Música' },
-    { id: 'informatica', label: 'Informática' },
-    { id: 'zumba', label: 'Zumba' },
-    { id: 'reforco', label: 'Reforço Escolar' },
-  ];
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return <div>Carregando projetos...</div>;
+  }
 
   return (
     <div className="space-y-2">
       <Label>Projetos</Label>
       <div className="grid grid-cols-2 gap-2">
-        {projects.map((project) => (
+        {projects?.map((project) => (
           <div key={project.id} className="flex items-center space-x-2">
             <Checkbox
               id={project.id}
@@ -32,7 +41,7 @@ export const ProjectSelection = ({
               onCheckedChange={(checked) => onProjectChange(project.id, checked as boolean)}
             />
             <Label htmlFor={project.id} className="capitalize">
-              {project.label}
+              {project.name}
             </Label>
           </div>
         ))}
