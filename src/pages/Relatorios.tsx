@@ -17,7 +17,7 @@ type Student = Database['public']['Tables']['students']['Row'];
 const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     name: "",
@@ -46,11 +46,15 @@ const Relatorios = () => {
   );
 
   const [events, setEvents] = useState([
-    { date: new Date(), title: "Reunião Pedagógica", type: "meeting" },
+    {
+      date: new Date(),
+      title: "Reunião Pedagógica",
+      type: "meeting" as const
+    },
     {
       date: new Date(new Date().setDate(new Date().getDate() + 1)),
       title: "Entrega de Notas",
-      type: "deadline"
+      type: "deadline" as const
     }
   ]);
 
@@ -85,21 +89,40 @@ const Relatorios = () => {
 
   const handleDeleteStudent = async (studentId: string) => {
     try {
+      // First delete related records in attendance
+      const { error: attendanceError } = await supabase
+        .from("attendance")
+        .delete()
+        .eq("student_id", studentId);
+
+      if (attendanceError) throw attendanceError;
+
+      // Then delete related records in grades
+      const { error: gradesError } = await supabase
+        .from("grades")
+        .delete()
+        .eq("student_id", studentId);
+
+      if (gradesError) throw gradesError;
+
+      // Finally delete the student
       const { error } = await supabase
         .from("students")
         .delete()
         .eq("id", studentId);
 
       if (error) throw error;
+
       toast({
         title: "Sucesso",
         description: "Aluno excluído com sucesso."
       });
       fetchStudents();
     } catch (error) {
+      console.error("Error deleting student:", error);
       toast({
         title: "Erro",
-        description: "Falha ao excluir aluno."
+        description: "Falha ao excluir aluno. Verifique se não existem registros vinculados."
       });
     }
   };
