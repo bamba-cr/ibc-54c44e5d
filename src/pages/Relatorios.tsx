@@ -64,14 +64,14 @@ const Relatorios = () => {
     });
   };
 
-  const handleExportExcel = (data: any[], filename: string) => {
+  const handleExportExcel = (data: any[]) => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Dados");
-    XLSX.writeFile(wb, filename);
+    XLSX.writeFile(wb, "relatorio.xlsx");
   };
 
-  const handleExportSQL = (data: any[], filename: string) => {
+  const handleExportSQL = (data: any[]) => {
     let sql = `INSERT INTO students (id, name, age, city, birth_date) VALUES\n`;
     data.forEach((student, index) => {
       sql += `(${student.id}, '${student.name}', ${student.age}, '${student.city}', '${student.birth_date}')${index !== data.length - 1 ? "," : ""}\n`;
@@ -79,7 +79,7 @@ const Relatorios = () => {
     const blob = new Blob([sql], { type: "text/sql" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = filename;
+    link.download = "relatorio.sql";
     link.click();
   };
 
@@ -98,12 +98,18 @@ const Relatorios = () => {
   const handleExport = (type: string) => {
     if (!students) return;
     
-    if (type === "excel") {
-      handleExportExcel(students, "relatorio.xlsx");
-    } else if (type === "sql") {
-      handleExportSQL(students, "relatorio.sql");
-    } else if (type === "pdf") {
-      handleExportPDF(students);
+    switch (type) {
+      case "excel":
+        handleExportExcel(students);
+        break;
+      case "sql":
+        handleExportSQL(students);
+        break;
+      case "pdf":
+        handleExportPDF(students);
+        break;
+      default:
+        break;
     }
   };
 
@@ -147,8 +153,10 @@ const Relatorios = () => {
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
   return (
-    <div data-component-path="src/pages/Relatorios.tsx" data-component-name="div" data-component-line="114" data-component-file="Relatorios.tsx" data-component-content='{"className":"container mx-auto p-4 md:p-6 lg:p-8 min-h-screen"}' className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
-      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold mb-6 text-primary">Relatórios e Gestão</motion.h1>
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
+      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold mb-6 text-primary">
+        Relatórios e Gestão
+      </motion.h1>
       <Tabs defaultValue="calendar" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px]">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
@@ -184,7 +192,12 @@ const Relatorios = () => {
                         <span className="text-sm text-muted-foreground ml-auto">{event.date.toLocaleDateString()}</span>
                       </motion.div>
                     ))}
-                    <Button className="w-full bg-primary hover:bg-primary-dark transition-colors" onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}>Adicionar Evento</Button>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary-dark transition-colors" 
+                      onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}
+                    >
+                      Adicionar Evento
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -205,7 +218,9 @@ const Relatorios = () => {
                   <Input placeholder="Cidade" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} />
                   <Input placeholder="Data de Nascimento" value={filters.birth_date} onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })} type="date" />
                 </div>
-                <Button variant="outline" onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })} className="w-full md:w-auto">Limpar Filtros</Button>
+                <Button variant="outline" onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })} className="w-full md:w-auto">
+                  Limpar Filtros
+                </Button>
                 <AnimatePresence>
                   {isLoading ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center p-4">
@@ -229,8 +244,12 @@ const Relatorios = () => {
                   )}
                 </AnimatePresence>
                 <div className="flex justify-between mt-4">
-                  <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>Anterior</Button>
-                  <Button variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>Próximo</Button>
+                  <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
+                    Anterior
+                  </Button>
+                  <Button variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
+                    Próximo
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -244,9 +263,15 @@ const Relatorios = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Button onClick={() => handleExport("excel", "all")} className="w-full md:w-auto">Exportar para Excel</Button>
-                <Button onClick={() => handleExport("sql", "all")} className="w-full md:w-auto">Exportar para SQL</Button>
-                <Button onClick={() => handleExport("pdf")} className="w-full md:w-auto">Exportar para PDF</Button>
+                <Button onClick={() => handleExport("excel")} className="w-full md:w-auto">
+                  Exportar para Excel
+                </Button>
+                <Button onClick={() => handleExport("sql")} className="w-full md:w-auto">
+                  Exportar para SQL
+                </Button>
+                <Button onClick={() => handleExport("pdf")} className="w-full md:w-auto">
+                  Exportar para PDF
+                </Button>
               </div>
             </CardContent>
           </Card>
