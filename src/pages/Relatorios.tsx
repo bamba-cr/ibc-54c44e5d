@@ -5,15 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { CSVLink } from "react-csv";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import type { Database } from "@/integrations/supabase/types";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -66,6 +65,7 @@ const Relatorios = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAddEvent = (newEvent: typeof events[0]) => {
     setEvents([...events, newEvent]);
@@ -83,6 +83,34 @@ const Relatorios = () => {
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
     setSelectedStudent(null);
+  };
+
+  const handleDeleteStudent = async (studentId: string) => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("students")
+        .delete()
+        .eq("id", studentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Aluno excluído",
+        description: "O aluno foi excluído com sucesso.",
+        className: "bg-green-50 border-green-200",
+      });
+      
+      fetchStudents();
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o aluno. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const validateStudentData = (data: Partial<Student>) => {
@@ -128,6 +156,50 @@ const Relatorios = () => {
     }
   };
 
+  const handleExportData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("students")
+        .select("*");
+      
+      if (error) throw error;
+
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        encodeURIComponent(
+          [
+            ["Nome", "Idade", "Data de Nascimento", "Cidade", "Responsável"].join(","),
+            ...data.map(student => 
+              [
+                student.name,
+                student.age,
+                student.birth_date,
+                student.city,
+                student.guardian_name
+              ].join(",")
+            )
+          ].join("\n")
+        );
+
+      const link = document.createElement("a");
+      link.setAttribute("href", csvContent);
+      link.setAttribute("download", "alunos.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Exportação concluída",
+        description: "Os dados foram exportados com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível exportar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -149,11 +221,10 @@ const Relatorios = () => {
       </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 lg:w-[600px]">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
@@ -227,81 +298,88 @@ const Relatorios = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                   <Input
                     placeholder="Nome"
                     value={filters.name}
                     onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Idade"
                     value={filters.age}
                     onChange={(e) => setFilters({ ...filters, age: e.target.value })}
-                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Cidade"
                     value={filters.city}
                     onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Data de Nascimento"
                     value={filters.birth_date}
                     onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
                     type="date"
-                    className="md:w-1/4"
                   />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}
-                    className="whitespace-nowrap"
-                  >
-                    Limpar Filtros
-                  </Button>
                 </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}
+                  className="w-full md:w-auto"
+                >
+                  Limpar Filtros
+                </Button>
                 
-                <div className="space-y-2">
-                  {isLoading && (
-                    <div className="flex items-center justify-center p-4">
+                <AnimatePresence>
+                  {isLoading ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center p-4"
+                    >
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-2">
+                      {paginatedStudents?.map((student) => (
+                        <motion.div
+                          key={student.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-all"
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center gap-2">
+                            <span className="font-medium">{student.name}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {student.age} anos • {student.city}
+                            </span>
+                          </div>
+                          <div className="flex gap-2 mt-2 md:mt-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditModalOpen(student)}
+                              className="flex-1 md:flex-none"
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteStudent(student.id)}
+                              disabled={isDeleting}
+                              className="flex-1 md:flex-none text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Excluir
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   )}
-                  {paginatedStudents?.map((student) => (
-                    <motion.div
-                      key={student.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-all"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center gap-2">
-                        <span className="font-medium">{student.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {student.age} anos • {student.city}
-                        </span>
-                      </div>
-                      <div className="flex gap-2 mt-2 md:mt-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditModalOpen(student)}
-                          className="w-full md:w-auto"
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteStudent(student.id)}
-                          className="w-full md:w-auto text-red-500 hover:text-red-700"
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                </AnimatePresence>
 
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
                   <Button
@@ -335,28 +413,21 @@ const Relatorios = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Button className="w-full">
-                  <CSVLink data={exportData} filename="alunos.csv">
-                    Exportar Alunos (CSV)
-                  </CSVLink>
-                </Button>
-                <Button className="w-full" onClick={handleExportPDF}>
-                  Exportar Alunos (PDF)
+                <Button 
+                  className="w-full md:w-auto flex items-center gap-2"
+                  onClick={handleExportData}
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar Alunos (CSV)
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="backup" className="space-y-4">
-          <Button className="w-full" onClick={handleBackup}>
-            Gerar Backup
-          </Button>
-        </TabsContent>
       </Tabs>
 
       <Dialog open={isEditModalOpen} onOpenChange={handleEditModalClose}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Aluno</DialogTitle>
           </DialogHeader>
@@ -383,71 +454,154 @@ const Relatorios = () => {
                 };
                 handleEditStudent(selectedStudent.id, updatedData);
               }}
-              className="space-y-4 max-h-[60vh] overflow-y-auto px-1"
+              className="space-y-4"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label>Nome</Label>
-                  <Input name="name" defaultValue={selectedStudent.name} placeholder="Nome" required />
+                  <Input 
+                    name="name" 
+                    defaultValue={selectedStudent.name} 
+                    placeholder="Nome" 
+                    required 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Idade</Label>
-                  <Input name="age" defaultValue={selectedStudent.age} placeholder="Idade" type="number" required />
+                  <Input 
+                    name="age" 
+                    defaultValue={selectedStudent.age} 
+                    placeholder="Idade" 
+                    type="number" 
+                    required 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Data de Nascimento</Label>
-                  <Input name="birth_date" defaultValue={selectedStudent.birth_date} type="date" required />
+                  <Input 
+                    name="birth_date" 
+                    defaultValue={selectedStudent.birth_date} 
+                    type="date" 
+                    required 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>RG</Label>
-                  <Input name="rg" defaultValue={selectedStudent.rg} placeholder="RG" />
+                  <Input 
+                    name="rg" 
+                    defaultValue={selectedStudent.rg} 
+                    placeholder="RG" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>CPF</Label>
-                  <Input name="cpf" defaultValue={selectedStudent.cpf} placeholder="CPF" />
+                  <Input 
+                    name="cpf" 
+                    defaultValue={selectedStudent.cpf} 
+                    placeholder="CPF" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Endereço</Label>
-                  <Input name="address" defaultValue={selectedStudent.address} placeholder="Endereço" />
+                  <Input 
+                    name="address" 
+                    defaultValue={selectedStudent.address} 
+                    placeholder="Endereço" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Cidade</Label>
-                  <Input name="city" defaultValue={selectedStudent.city} placeholder="Cidade" />
+                  <Input 
+                    name="city" 
+                    defaultValue={selectedStudent.city} 
+                    placeholder="Cidade" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Nome do Responsável</Label>
-                  <Input name="guardian_name" defaultValue={selectedStudent.guardian_name} placeholder="Nome do Responsável" />
+                  <Input 
+                    name="guardian_name" 
+                    defaultValue={selectedStudent.guardian_name} 
+                    placeholder="Nome do Responsável" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Grau de Parentesco</Label>
-                  <Input name="guardian_relationship" defaultValue={selectedStudent.guardian_relationship} placeholder="Grau de Parentesco" />
+                  <Input 
+                    name="guardian_relationship" 
+                    defaultValue={selectedStudent.guardian_relationship} 
+                    placeholder="Grau de Parentesco" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>CPF do Responsável</Label>
-                  <Input name="guardian_cpf" defaultValue={selectedStudent.guardian_cpf} placeholder="CPF do Responsável" />
+                  <Input 
+                    name="guardian_cpf" 
+                    defaultValue={selectedStudent.guardian_cpf} 
+                    placeholder="CPF do Responsável" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>RG do Responsável</Label>
-                  <Input name="guardian_rg" defaultValue={selectedStudent.guardian_rg} placeholder="RG do Responsável" />
+                  <Input 
+                    name="guardian_rg" 
+                    defaultValue={selectedStudent.guardian_rg} 
+                    placeholder="RG do Responsável" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Telefone do Responsável</Label>
-                  <Input name="guardian_phone" defaultValue={selectedStudent.guardian_phone} placeholder="Telefone do Responsável" />
+                  <Input 
+                    name="guardian_phone" 
+                    defaultValue={selectedStudent.guardian_phone} 
+                    placeholder="Telefone do Responsável" 
+                    className="w-full"
+                  />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label>Email do Responsável</Label>
-                  <Input name="guardian_email" defaultValue={selectedStudent.guardian_email} placeholder="Email do Responsável" type="email" />
+                  <Input 
+                    name="guardian_email" 
+                    defaultValue={selectedStudent.guardian_email} 
+                    placeholder="Email do Responsável" 
+                    type="email" 
+                    className="w-full"
+                  />
                 </div>
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 space-y-2">
                   <Label>Observações</Label>
-                  <Input name="notes" defaultValue={selectedStudent.notes} placeholder="Observações" />
+                  <Input 
+                    name="notes" 
+                    defaultValue={selectedStudent.notes} 
+                    placeholder="Observações" 
+                    className="w-full"
+                  />
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleEditModalClose}>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleEditModalClose}
+                  className="w-full sm:w-auto"
+                >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-primary hover:bg-primary-dark">
+                <Button 
+                  type="submit" 
+                  className="w-full sm:w-auto bg-primary hover:bg-primary-dark"
+                >
                   Salvar Alterações
                 </Button>
               </DialogFooter>
