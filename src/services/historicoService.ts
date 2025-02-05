@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export async function buscarHistorico(searchTerm: string) {
   if (!searchTerm) return [];
