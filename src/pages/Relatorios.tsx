@@ -9,8 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { AdminManagement } from "@/components/reports/AdminManagement";
-import { jsPDF } from "jspdf"; // Updated import syntax
+import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
+import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -157,7 +158,9 @@ const Relatorios = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) navigate("/login");
+      if (!session) {
+        navigate("/login");
+      }
     };
     checkSession();
   }, [navigate]);
