@@ -88,7 +88,6 @@ const Relatorios = () => {
     observations: "",
     photo: null
   });
-  const itemsPerPage = 10;
 
   const { data: students, isLoading, refetch: fetchStudents } = useQuery({
     queryKey: ["students", filters],
@@ -111,7 +110,7 @@ const Relatorios = () => {
       let photoUrl = selectedStudent.photo_url;
       
       if (editForm.photo) {
-        const fileExt = editForm.photo.name.split('.').pop();
+        const fileExt = editForm.photo.name.split('.').pop() || '';
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
@@ -129,7 +128,7 @@ const Relatorios = () => {
 
       const studentData = {
         name: editForm.name,
-        age: parseInt(editForm.age),
+        age: parseInt(editForm.age || '0'),
         birth_date: editForm.birthDate,
         rg: editForm.rg,
         cpf: editForm.cpf,
@@ -228,15 +227,25 @@ const Relatorios = () => {
   const handleExport = (type: string) => {
     if (!students) return;
     
+    const exportData = students.map(student => ({
+      id: student.id,
+      name: student.name,
+      age: student.age || '',
+      city: student.city || '',
+      birth_date: student.birth_date || '',
+      email: student.guardian_email || '',
+      phone: student.guardian_phone || ''
+    }));
+    
     switch (type) {
       case "excel":
-        handleExportExcel(students);
+        handleExportExcel(exportData);
         break;
       case "sql":
-        handleExportSQL(students);
+        handleExportSQL(exportData);
         break;
       case "pdf":
-        handleExportPDF(students);
+        handleExportPDF(exportData);
         break;
       default:
         break;
@@ -295,7 +304,11 @@ const Relatorios = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) navigate("/login");
+      if (!session) {
+        navigate("/login");
+      } else {
+        fetchStudents();
+      }
     };
     checkSession();
   }, [navigate]);
@@ -502,19 +515,19 @@ const Relatorios = () => {
                                     setSelectedStudent(student);
                                     setEditForm({
                                       name: student.name,
-                                      age: student.age.toString(),
-                                      birthDate: student.birth_date,
+                                      age: student.age?.toString() || "",
+                                      birthDate: student.birth_date || "",
                                       rg: student.rg || "",
                                       cpf: student.cpf || "",
                                       address: student.address || "",
-                                      city: student.city,
+                                      city: student.city || "",
                                       guardianName: student.guardian_name || "",
                                       guardianRelationship: student.guardian_relationship || "",
                                       guardianCpf: student.guardian_cpf || "",
                                       guardianRg: student.guardian_rg || "",
                                       guardianPhone: student.guardian_phone || "",
                                       guardianEmail: student.guardian_email || "",
-                                      projects: student.projects || [],
+                                      projects: [],
                                       observations: student.notes || "",
                                       photo: null
                                     });
