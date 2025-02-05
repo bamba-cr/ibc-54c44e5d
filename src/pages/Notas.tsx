@@ -13,6 +13,17 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const subjects = [
   "Matemática",
@@ -34,6 +45,7 @@ const Notas = () => {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [period, setPeriod] = useState("");
   const [observations, setObservations] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
@@ -53,24 +65,24 @@ const Notas = () => {
   });
 
   // Fetch students for selected project
-const { data: students, isLoading: isLoadingStudents } = useQuery({
-  queryKey: ["students", selectedProject],
-  queryFn: async () => {
-    if (!selectedProject) return [];
-    
-    const { data, error } = await supabase
-      .from("student_projects")
-      .select(`
-        students(id, name)
-      `)
-      .eq("project_id", selectedProject);
+  const { data: students, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ["students", selectedProject],
+    queryFn: async () => {
+      if (!selectedProject) return [];
+      
+      const { data, error } = await supabase
+        .from("student_projects")
+        .select(`
+          students(id, name)
+        `)
+        .eq("project_id", selectedProject);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return data?.map((entry) => entry.students) || [];
-  },
-  enabled: !!selectedProject,
-});
+      return data?.map((entry) => entry.students) || [];
+    },
+    enabled: !!selectedProject,
+  });
 
   // Mutation to save grades
   const saveMutation = useMutation({
@@ -96,8 +108,8 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
     },
     onSuccess: () => {
       toast({
-        title: "Sucesso!",
-        description: "Notas registradas com sucesso!",
+        title: "Notas salvas!",
+        description: "As notas foram registradas com sucesso.",
       });
       // Reset form
       setGrades(subjects.map((subject) => ({ subject, grade: "" })));
@@ -109,8 +121,8 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
     onError: (error) => {
       console.error("Error saving grades:", error);
       toast({
-        title: "Erro",
-        description: "Erro ao salvar as notas. Por favor, tente novamente.",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as notas. Por favor, tente novamente.",
         variant: "destructive",
       });
     },
@@ -124,12 +136,43 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
           grade.subject === subject ? { ...grade, grade: value } : grade
         )
       );
+    } else {
+      toast({
+        title: "Valor inválido",
+        description: "A nota deve estar entre 0 e 10",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const validateForm = () => {
+    if (!selectedStudent) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Por favor, selecione um aluno",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!selectedProject) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Por favor, selecione um projeto",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!period) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Por favor, informe o período",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     // Validate all grades
     const invalidGrades = grades.filter(
       (grade) => grade.grade !== "" && (Number(grade.grade) < 0 || Number(grade.grade) > 10)
@@ -137,40 +180,25 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
 
     if (invalidGrades.length > 0) {
       toast({
-        title: "Erro",
+        title: "Notas inválidas",
         description: "Todas as notas devem estar entre 0 e 10",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    if (!selectedStudent) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione um aluno",
-        variant: "destructive",
-      });
-      return;
-    }
+    return true;
+  };
 
-    if (!selectedProject) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione um projeto",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
 
-    if (!period) {
-      toast({
-        title: "Erro",
-        description: "Por favor, informe o período",
-        variant: "destructive",
-      });
-      return;
-    }
+    setShowConfirmDialog(true);
+  };
 
+  const confirmSubmit = () => {
     saveMutation.mutate({
       studentId: selectedStudent,
       projectId: selectedProject,
@@ -178,10 +206,11 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
       grades,
       observations,
     });
+    setShowConfirmDialog(false);
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 animate-fadeIn">
       <h1 className="text-2xl font-bold mb-6">Boletim Escolar</h1>
       
       <Card className="p-6">
@@ -195,17 +224,23 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
                   setSelectedProject(value);
                   setSelectedStudent(""); // Reset student when project changes
                 }}
+                disabled={isLoadingProjects}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o projeto" />
                 </SelectTrigger>
                 <SelectContent>
-                  {!isLoadingProjects &&
+                  {isLoadingProjects ? (
+                    <SelectItem value="loading" disabled>
+                      Carregando projetos...
+                    </SelectItem>
+                  ) : (
                     projects?.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
                       </SelectItem>
-                    ))}
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -218,15 +253,24 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
                 disabled={!selectedProject || isLoadingStudents}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o aluno" />
+                  <SelectValue placeholder={
+                    !selectedProject 
+                      ? "Selecione um projeto primeiro" 
+                      : "Selecione o aluno"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {!isLoadingStudents &&
+                  {isLoadingStudents ? (
+                    <SelectItem value="loading" disabled>
+                      Carregando alunos...
+                    </SelectItem>
+                  ) : (
                     students?.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
                         {student.name}
                       </SelectItem>
-                    ))}
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -277,10 +321,35 @@ const { data: students, isLoading: isLoadingStudents } = useQuery({
             className="w-full"
             disabled={saveMutation.isPending}
           >
-            {saveMutation.isPending ? "Salvando..." : "Salvar Boletim"}
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar Boletim"
+            )}
           </Button>
         </form>
       </Card>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Registro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a registrar as notas para este aluno. 
+              Esta ação não pode ser desfeita. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmit}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
