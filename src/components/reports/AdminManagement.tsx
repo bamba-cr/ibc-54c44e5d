@@ -24,17 +24,23 @@ export const AdminManagement = () => {
     setIsLoading(true);
     try {
       // First find the user by email in auth.users
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email);
+      const { data: users, error: userError } = await supabase.auth.admin.users.list({
+        filters: {
+          email: email
+        }
+      });
 
-      if (userError || !userData?.user) {
+      if (userError || !users?.length) {
         throw new Error("Usuário não encontrado");
       }
+
+      const user = users[0];
 
       // Check if user is already an admin
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("*")
-        .eq("user_id", userData.user.id)
+        .eq("user_id", user.id)
         .eq("role", "admin")
         .single();
 
@@ -53,7 +59,7 @@ export const AdminManagement = () => {
         .from("user_roles")
         .insert([
           {
-            user_id: userData.user.id,
+            user_id: user.id,
             role: "admin",
           },
         ]);
