@@ -6,7 +6,7 @@ export async function buscarHistorico(searchTerm: string) {
   const { data, error } = await supabase
     .from("grades")
     .select(
-      `id, period, frequency, grade, status, 
+      `id, period, grade, status, 
        student:students(name), 
        project:projects(name)`
     )

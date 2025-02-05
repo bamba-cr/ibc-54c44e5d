@@ -57,7 +57,6 @@ const Historico = () => {
             <div className="space-y-2 text-sm">
               <p>Aluno: {item.student.name}</p>
               <p>Período: {item.period}</p>
-              <p>Frequência: {item.frequency}%</p>
               <p>Nota Final: {item.grade}</p>
               <p>Status: {item.status}</p>
             </div>
