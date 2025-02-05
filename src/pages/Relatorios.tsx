@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { AdminManagement } from "@/components/reports/AdminManagement";
 import { DataExport } from "@/components/reports/DataExport";
-import { ExportToPdf } from "@/components/reports/ExportToPdf";  // Importando o componente de exportação PDF
+import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -310,9 +310,10 @@ const Relatorios = () => {
                         <Button 
                           onClick={() => handleDeleteStudent(student.id)} 
                           variant="destructive"
-                          isLoading={isDeleting}
+                          disabled={isDeleting}
                         >
-                          Excluir
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {isDeleting ? "Excluindo..." : "Excluir"}
                         </Button>
                       </div>
                     </div>
