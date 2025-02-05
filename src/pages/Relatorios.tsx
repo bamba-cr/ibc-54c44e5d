@@ -5,14 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CSVLink } from "react-csv";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import type { Database } from "@/integrations/supabase/types";
+import { motion } from "framer-motion";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -95,8 +96,9 @@ const Relatorios = () => {
     const validationError = validateStudentData(updatedData);
     if (validationError) {
       toast({
-        title: "Erro",
-        description: validationError
+        title: "Erro na Validação",
+        description: validationError,
+        variant: "destructive",
       });
       return;
     }
@@ -108,97 +110,22 @@ const Relatorios = () => {
         .eq("id", studentId);
 
       if (error) throw error;
+      
       toast({
-        title: "Sucesso",
-        description: "Aluno atualizado com sucesso."
+        title: "Sucesso!",
+        description: "As informações do aluno foram atualizadas com sucesso.",
+        className: "bg-green-50 border-green-200",
       });
+      
       fetchStudents();
       handleEditModalClose();
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Falha ao atualizar aluno."
+        title: "Erro ao Atualizar",
+        description: "Não foi possível atualizar as informações do aluno. Tente novamente.",
+        variant: "destructive",
       });
     }
-  };
-
-  const handleDeleteStudent = async (studentId: string) => {
-    try {
-      const { error: attendanceError } = await supabase
-        .from("attendance")
-        .delete()
-        .eq("student_id", studentId);
-
-      if (attendanceError) throw attendanceError;
-
-      const { error: gradesError } = await supabase
-        .from("grades")
-        .delete()
-        .eq("student_id", studentId);
-
-      if (gradesError) throw gradesError;
-
-      const { error } = await supabase
-        .from("students")
-        .delete()
-        .eq("id", studentId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: "Aluno excluído com sucesso."
-      });
-      fetchStudents();
-    } catch (error) {
-      console.error("Error deleting student:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao excluir aluno. Verifique se não existem registros vinculados."
-      });
-    }
-  };
-
-  const exportData = students?.map((student) => ({
-    Nome: student.name,
-    Idade: student.age,
-    Cidade: student.city,
-    "Data de Nascimento": student.birth_date,
-    "Nome do Responsável": student.guardian_name,
-    "Telefone do Responsável": student.guardian_phone
-  }));
-
-  const handleBackup = async () => {
-    try {
-      const { data, error } = await supabase.from("students").select("*");
-      if (error) throw error;
-
-      const blob = new Blob([JSON.stringify(data)], {
-        type: "application/json"
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "backup-alunos.json";
-      link.click();
-
-      toast({
-        title: "Sucesso",
-        description: "Backup gerado com sucesso."
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Falha ao gerar backup."
-      });
-    }
-  };
-
-  const handleExportPDF = async () => {
-    toast({
-      title: "Em breve",
-      description: "Exportação para PDF em desenvolvimento."
-    });
   };
 
   useEffect(() => {
@@ -212,11 +139,17 @@ const Relatorios = () => {
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Relatórios e Gestão</h1>
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
+      <motion.h1 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold mb-6 text-primary"
+      >
+        Relatórios e Gestão
+      </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[600px]">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -225,43 +158,64 @@ const Relatorios = () => {
 
         <TabsContent value="calendar" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Calendário de Atividades</CardTitle>
-                <CardDescription>Visualize e gerencie eventos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-md border"
-                />
-              </CardContent>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calendário de Atividades</CardTitle>
+                  <CardDescription>Visualize e gerencie eventos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Eventos</CardTitle>
-                <CardDescription>Atividades programadas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {events.map((event, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 border rounded-lg">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>{event.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {event.date.toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-                  <Button className="w-full" onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}>
-                    Adicionar Evento
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Eventos</CardTitle>
+                  <CardDescription>Atividades programadas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {events.map((event, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{event.title}</span>
+                        <span className="text-sm text-muted-foreground ml-auto">
+                          {event.date.toLocaleDateString()}
+                        </span>
+                      </motion.div>
+                    ))}
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary-dark transition-colors"
+                      onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}
+                    >
+                      Adicionar Evento
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </TabsContent>
 
@@ -273,46 +227,66 @@ const Relatorios = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row gap-2">
                   <Input
                     placeholder="Nome"
                     value={filters.name}
                     onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Idade"
                     value={filters.age}
                     onChange={(e) => setFilters({ ...filters, age: e.target.value })}
+                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Cidade"
                     value={filters.city}
                     onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                    className="md:w-1/4"
                   />
                   <Input
                     placeholder="Data de Nascimento"
                     value={filters.birth_date}
                     onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
                     type="date"
+                    className="md:w-1/4"
                   />
-                  <Button variant="outline" onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}
+                    className="whitespace-nowrap"
+                  >
                     Limpar Filtros
                   </Button>
                 </div>
                 
                 <div className="space-y-2">
-                  {isLoading && <p>Buscando alunos...</p>}
+                  {isLoading && (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
                   {paginatedStudents?.map((student) => (
-                    <div
+                    <motion.div
                       key={student.id}
-                      className="flex items-center justify-between p-2 border rounded-lg"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-all"
                     >
-                      <span>{student.name}</span>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2">
+                        <span className="font-medium">{student.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {student.age} anos • {student.city}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 mt-2 md:mt-0">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditModalOpen(student)}
+                          className="w-full md:w-auto"
                         >
                           Editar
                         </Button>
@@ -320,25 +294,30 @@ const Relatorios = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteStudent(student.id)}
+                          className="w-full md:w-auto text-red-500 hover:text-red-700"
                         >
                           Excluir
                         </Button>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
                   <Button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage((prev) => prev - 1)}
+                    className="w-full md:w-auto"
                   >
                     Anterior
                   </Button>
-                  <span>Página {currentPage} de {totalPages}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </span>
                   <Button
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage((prev) => prev + 1)}
+                    className="w-full md:w-auto"
                   >
                     Próxima
                   </Button>
@@ -377,7 +356,7 @@ const Relatorios = () => {
       </Tabs>
 
       <Dialog open={isEditModalOpen} onOpenChange={handleEditModalClose}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Editar Aluno</DialogTitle>
           </DialogHeader>
@@ -404,20 +383,20 @@ const Relatorios = () => {
                 };
                 handleEditStudent(selectedStudent.id, updatedData);
               }}
-              className="space-y-4"
+              className="space-y-4 max-h-[60vh] overflow-y-auto px-1"
             >
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Nome</Label>
-                  <Input name="name" defaultValue={selectedStudent.name} placeholder="Nome" />
+                  <Input name="name" defaultValue={selectedStudent.name} placeholder="Nome" required />
                 </div>
                 <div>
                   <Label>Idade</Label>
-                  <Input name="age" defaultValue={selectedStudent.age} placeholder="Idade" type="number" />
+                  <Input name="age" defaultValue={selectedStudent.age} placeholder="Idade" type="number" required />
                 </div>
                 <div>
                   <Label>Data de Nascimento</Label>
-                  <Input name="birth_date" defaultValue={selectedStudent.birth_date} placeholder="Data de Nascimento" type="date" />
+                  <Input name="birth_date" defaultValue={selectedStudent.birth_date} type="date" required />
                 </div>
                 <div>
                   <Label>RG</Label>
@@ -457,21 +436,21 @@ const Relatorios = () => {
                 </div>
                 <div>
                   <Label>Email do Responsável</Label>
-                  <Input name="guardian_email" defaultValue={selectedStudent.guardian_email} placeholder="Email do Responsável" />
+                  <Input name="guardian_email" defaultValue={selectedStudent.guardian_email} placeholder="Email do Responsável" type="email" />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <Label>Observações</Label>
                   <Input name="notes" defaultValue={selectedStudent.notes} placeholder="Observações" />
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={handleEditModalClose}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    Salvar Alterações
-                  </Button>
-                </div>
               </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleEditModalClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-primary hover:bg-primary-dark">
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
             </form>
           )}
         </DialogContent>
