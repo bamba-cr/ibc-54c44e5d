@@ -140,4 +140,4 @@ const RelatorioAluno = () => {
   );
 };
 
-export default RelatorioAluno;
+export default Historico;
