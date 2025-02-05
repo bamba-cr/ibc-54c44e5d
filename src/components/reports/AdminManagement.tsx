@@ -35,7 +35,7 @@ export const AdminManagement = () => {
       const { data, error: userError } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 1,
-        query: email
+        emailOrPhone: email
       });
 
       if (userError || !data?.users?.length) {
