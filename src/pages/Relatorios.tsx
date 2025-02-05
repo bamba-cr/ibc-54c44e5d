@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import type { Database } from "@/integrations/supabase/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdminManagement } from "@/components/reports/AdminManagement";
+import { DataExport } from "@/components/reports/DataExport";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -156,50 +158,6 @@ const Relatorios = () => {
     }
   };
 
-  const handleExportData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*");
-      
-      if (error) throw error;
-
-      const csvContent = "data:text/csv;charset=utf-8," + 
-        encodeURIComponent(
-          [
-            ["Nome", "Idade", "Data de Nascimento", "Cidade", "Responsável"].join(","),
-            ...data.map(student => 
-              [
-                student.name,
-                student.age,
-                student.birth_date,
-                student.city,
-                student.guardian_name
-              ].join(",")
-            )
-          ].join("\n")
-        );
-
-      const link = document.createElement("a");
-      link.setAttribute("href", csvContent);
-      link.setAttribute("download", "alunos.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Exportação concluída",
-        description: "Os dados foram exportados com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro na exportação",
-        description: "Não foi possível exportar os dados. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -221,10 +179,11 @@ const Relatorios = () => {
       </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px]">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
+          <TabsTrigger value="admin">Administração</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
@@ -406,23 +365,11 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatórios do Sistema</CardTitle>
-              <CardDescription>Gere relatórios diversos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button 
-                  className="w-full md:w-auto flex items-center gap-2"
-                  onClick={handleExportData}
-                >
-                  <Download className="h-4 w-4" />
-                  Exportar Alunos (CSV)
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <DataExport />
+        </TabsContent>
+
+        <TabsContent value="admin" className="space-y-4">
+          <AdminManagement />
         </TabsContent>
       </Tabs>
 
