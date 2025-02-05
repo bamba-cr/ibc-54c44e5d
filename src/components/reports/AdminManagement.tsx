@@ -32,7 +32,7 @@ export const AdminManagement = () => {
 
     setIsLoading(true);
     try {
-      // First, get the user data from auth
+      // First check if the user exists in auth
       const { data: { users }, error: userError } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 100
@@ -41,7 +41,12 @@ export const AdminManagement = () => {
       const user = users?.find((u: User) => u.email === email);
 
       if (userError || !user) {
-        throw new Error("Usuário não encontrado");
+        toast({
+          title: "Usuário não encontrado",
+          description: "O usuário precisa criar uma conta primeiro antes de ser promovido a administrador.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const userId = user.id;
@@ -69,7 +74,10 @@ export const AdminManagement = () => {
         role: "admin",
       });
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error("Error adding admin role:", roleError);
+        throw roleError;
+      }
 
       toast({
         title: "Sucesso!",
