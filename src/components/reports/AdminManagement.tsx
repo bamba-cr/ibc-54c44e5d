@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
@@ -37,7 +38,7 @@ export const AdminManagement = () => {
         perPage: 100
       });
 
-      const user = users?.find(u => u.email === email);
+      const user = users?.find((u: User) => u.email === email);
 
       if (userError || !user) {
         throw new Error("Usuário não encontrado");
