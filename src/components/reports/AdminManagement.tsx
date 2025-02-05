@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
-import { User } from "@supabase/supabase-js";
 
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
@@ -24,18 +23,20 @@ export const AdminManagement = () => {
 
     setIsLoading(true);
     try {
-      // First find the user by email in auth.users
-      const { data: users, error: userError } = await supabase.auth.admin.listUsers({
+      // First, get the user data by email
+      const { data: { users }, error: userError } = await supabase.auth.admin.listUsers({
         page: 1,
-        perPage: 100
+        perPage: 1,
+        filters: {
+          email: email
+        }
       });
 
-      // Find user with matching email
-      const user = users?.users?.find((u: User) => u.email === email);
-
-      if (userError || !user) {
+      if (userError || !users?.length) {
         throw new Error("Usuário não encontrado");
       }
+
+      const user = users[0];
 
       // Check if user is already an admin
       const { data: existingRole } = await supabase
