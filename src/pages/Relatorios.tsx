@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Calendar as CalendarIcon, 
   Loader2, 
@@ -37,6 +37,25 @@ interface Event {
   color?: string;
 }
 
+interface StudentFormValues {
+  name: string;
+  age: string;
+  birthDate: string;
+  rg: string;
+  cpf: string;
+  address: string;
+  city: string;
+  guardianName: string;
+  guardianRelationship: string;
+  guardianCpf: string;
+  guardianRg: string;
+  guardianPhone: string;
+  guardianEmail: string;
+  projects: string[];
+  observations: string;
+  photo: File | null;
+}
+
 const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,13 +70,23 @@ const Relatorios = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [editForm, setEditForm] = useState<StudentFormValues>({
     name: "",
     age: "",
+    birthDate: "",
+    rg: "",
+    cpf: "",
+    address: "",
     city: "",
-    birth_date: "",
-    email: "",
-    phone: ""
+    guardianName: "",
+    guardianRelationship: "",
+    guardianCpf: "",
+    guardianRg: "",
+    guardianPhone: "",
+    guardianEmail: "",
+    projects: [],
+    observations: "",
+    photo: null
   });
   const itemsPerPage = 10;
 
@@ -79,16 +108,46 @@ const Relatorios = () => {
     if (!selectedStudent) return;
 
     try {
+      let photoUrl = selectedStudent.photo_url;
+      
+      if (editForm.photo) {
+        const fileExt = editForm.photo.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('student-photos')
+          .upload(fileName, editForm.photo);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('student-photos')
+          .getPublicUrl(fileName);
+
+        photoUrl = publicUrl;
+      }
+
+      const studentData = {
+        name: editForm.name,
+        age: parseInt(editForm.age),
+        birth_date: editForm.birthDate,
+        rg: editForm.rg,
+        cpf: editForm.cpf,
+        address: editForm.address,
+        city: editForm.city,
+        guardian_name: editForm.guardianName,
+        guardian_relationship: editForm.guardianRelationship,
+        guardian_cpf: editForm.guardianCpf,
+        guardian_rg: editForm.guardianRg,
+        guardian_phone: editForm.guardianPhone,
+        guardian_email: editForm.guardianEmail,
+        notes: editForm.observations,
+        photo_url: photoUrl
+      };
+
       const { error } = await supabase
         .from('students')
-        .update({
-          name: editForm.name,
-          age: parseInt(editForm.age),
-          city: editForm.city,
-          birth_date: editForm.birth_date,
-          email: editForm.email,
-          phone: editForm.phone
-        })
+        .update(studentData)
         .eq('id', selectedStudent.id);
 
       if (error) throw error;
@@ -100,7 +159,7 @@ const Relatorios = () => {
 
       setIsEditDialogOpen(false);
       fetchStudents();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar os dados do aluno.",
@@ -146,7 +205,6 @@ const Relatorios = () => {
     doc.setFontSize(16);
     doc.text("Relatório de Alunos", 14, 22);
     
-    // Add header
     doc.setFontSize(12);
     doc.text("Data do relatório: " + new Date().toLocaleDateString(), 14, 32);
     doc.text("Total de alunos: " + data.length, 14, 42);
@@ -420,10 +478,20 @@ const Relatorios = () => {
                                     setEditForm({
                                       name: student.name,
                                       age: student.age.toString(),
+                                      birthDate: student.birth_date,
+                                      rg: student.rg || "",
+                                      cpf: student.cpf || "",
+                                      address: student.address || "",
                                       city: student.city,
-                                      birth_date: student.birth_date,
-                                      email: student.email || "",
-                                      phone: student.phone || ""
+                                      guardianName: student.guardian_name || "",
+                                      guardianRelationship: student.guardian_relationship || "",
+                                      guardianCpf: student.guardian_cpf || "",
+                                      guardianRg: student.guardian_rg || "",
+                                      guardianPhone: student.guardian_phone || "",
+                                      guardianEmail: student.guardian_email || "",
+                                      projects: student.projects || [],
+                                      observations: student.notes || "",
+                                      photo: null
                                     });
                                     setIsEditDialogOpen(true);
                                   }}
@@ -436,6 +504,16 @@ const Relatorios = () => {
                                   onClick={() => deleteStudent(student.id)}
                                 >
                                   <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedStudent(student);
+                                    // Add view details functionality
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 text-green-500" />
                                 </Button>
                               </div>
                             </div>
@@ -493,6 +571,39 @@ const Relatorios = () => {
                   />
                 </div>
                 <div className="grid gap-2">
+                  <label htmlFor="birthDate" className="text-sm font-medium">Data de Nascimento</label>
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    value={editForm.birthDate}
+                    onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="rg" className="text-sm font-medium">RG</label>
+                  <Input
+                    id="rg"
+                    value={editForm.rg}
+                    onChange={(e) => setEditForm({ ...editForm, rg: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="cpf" className="text-sm font-medium">CPF</label>
+                  <Input
+                    id="cpf"
+                    value={editForm.cpf}
+                    onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="address" className="text-sm font-medium">Endereço</label>
+                  <Input
+                    id="address"
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
                   <label htmlFor="city" className="text-sm font-medium">Cidade</label>
                   <Input
                     id="city"
@@ -501,29 +612,44 @@ const Relatorios = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="birth_date" className="text-sm font-medium">Data de Nascimento</label>
+                  <label htmlFor="guardianName" className="text-sm font-medium">Nome do Responsável</label>
                   <Input
-                    id="birth_date"
-                    type="date"
-                    value={editForm.birth_date}
-                    onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                    id="guardianName"
+                    value={editForm.guardianName}
+                    onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="email" className="text-sm font-medium">Email</label>
+                  <label htmlFor="guardianRelationship" className="text-sm font-medium">Parentesco</label>
                   <Input
-                    id="email"
+                    id="guardianRelationship"
+                    value={editForm.guardianRelationship}
+                    onChange={(e) => setEditForm({ ...editForm, guardianRelationship: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="guardianPhone" className="text-sm font-medium">Telefone do Responsável</label>
+                  <Input
+                    id="guardianPhone"
+                    value={editForm.guardianPhone}
+                    onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="guardianEmail" className="text-sm font-medium">Email do Responsável</label>
+                  <Input
+                    id="guardianEmail"
                     type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    value={editForm.guardianEmail}
+                    onChange={(e) => setEditForm({ ...editForm, guardianEmail: e.target.value })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="phone" className="text-sm font-medium">Telefone</label>
+                  <label htmlFor="observations" className="text-sm font-medium">Observações</label>
                   <Input
-                    id="phone"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    id="observations"
+                    value={editForm.observations}
+                    onChange={(e) => setEditForm({ ...editForm, observations: e.target.value })}
                   />
                 </div>
               </div>
