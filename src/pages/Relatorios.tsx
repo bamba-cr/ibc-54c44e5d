@@ -56,6 +56,8 @@ interface StudentFormValues {
   photo: File | null;
 }
 
+const itemsPerPage = 10; // Define itemsPerPage constant
+
 const Relatorios = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -502,9 +504,9 @@ const Relatorios = () => {
                               <div className="space-y-1">
                                 <h3 className="font-medium text-lg">{student.name}</h3>
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                                  <span>{student.city}</span>
-                                  <span>{student.age} anos</span>
-                                  <span>{new Date(student.birth_date).toLocaleDateString()}</span>
+                                  <span>{student.city || 'N/A'}</span>
+                                  <span>{student.age ? `${student.age} anos` : 'Idade não informada'}</span>
+                                  <span>{student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'Data não informada'}</span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
