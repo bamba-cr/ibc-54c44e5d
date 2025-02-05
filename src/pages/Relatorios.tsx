@@ -245,6 +245,31 @@ const Relatorios = () => {
 
   const deleteStudent = async (id: string) => {
     try {
+      // First delete attendance records
+      const { error: attendanceError } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('student_id', id);
+      
+      if (attendanceError) throw attendanceError;
+
+      // Then delete student_projects records
+      const { error: projectsError } = await supabase
+        .from('student_projects')
+        .delete()
+        .eq('student_id', id);
+      
+      if (projectsError) throw projectsError;
+
+      // Then delete grades records
+      const { error: gradesError } = await supabase
+        .from('grades')
+        .delete()
+        .eq('student_id', id);
+      
+      if (gradesError) throw gradesError;
+
+      // Finally delete the student
       const { error } = await supabase
         .from('students')
         .delete()
@@ -261,7 +286,7 @@ const Relatorios = () => {
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Não foi possível remover o aluno.",
+        description: "Não foi possível remover o aluno. " + (error.message || ''),
         variant: "destructive"
       });
     }
