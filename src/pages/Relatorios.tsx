@@ -5,7 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar as CalendarIcon, Loader2, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Calendar as CalendarIcon, 
+  Loader2, 
+  Trash2, 
+  Edit2, 
+  Search,
+  UserPlus,
+  Download,
+  Filter,
+  Eye
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +33,8 @@ interface Event {
   title: string;
   date: Date;
   type: 'meeting' | 'task' | 'reminder';
+  description?: string;
+  color?: string;
 }
 
 const Relatorios = () => {
@@ -36,6 +49,16 @@ const Relatorios = () => {
     birth_date: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    age: "",
+    city: "",
+    birth_date: "",
+    email: "",
+    phone: ""
+  });
   const itemsPerPage = 10;
 
   const { data: students, isLoading, refetch: fetchStudents } = useQuery({
@@ -52,10 +75,45 @@ const Relatorios = () => {
     }
   });
 
+  const handleEditStudent = async () => {
+    if (!selectedStudent) return;
+
+    try {
+      const { error } = await supabase
+        .from('students')
+        .update({
+          name: editForm.name,
+          age: parseInt(editForm.age),
+          city: editForm.city,
+          birth_date: editForm.birth_date,
+          email: editForm.email,
+          phone: editForm.phone
+        })
+        .eq('id', selectedStudent.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Dados do aluno atualizados com sucesso!"
+      });
+
+      setIsEditDialogOpen(false);
+      fetchStudents();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os dados do aluno.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
     const event: Event = {
       ...newEvent,
-      id: Math.random().toString(36).substr(2, 9)
+      id: Math.random().toString(36).substr(2, 9),
+      color: ['#4CAF50', '#2196F3', '#FFC107', '#E91E63'][Math.floor(Math.random() * 4)]
     };
     setEvents(prev => [...prev, event]);
     toast({
@@ -68,18 +126,18 @@ const Relatorios = () => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Dados");
-    XLSX.writeFile(wb, "relatorio.xlsx");
+    XLSX.writeFile(wb, `relatorio_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleExportSQL = (data: any[]) => {
-    let sql = `INSERT INTO students (id, name, age, city, birth_date) VALUES\n`;
+    let sql = `INSERT INTO students (id, name, age, city, birth_date, email, phone) VALUES\n`;
     data.forEach((student, index) => {
-      sql += `(${student.id}, '${student.name}', ${student.age}, '${student.city}', '${student.birth_date}')${index !== data.length - 1 ? "," : ""}\n`;
+      sql += `(${student.id}, '${student.name}', ${student.age}, '${student.city}', '${student.birth_date}', '${student.email || ''}', '${student.phone || ''}')${index !== data.length - 1 ? "," : ""}\n`;
     });
     const blob = new Blob([sql], { type: "text/sql" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "relatorio.sql";
+    link.download = `relatorio_${new Date().toISOString().split('T')[0]}.sql`;
     link.click();
   };
 
@@ -87,12 +145,26 @@ const Relatorios = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("Relatório de Alunos", 14, 22);
-    let y = 30;
+    
+    // Add header
+    doc.setFontSize(12);
+    doc.text("Data do relatório: " + new Date().toLocaleDateString(), 14, 32);
+    doc.text("Total de alunos: " + data.length, 14, 42);
+    
+    let y = 60;
     data.forEach((student) => {
-      doc.text(`${student.name} - ${student.age} anos - ${student.city}`, 14, y);
-      y += 10;
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(10);
+      doc.text(`Nome: ${student.name}`, 14, y);
+      doc.text(`Idade: ${student.age}`, 14, y + 5);
+      doc.text(`Cidade: ${student.city}`, 14, y + 10);
+      y += 20;
     });
-    doc.save("relatorio_alunos.pdf");
+    
+    doc.save(`relatorio_alunos_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const handleExport = (type: string) => {
@@ -153,49 +225,104 @@ const Relatorios = () => {
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
-      <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold mb-6 text-primary">
-        Relatórios e Gestão
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50">
+      <motion.h1 
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="text-4xl font-bold mb-8 text-primary border-b pb-4"
+      >
+        Sistema de Gestão Acadêmica
       </motion.h1>
-      <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px]">
+      
+      <Tabs defaultValue="calendar" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px] bg-white shadow-sm">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
           <TabsTrigger value="admin">Administração</TabsTrigger>
         </TabsList>
-        <TabsContent value="calendar" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <Card>
+
+        <TabsContent value="calendar" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle>Calendário de Atividades</CardTitle>
-                  <CardDescription>Visualize e gerencie eventos</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    Calendário de Atividades
+                  </CardTitle>
+                  <CardDescription>Gerencie eventos e compromissos</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border" />
+                  <Calendar 
+                    mode="single" 
+                    selected={date} 
+                    onSelect={setDate} 
+                    className="rounded-md border" 
+                  />
                 </CardContent>
               </Card>
             </motion.div>
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <Card>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle>Eventos</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    Eventos
+                  </CardTitle>
                   <CardDescription>Atividades programadas</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {events.map((event, index) => (
-                      <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <CalendarIcon className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{event.title}</span>
-                        <span className="text-sm text-muted-foreground ml-auto">{event.date.toLocaleDateString()}</span>
-                      </motion.div>
-                    ))}
+                    <AnimatePresence>
+                      {events.map((event, index) => (
+                        <motion.div 
+                          key={event.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-all"
+                          style={{ borderLeft: `4px solid ${event.color}` }}
+                        >
+                          <div className="flex-1">
+                            <h4 className="font-medium">{event.title}</h4>
+                            <p className="text-sm text-gray-500">
+                              {event.date.toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => {
+                              setEvents(prev => prev.filter(e => e.id !== event.id));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    
                     <Button 
-                      className="w-full bg-primary hover:bg-primary-dark transition-colors" 
-                      onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}
+                      className="w-full bg-primary hover:bg-primary/90 transition-colors" 
+                      onClick={() => handleAddEvent({ 
+                        date: new Date(), 
+                        title: "Novo Evento", 
+                        type: "meeting",
+                        description: "Descrição do evento"
+                      })}
                     >
+                      <UserPlus className="h-4 w-4 mr-2" />
                       Adicionar Evento
                     </Button>
                   </div>
@@ -204,79 +331,252 @@ const Relatorios = () => {
             </motion.div>
           </div>
         </TabsContent>
-        <TabsContent value="students" className="space-y-4">
-          <Card>
+
+        <TabsContent value="students" className="space-y-6">
+          <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Gerenciamento de Alunos</CardTitle>
-              <CardDescription>Pesquise e edite informações dos alunos</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                Gerenciamento de Alunos
+              </CardTitle>
+              <CardDescription>Pesquise e gerencie informações dos alunos</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                  <Input placeholder="Nome" value={filters.name} onChange={(e) => setFilters({ ...filters, name: e.target.value })} />
-                  <Input placeholder="Idade" value={filters.age} onChange={(e) => setFilters({ ...filters, age: e.target.value })} />
-                  <Input placeholder="Cidade" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} />
-                  <Input placeholder="Data de Nascimento" value={filters.birth_date} onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })} type="date" />
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                  <Filter className="h-5 w-5 text-gray-400" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                    <Input 
+                      placeholder="Nome" 
+                      value={filters.name} 
+                      onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                      className="bg-white"
+                    />
+                    <Input 
+                      placeholder="Idade" 
+                      value={filters.age} 
+                      onChange={(e) => setFilters({ ...filters, age: e.target.value })}
+                      type="number"
+                      className="bg-white"
+                    />
+                    <Input 
+                      placeholder="Cidade" 
+                      value={filters.city} 
+                      onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                      className="bg-white"
+                    />
+                    <Input 
+                      placeholder="Data de Nascimento" 
+                      value={filters.birth_date} 
+                      onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
+                      type="date"
+                      className="bg-white"
+                    />
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}
+                  >
+                    Limpar
+                  </Button>
                 </div>
-                <Button variant="outline" onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })} className="w-full md:w-auto">
-                  Limpar Filtros
-                </Button>
+
                 <AnimatePresence>
                   {isLoading ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center p-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <motion.div 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      exit={{ opacity: 0 }} 
+                      className="flex items-center justify-center p-8"
+                    >
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </motion.div>
                   ) : (
-                    <div className="space-y-2">
-                      {paginatedStudents?.map((student) => (
-                        <motion.div key={student.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                          <span>{student.name}</span>
-                          <span>{student.city}</span>
-                          <span>{student.age}</span>
-                          <div className="flex justify-end">
-                            <Button variant="outline" className="mr-2" onClick={() => deleteStudent(student.id)}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </motion.div>
-                      ))}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        {paginatedStudents?.map((student) => (
+                          <motion.div 
+                            key={student.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-all"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <h3 className="font-medium text-lg">{student.name}</h3>
+                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                  <span>{student.city}</span>
+                                  <span>{student.age} anos</span>
+                                  <span>{new Date(student.birth_date).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedStudent(student);
+                                    setEditForm({
+                                      name: student.name,
+                                      age: student.age.toString(),
+                                      city: student.city,
+                                      birth_date: student.birth_date,
+                                      email: student.email || "",
+                                      phone: student.phone || ""
+                                    });
+                                    setIsEditDialogOpen(true);
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4 text-blue-500" />
+                                </Button>
+                                <Button 
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => deleteStudent(student.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <Button 
+                          variant="outline" 
+                          disabled={currentPage === 1} 
+                          onClick={() => setCurrentPage(currentPage - 1)}
+                        >
+                          Anterior
+                        </Button>
+                        <span className="text-sm text-gray-500">
+                          Página {currentPage} de {totalPages}
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          disabled={currentPage === totalPages} 
+                          onClick={() => setCurrentPage(currentPage + 1)}
+                        >
+                          Próximo
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </AnimatePresence>
-                <div className="flex justify-between mt-4">
-                  <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
-                    Anterior
-                  </Button>
-                  <Button variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
-                    Próximo
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Editar Aluno</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <label htmlFor="name" className="text-sm font-medium">Nome</label>
+                  <Input
+                    id="name"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="age" className="text-sm font-medium">Idade</label>
+                  <Input
+                    id="age"
+                    type="number"
+                    value={editForm.age}
+                    onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="city" className="text-sm font-medium">Cidade</label>
+                  <Input
+                    id="city"
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="birth_date" className="text-sm font-medium">Data de Nascimento</label>
+                  <Input
+                    id="birth_date"
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="email" className="text-sm font-medium">Email</label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="phone" className="text-sm font-medium">Telefone</label>
+                  <Input
+                    id="phone"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleEditStudent}>
+                  Salvar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
+
+        <TabsContent value="reports" className="space-y-6">
+          <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Exportar Dados</CardTitle>
-              <CardDescription>Escolha o formato de exportação</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5 text-primary" />
+                Exportar Dados
+              </CardTitle>
+              <CardDescription>Escolha o formato de exportação desejado</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Button onClick={() => handleExport("excel")} className="w-full md:w-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button 
+                  onClick={() => handleExport("excel")}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
                   Exportar para Excel
                 </Button>
-                <Button onClick={() => handleExport("sql")} className="w-full md:w-auto">
+                <Button 
+                  onClick={() => handleExport("sql")}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
                   Exportar para SQL
                 </Button>
-                <Button onClick={() => handleExport("pdf")} className="w-full md:w-auto">
+                <Button 
+                  onClick={() => handleExport("pdf")}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
                   Exportar para PDF
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="admin" className="space-y-4">
+
+        <TabsContent value="admin" className="space-y-6">
           <AdminManagement />
         </TabsContent>
       </Tabs>
