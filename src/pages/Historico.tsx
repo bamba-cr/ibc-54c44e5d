@@ -58,7 +58,6 @@ const Historico = () => {
               <p>Aluno: {item.student.name}</p>
               <p>Período: {item.period}</p>
               <p>Nota Final: {item.grade}</p>
-              <p>Status: {item.status}</p>
             </div>
           </Card>
         ))}
