@@ -3,28 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { buscarHistorico } from "@/services/historicoService";
-import { supabase } from "@/lib/supabase";
 
-// Função para buscar o histórico de um aluno pelo nome ou matrícula
-export async function buscarHistorico(searchTerm: string) {
-  if (!searchTerm) return [];
-
-  const { data, error } = await supabase
-    .from("grades")
-    .select(
-      `id, period, frequency, grade, status, 
-       student:students(name), 
-       project:projects(name)`
-    )
-    .ilike("student.name", `%${searchTerm}%`);
-
-  if (error) {
-    console.error("Erro ao buscar histórico:", error);
-    return [];
-  }
-
-  return data || [];
-}
 const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [historico, setHistorico] = useState<any[]>([]);
