@@ -23,20 +23,37 @@ export const AdminManagement = () => {
 
     setIsLoading(true);
     try {
-      // First check if the user exists
-      const { data: userData, error: userError } = await supabase
+      // First find the user by email in auth.users
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserByEmail(email);
+
+      if (userError || !userData?.user) {
+        throw new Error("Usuário não encontrado");
+      }
+
+      // Check if user is already an admin
+      const { data: existingRole } = await supabase
         .from("user_roles")
         .select("*")
-        .eq("role", "admin");
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .single();
 
-      if (userError) throw userError;
+      if (existingRole) {
+        toast({
+          title: "Usuário já é administrador",
+          description: `${email} já possui privilégios de administrador.`,
+          variant: "default",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Add admin role
       const { error: roleError } = await supabase
         .from("user_roles")
         .insert([
           {
-            user_id: userData?.id,
+            user_id: userData.user.id,
             role: "admin",
           },
         ]);
@@ -52,7 +69,7 @@ export const AdminManagement = () => {
       console.error("Error adding admin:", error);
       toast({
         title: "Erro ao adicionar administrador",
-        description: "Verifique se o usuário existe e tente novamente.",
+        description: error.message || "Verifique se o usuário existe e tente novamente.",
         variant: "destructive",
       });
     } finally {
