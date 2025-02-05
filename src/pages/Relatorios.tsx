@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar as CalendarIcon, Loader2, Download, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { AdminManagement } from "@/components/reports/AdminManagement";
-import { jsPDF } from "jspdf";
-import { saveAs } from "file-saver";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import type { Database } from "@/integrations/supabase/types";
+import { motion, AnimatePresence } from "framer-motion";
+import { AdminManagement } from "@/components/reports/AdminManagement";
+import { DataExport } from "@/components/reports/DataExport";
+import * as XLSX from "xlsx"; // Para exportação em Excel
+import { jsPDF } from "jspdf"; // Para exportação em PDF
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -49,148 +54,61 @@ const Relatorios = () => {
     currentPage * itemsPerPage
   );
 
-  const [events, setEvents] = useState([
-    {
-      date: new Date(),
-      title: "Reunião Pedagógica",
-      type: "meeting" as const
-    },
-    {
-      date: new Date(new Date().setDate(new Date().getDate() + 1)),
-      title: "Entrega de Notas",
-      type: "deadline" as const
-    }
-  ]);
+  const handleExportExcel = (data: any[], filename: string) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dados");
+    XLSX.writeFile(wb, filename);
+  };
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleAddEvent = (newEvent: typeof events[0]) => {
-    setEvents([...events, newEvent]);
-    toast({
-      title: "Evento adicionado",
-      description: `\"${newEvent.title}\" foi adicionado ao calendário.`
+  const handleExportSQL = (data: any[], filename: string) => {
+    let sql = `INSERT INTO students (id, name, age, city, birth_date) VALUES\n`;
+    data.forEach((student: Student, index: number) => {
+      sql += `(${student.id}, '${student.name}', ${student.age}, '${student.city}', '${student.birth_date}')${index !== data.length - 1 ? "," : ""}\n`;
     });
+    const blob = new Blob([sql], { type: "text/sql" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
   };
 
-  const handleEditModalOpen = (student: Student) => {
-    setSelectedStudent(student);
-    setIsEditModalOpen(true);
+  const handleExportPDF = (data: any[]) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Relatório de Alunos", 14, 22);
+
+    let y = 30;
+    data.forEach((student: Student) => {
+      doc.text(`${student.name} - ${student.age} anos - ${student.city}`, 14, y);
+      y += 10;
+    });
+
+    doc.save("relatorio_alunos.pdf");
   };
 
-  const handleEditModalClose = () => {
-    setIsEditModalOpen(false);
-    setSelectedStudent(null);
-  };
-
-  const handleDeleteStudent = async (studentId: string) => {
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase
-        .from("students")
-        .delete()
-        .eq("id", studentId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Aluno excluído",
-        description: "O aluno foi excluído com sucesso.",
-        className: "bg-green-50 border-green-200",
-      });
-      
-      fetchStudents();
-    } catch (error) {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o aluno. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const validateStudentData = (data: Partial<Student>) => {
-    if (!data.name) return "O nome é obrigatório.";
-    if (data.age && (data.age < 0 || data.age > 120)) return "Idade inválida.";
-    if (data.birth_date && isNaN(Date.parse(data.birth_date))) return "Data de nascimento inválida.";
-    return null;
-  };
-
-  const handleEditStudent = async (studentId: string, updatedData: Partial<Student>) => {
-    const validationError = validateStudentData(updatedData);
-    if (validationError) {
-      toast({
-        title: "Erro na Validação",
-        description: validationError,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("students")
-        .update(updatedData)
-        .eq("id", studentId);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Sucesso!",
-        description: "As informações do aluno foram atualizadas com sucesso.",
-        className: "bg-green-50 border-green-200",
-      });
-      
-      fetchStudents();
-      handleEditModalClose();
-    } catch (error) {
-      toast({
-        title: "Erro ao Atualizar",
-        description: "Não foi possível atualizar as informações do aluno. Tente novamente.",
-        variant: "destructive",
-      });
+  const handleExport = (type: string, category?: string) => {
+    if (type === "excel") {
+      const data = category === "all" ? students : students?.filter((student: Student) => student.category === category);
+      handleExportExcel(data, category ? `${category}_relatorio.xlsx` : "relatorio.xlsx");
+    } else if (type === "sql") {
+      const data = category === "all" ? students : students?.filter((student: Student) => student.category === category);
+      handleExportSQL(data, category ? `${category}_relatorio.sql` : "relatorio.sql");
+    } else if (type === "pdf") {
+      const data = category === "all" ? students : students?.filter((student: Student) => student.category === category);
+      handleExportPDF(data);
     }
   };
 
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-      }
+      if (!session) navigate("/login");
     };
     checkSession();
   }, [navigate]);
 
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
-
-  const exportToPdf = (data: any[], title: string) => {
-    const doc = new jsPDF();
-    doc.text(title, 10, 10);
-    data.forEach((item, index) => {
-      doc.text(`${index + 1}. ${JSON.stringify(item)}`, 10, 20 + index * 10);
-    });
-    doc.save(`${title}.pdf`);
-  };
-
-  const handleExport = (category: string) => {
-    let dataToExport = [];
-    switch (category) {
-      case "students":
-        dataToExport = students || [];
-        break;
-      case "events":
-        dataToExport = events;
-        break;
-      default:
-        dataToExport = [...(students || []), ...events];
-    }
-
-    exportToPdf(dataToExport, category);
-  };
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
@@ -211,7 +129,66 @@ const Relatorios = () => {
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
-          {/* Calendário de atividades */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calendário de Atividades</CardTitle>
+                  <CardDescription>Visualize e gerencie eventos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Eventos</CardTitle>
+                  <CardDescription>Atividades programadas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {events.map((event, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{event.title}</span>
+                        <span className="text-sm text-muted-foreground ml-auto">
+                          {event.date.toLocaleDateString()}
+                        </span>
+                      </motion.div>
+                    ))}
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary-dark transition-colors"
+                      onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}
+                    >
+                      Adicionar Evento
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
         </TabsContent>
 
         <TabsContent value="students" className="space-y-4">
@@ -253,24 +230,57 @@ const Relatorios = () => {
                   Limpar Filtros
                 </Button>
                 
-                {/* Paginação e listagem de alunos */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
+                <AnimatePresence>
+                  {isLoading ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center p-4"
+                    >
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-2">
+                      {paginatedStudents?.map((student) => (
+                        <motion.div
+                          key={student.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <span>{student.name}</span>
+                          <span>{student.city}</span>
+                          <span>{student.age}</span>
+                          <div className="flex justify-end">
+                            <Button 
+                              variant="outline"
+                              className="mr-2"
+                              onClick={() => deleteStudent(student.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
+                <div className="flex justify-between mt-4">
                   <Button
+                    variant="outline"
                     disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((prev) => prev - 1)}
-                    className="w-full md:w-auto"
+                    onClick={() => setCurrentPage(currentPage - 1)}
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Página {currentPage} de {totalPages}
-                  </span>
                   <Button
+                    variant="outline"
                     disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((prev) => prev + 1)}
-                    className="w-full md:w-auto"
+                    onClick={() => setCurrentPage(currentPage + 1)}
                   >
-                    Próxima
+                    Próximo
                   </Button>
                 </div>
               </div>
@@ -279,11 +289,34 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
-          <div className="space-y-4">
-            <Button onClick={() => handleExport("students")}>Exportar Alunos</Button>
-            <Button onClick={() => handleExport("events")}>Exportar Eventos</Button>
-            <Button onClick={() => handleExport("all")}>Exportar Todos</Button>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Exportar Dados</CardTitle>
+              <CardDescription>Escolha o formato de exportação</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => handleExport("excel", "all")}
+                  className="w-full md:w-auto"
+                >
+                  Exportar para Excel
+                </Button>
+                <Button 
+                  onClick={() => handleExport("sql", "all")}
+                  className="w-full md:w-auto"
+                >
+                  Exportar para SQL
+                </Button>
+                <Button 
+                  onClick={() => handleExport("pdf")}
+                  className="w-full md:w-auto"
+                >
+                  Exportar para PDF
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="admin" className="space-y-4">
