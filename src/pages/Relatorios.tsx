@@ -168,6 +168,11 @@ const Relatorios = () => {
 
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
+  const handleFetchStudents = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    fetchStudents();
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen">
       <motion.h1 
@@ -280,7 +285,7 @@ const Relatorios = () => {
                   />
                 </div>
                 <Button
-                  onClick={fetchStudents}
+                  onClick={handleFetchStudents}
                   className="w-full bg-primary hover:bg-primary-dark transition-colors"
                 >
                   Buscar Alunos
