@@ -2,33 +2,52 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { buscarHistorico } from "@/services/historicoService";
+import { supabase } from "@/lib/supabase";
 
+// Função para buscar o histórico de um aluno pelo nome ou matrícula
+export async function buscarHistorico(searchTerm: string) {
+  if (!searchTerm) return [];
+
+  const { data, error } = await supabase
+    .from("grades")
+    .select(
+      `id, period, frequency, grade, status, 
+       student:students(name), 
+       project:projects(name)`
+    )
+    .ilike("student.name", `%${searchTerm}%`);
+
+  if (error) {
+    console.error("Erro ao buscar histórico:", error);
+    return [];
+  }
+
+  return data || [];
+}
 const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [historico, setHistorico] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock API call
-    setHistorico([
-      {
-        id: 1,
-        project: "Capoeira",
-        period: "2024.1",
-        frequency: "85%",
-        grade: "8.5",
-        status: "Concluído",
-      },
-      {
-        id: 2,
-        project: "Música",
-        period: "2023.2",
-        frequency: "92%",
-        grade: "9.0",
-        status: "Concluído",
-      },
-      // Add more mock data as needed
-    ]);
+    setLoading(true);
+    setErro("");
+
+    try {
+      const data = await buscarHistorico(searchTerm);
+      setHistorico(data);
+
+      if (data.length === 0) {
+        setErro("Nenhum histórico encontrado.");
+      }
+    } catch (error) {
+      setErro("Erro ao buscar os dados.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,29 +63,28 @@ const Historico = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit">Buscar</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Buscando..." : "Buscar"}
+          </Button>
         </div>
       </form>
+
+      {erro && <p className="text-red-500 text-center mt-4">{erro}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {historico.map((item) => (
           <Card key={item.id} className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.project}</h3>
+            <h3 className="font-semibold text-lg mb-2">{item.project.name}</h3>
             <div className="space-y-2 text-sm">
+              <p>Aluno: {item.student.name}</p>
               <p>Período: {item.period}</p>
-              <p>Frequência: {item.frequency}</p>
+              <p>Frequência: {item.frequency}%</p>
               <p>Nota Final: {item.grade}</p>
               <p>Status: {item.status}</p>
             </div>
           </Card>
         ))}
       </div>
-
-      {historico.length === 0 && searchTerm && (
-        <p className="text-center text-gray-500 mt-6">
-          Nenhum histórico encontrado para esta busca.
-        </p>
-      )}
     </div>
   );
 };
