@@ -32,13 +32,17 @@ export const AdminManagement = () => {
     setIsLoading(true);
     try {
       // First, get the user data from auth
-      const { data: authData, error: authError } = await supabase.auth.admin.getUserByEmail(email);
+      const { data, error: userError } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+        query: email
+      });
 
-      if (authError || !authData?.user) {
+      if (userError || !data?.users?.length) {
         throw new Error("Usuário não encontrado");
       }
 
-      const userId = authData.user.id;
+      const userId = data.users[0].id;
 
       // Check if user is already an admin
       const { data: existingRole } = await supabase
