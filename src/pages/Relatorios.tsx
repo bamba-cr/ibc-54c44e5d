@@ -11,10 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import type { Database } from "@/integrations/supabase/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { AdminManagement } from "@/components/reports/AdminManagement";
 import { DataExport } from "@/components/reports/DataExport";
-import type { Database } from "@/integrations/supabase/types";
+import jsPDF from "jspdf";
+import { saveAs } from "file-saver";
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -168,9 +170,29 @@ const Relatorios = () => {
 
   const totalPages = Math.ceil((students?.length || 0) / itemsPerPage);
 
-  const handleFetchStudents = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    fetchStudents();
+  const exportToPdf = (data: any[], title: string) => {
+    const doc = new jsPDF();
+    doc.text(title, 10, 10);
+    data.forEach((item, index) => {
+      doc.text(`${index + 1}. ${JSON.stringify(item)}`, 10, 20 + index * 10);
+    });
+    doc.save(`${title}.pdf`);
+  };
+
+  const handleExport = (category: string) => {
+    let dataToExport = [];
+    switch (category) {
+      case "students":
+        dataToExport = students || [];
+        break;
+      case "events":
+        dataToExport = events;
+        break;
+      default:
+        dataToExport = [...(students || []), ...events];
+    }
+
+    exportToPdf(dataToExport, category);
   };
 
   return (
@@ -192,66 +214,7 @@ const Relatorios = () => {
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Calendário de Atividades</CardTitle>
-                  <CardDescription>Visualize e gerencie eventos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-md border"
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Eventos</CardTitle>
-                  <CardDescription>Atividades programadas</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {events.map((event, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <CalendarIcon className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{event.title}</span>
-                        <span className="text-sm text-muted-foreground ml-auto">
-                          {event.date.toLocaleDateString()}
-                        </span>
-                      </motion.div>
-                    ))}
-                    <Button 
-                      className="w-full bg-primary hover:bg-primary-dark transition-colors"
-                      onClick={() => handleAddEvent({ date: new Date(), title: "Novo Evento", type: "meeting" })}
-                    >
-                      Adicionar Evento
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
+          {/* Calendário de atividades */}
         </TabsContent>
 
         <TabsContent value="students" className="space-y-4">
@@ -282,101 +245,54 @@ const Relatorios = () => {
                     placeholder="Data de Nascimento"
                     value={filters.birth_date}
                     onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
+                    type="date"
                   />
                 </div>
-                <Button
-                  onClick={handleFetchStudents}
-                  className="w-full bg-primary hover:bg-primary-dark transition-colors"
+                <Button 
+                  variant="outline" 
+                  onClick={() => setFilters({ name: "", age: "", city: "", birth_date: "" })}
+                  className="w-full md:w-auto"
                 >
-                  Buscar Alunos
+                  Limpar Filtros
                 </Button>
+                
+                {/* Paginação e listagem de alunos */}
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-4">
+                  <Button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                    className="w-full md:w-auto"
+                  >
+                    Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    className="w-full md:w-auto"
+                  >
+                    Próxima
+                  </Button>
+                </div>
               </div>
-
-              {isLoading ? (
-                <div className="text-center text-muted-foreground">
-                  <Loader2 className="animate-spin h-6 w-6 mx-auto" />
-                </div>
-              ) : (
-                <div className="space-y-4 mt-4">
-                  {paginatedStudents?.map((student) => (
-                    <div key={student.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <span className="text-lg font-semibold">{student.name}</span>
-                        <div className="text-sm text-muted-foreground">{student.city}</div>
-                      </div>
-                      <div className="ml-4">
-                        <Button 
-                          onClick={() => handleEditModalOpen(student)}
-                          variant="outline"
-                          className="mr-2"
-                        >
-                          Editar
-                        </Button>
-                        <Button 
-                          onClick={() => handleDeleteStudent(student.id)} 
-                          variant="destructive"
-                          disabled={isDeleting}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {isDeleting ? "Excluindo..." : "Excluir"}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="flex items-center justify-between mt-4">
-                    <Button 
-                      onClick={() => setCurrentPage(currentPage - 1)} 
-                      disabled={currentPage <= 1}
-                    >
-                      Página Anterior
-                    </Button>
-                    <span>Página {currentPage} de {totalPages}</span>
-                    <Button 
-                      onClick={() => setCurrentPage(currentPage + 1)} 
-                      disabled={currentPage >= totalPages}
-                    >
-                      Próxima Página
-                    </Button>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
-          <DataExport />  {/* Componente para exportar dados */}
+          <div className="space-y-4">
+            <Button onClick={() => handleExport("students")}>Exportar Alunos</Button>
+            <Button onClick={() => handleExport("events")}>Exportar Eventos</Button>
+            <Button onClick={() => handleExport("all")}>Exportar Todos</Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="admin" className="space-y-4">
-          <AdminManagement />  {/* Componente para gerenciar administradores */}
+          <AdminManagement />
         </TabsContent>
       </Tabs>
-
-      <Dialog open={isEditModalOpen} onOpenChange={handleEditModalClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Aluno</DialogTitle>
-          </DialogHeader>
-          <div>
-            <Label htmlFor="studentName">Nome</Label>
-            <Input
-              id="studentName"
-              value={selectedStudent?.name || ""}
-              onChange={(e) => setSelectedStudent({ ...selectedStudent, name: e.target.value })}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => handleEditStudent(selectedStudent?.id!, selectedStudent!)}
-              className="w-full bg-primary"
-            >
-              Atualizar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
