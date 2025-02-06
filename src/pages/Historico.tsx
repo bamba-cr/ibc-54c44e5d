@@ -1,139 +1,96 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Search, User, Calendar, ClipboardList, BookOpen, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { Loader2, Search, BookOpen } from "lucide-react";
+import { buscarHistorico } from "@/services/historicoService";
+import { useToast } from "@/components/ui/use-toast";
 
-const RelatorioAluno = () => {
+const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [aluno, setAluno] = useState<any>(null);
+  const [historico, setHistorico] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState("");
+  const { toast } = useToast();
 
-  // Função para buscar o relatório individual do aluno
-  const buscarRelatorio = async (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErro("");
-    setAluno(null);
 
-    const { data, error } = await supabase
-      .from("students")
-      .select(
-        `id, name, city, guardian_name, guardian_phone, guardian_email, 
-        student_projects:student_projects ( project:projects(name, code) ), 
-        grades ( period, grade, observations, project:projects(name) ), 
-        attendance ( date, status, observations, project:projects(name) )`
-      )
-      .or(`id.eq.${searchTerm}, name.ilike.%${searchTerm}%`)
-      .single();
-
-    if (error) {
-      setErro("Nenhum aluno encontrado.");
-      console.error("Erro ao buscar aluno:", error);
-    } else {
-      setAluno(data);
+    try {
+      const results = await buscarHistorico(searchTerm);
+      setHistorico(results);
+      
+      if (results.length === 0) {
+        toast({
+          description: "Nenhum registro encontrado para este aluno.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar histórico",
+        description: "Ocorreu um erro ao buscar o histórico. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold text-center mb-6">📚 Relatório Individual do Aluno</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
+        <BookOpen className="h-8 w-8" />
+        Histórico Escolar
+      </h1>
 
-      <form onSubmit={buscarRelatorio} className="mb-6">
-        <div className="flex gap-4 items-center">
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-4">
           <Input
             type="text"
-            placeholder="🔍 Buscar por nome ou matrícula"
+            placeholder="Digite o nome do aluno para buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 text-lg"
+            className="flex-1"
           />
-          <Button type="submit" disabled={loading} className="text-lg">
-            {loading ? <Loader2 className="animate-spin" /> : <Search />}
+          <Button type="submit" disabled={loading || !searchTerm.trim()}>
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            <span className="ml-2">Buscar</span>
           </Button>
         </div>
       </form>
 
-      {erro && <p className="text-red-500 text-center mt-4">{erro}</p>}
-
-      {aluno && (
-        <div className="space-y-6">
-          {/* Dados do Aluno */}
-          <Card className="p-4 shadow-lg border border-gray-200">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <User className="text-blue-500" /> Dados Pessoais
-            </h3>
-            <p><strong>👤 Nome:</strong> {aluno.name}</p>
-            <p><strong>📍 Cidade:</strong> {aluno.city}</p>
-            <p><strong>👨‍👩‍👦 Responsável:</strong> {aluno.guardian_name}</p>
-            <p><strong>📞 Contato:</strong> {aluno.guardian_phone} | {aluno.guardian_email}</p>
-          </Card>
-
-          {/* Projetos Inscritos */}
-          <Card className="p-4 shadow-lg border border-gray-200">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <ClipboardList className="text-green-500" /> Projetos Inscritos
-            </h3>
-            {aluno.student_projects.length > 0 ? (
-              <ul className="list-disc ml-6 space-y-1">
-                {aluno.student_projects.map((proj: any, index: number) => (
-                  <li key={index}>🎯 <strong>{proj.project.name}</strong> ({proj.project.code})</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">Nenhum projeto inscrito.</p>
-            )}
-          </Card>
-
-          {/* Notas e Desempenho */}
-          <Card className="p-4 shadow-lg border border-gray-200">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <BookOpen className="text-purple-500" /> Notas e Desempenho
-            </h3>
-            {aluno.grades.length > 0 ? (
-              <ul className="list-none space-y-2">
-                {aluno.grades.map((nota: any, index: number) => (
-                  <li key={index} className="border p-2 rounded-md">
-                    <p>📌 <strong>{nota.project.name}</strong> ({nota.period})</p>
-                    <p>🎓 <strong>Nota:</strong> {nota.grade}</p>
-                    <p>📝 <strong>Observação:</strong> {nota.observations || "Nenhuma"}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">Nenhuma nota registrada.</p>
-            )}
-          </Card>
-
-          {/* Histórico de Presença */}
-          <Card className="p-4 shadow-lg border border-gray-200">
-            <h3 className="text-xl font-semibold flex items-center gap-2">
-              <Calendar className="text-orange-500" /> Histórico de Presença
-            </h3>
-            {aluno.attendance.length > 0 ? (
-              <ul className="list-none space-y-2">
-                {aluno.attendance.map((freq: any, index: number) => (
-                  <li key={index} className="border p-2 rounded-md flex items-center gap-2">
-                    {freq.status === "Presente" ? (
-                      <CheckCircle className="text-green-500" />
-                    ) : (
-                      <XCircle className="text-red-500" />
-                    )}
-                    <div>
-                      <p>📅 <strong>{freq.date}</strong> - <strong>{freq.project.name}</strong></p>
-                      <p>📝 <strong>Observação:</strong> {freq.observations || "Nenhuma"}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">Nenhum registro de presença.</p>
-            )}
-          </Card>
+      {historico.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {historico.map((item) => (
+            <Card key={item.id} className="p-4 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{item.student.name}</h3>
+                  <span className="text-sm text-gray-500">{item.project.code}</span>
+                </div>
+                <p className="font-medium text-gray-700">{item.project.name}</p>
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <span className="text-sm text-gray-600">
+                    Período: {item.period}
+                  </span>
+                  <span className="font-semibold text-lg">
+                    Nota: {item.grade?.toFixed(1) || 'N/A'}
+                  </span>
+                </div>
+                {item.observations && (
+                  <p className="text-sm text-gray-600 mt-2 pt-2 border-t">
+                    <strong>Observações:</strong> {item.observations}
+                  </p>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
     </div>

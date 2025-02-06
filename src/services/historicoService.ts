@@ -1,21 +1,32 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export async function buscarHistorico(searchTerm: string) {
-  if (!searchTerm) return [];
-
-  const { data, error } = await supabase
-    .from("grades")
-    .select(
-      `id, period, grade,
-       student:students(name), 
-       project:projects(name)`
-    )
-    .ilike("student.name", `%${searchTerm}%`);
-
-  if (error) {
-    console.error("Erro ao buscar histórico:", error);
+  if (!searchTerm.trim()) {
     return [];
   }
 
-  return data || [];
+  try {
+    const { data, error } = await supabase
+      .from("grades")
+      .select(
+        `id, 
+         period,
+         grade,
+         observations,
+         student:students(id, name), 
+         project:projects(id, name, code)`
+      )
+      .ilike("student.name", `%${searchTerm}%`);
+
+    if (error) {
+      console.error("Erro ao buscar histórico:", error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar histórico:", error);
+    return [];
+  }
 }
