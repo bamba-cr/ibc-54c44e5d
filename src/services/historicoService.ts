@@ -39,7 +39,7 @@ export async function buscarHistorico(searchTerm: string): Promise<HistoricoResp
       `)
       .ilike("student.name", `%${searchTerm}%`)
       .order('period', { ascending: true })
-      .order('student.name', { ascending: true });
+      .order('student(name)', { ascending: true });
 
     if (error) {
       console.error("Erro na query do Supabase:", error);
