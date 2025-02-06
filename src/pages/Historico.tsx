@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,10 +12,16 @@ const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const { data: historico = [], isLoading, refetch } = useQuery({
+  const { data: historico = [], isLoading, refetch, isError, error } = useQuery({
     queryKey: ["historico", searchTerm],
-    queryFn: () => buscarHistorico(searchTerm),
+    queryFn: ({ queryKey }) => buscarHistorico(queryKey[1]), // Usar queryKey para evitar closure stale
     enabled: false,
+    onError: (error) => {
+      toast({
+        description: "Erro ao buscar histórico. Tente novamente.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -29,7 +34,11 @@ const Historico = () => {
       return;
     }
     
-    refetch();
+    try {
+      await refetch();
+    } catch (err) {
+      console.error("Erro na busca:", err);
+    }
   };
 
   const formatGrade = (grade: number): string => {
@@ -137,7 +146,19 @@ const Historico = () => {
           )}
         </AnimatePresence>
 
-        {historico.length === 0 && !isLoading && searchTerm && (
+        {isError && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8 text-gray-500"
+          >
+            <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-lg">Erro ao buscar histórico</p>
+            <p className="text-sm">{error?.message || "Tente novamente mais tarde."}</p>
+          </motion.div>
+        )}
+
+        {historico.length === 0 && !isLoading && searchTerm && !isError && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
