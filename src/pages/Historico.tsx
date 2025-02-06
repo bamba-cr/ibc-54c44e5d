@@ -16,9 +16,13 @@ const Historico = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setHistorico([]);
 
     try {
+      console.log("Iniciando busca...");
       const results = await buscarHistorico(searchTerm);
+      console.log("Resultados recebidos:", results);
+      
       setHistorico(results);
       
       if (results.length === 0) {
@@ -26,13 +30,19 @@ const Historico = () => {
           description: "Nenhum registro encontrado para este aluno.",
           variant: "destructive",
         });
+      } else {
+        toast({
+          description: `Encontrados ${results.length} registros.`,
+        });
       }
     } catch (error) {
+      console.error("Erro na busca:", error);
       toast({
         title: "Erro ao buscar histórico",
         description: "Ocorreu um erro ao buscar o histórico. Tente novamente.",
         variant: "destructive",
       });
+      setHistorico([]);
     } finally {
       setLoading(false);
     }
@@ -54,13 +64,22 @@ const Historico = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1"
           />
-          <Button type="submit" disabled={loading || !searchTerm.trim()}>
+          <Button 
+            type="submit" 
+            disabled={loading || !searchTerm.trim()}
+            className="min-w-[120px]"
+          >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Buscando...
+              </>
             ) : (
-              <Search className="h-4 w-4" />
+              <>
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </>
             )}
-            <span className="ml-2">Buscar</span>
           </Button>
         </div>
       </form>
@@ -71,10 +90,10 @@ const Historico = () => {
             <Card key={item.id} className="p-4 shadow-lg hover:shadow-xl transition-shadow">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{item.student.name}</h3>
-                  <span className="text-sm text-gray-500">{item.project.code}</span>
+                  <h3 className="text-lg font-semibold">{item.student?.name}</h3>
+                  <span className="text-sm text-gray-500">{item.project?.code}</span>
                 </div>
-                <p className="font-medium text-gray-700">{item.project.name}</p>
+                <p className="font-medium text-gray-700">{item.project?.name}</p>
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm text-gray-600">
                     Período: {item.period}
