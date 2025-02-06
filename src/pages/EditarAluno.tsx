@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentForm } from "@/components/students/StudentForm";
@@ -87,48 +88,57 @@ const EditarAluno = () => {
   };
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <h1 className="text-2xl font-bold mb-4">Lista de Alunos</h1>
-      {editingStudent ? (
-        <StudentForm
-          initialValues={editingStudent}
-          onSubmit={handleUpdate}
-          onCancel={() => setEditingStudent(null)}
-        />
-      ) : (
-        <>
-          <button
-            onClick={() => setEditingStudent({} as Student)}
-            className="mb-4 bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Adicionar Novo Aluno
-          </button>
-          <ul>
-            {students.map((student) => (
-              <li key={student.id} className="mb-4 p-4 border rounded">
-                <p><strong>Nome:</strong> {student.name}</p>
-                <p><strong>Idade:</strong> {student.age}</p>
-                <button
-                  onClick={() => handleEdit(student)}
-                  className="mr-2 bg-yellow-500 text-white px-2 py-1 rounded"
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Lista de Alunos</h1>
+        {editingStudent ? (
+          <StudentForm
+            initialValues={editingStudent}
+            onSubmit={handleUpdate}
+            onCancel={() => setEditingStudent(null)}
+          />
+        ) : (
+          <>
+            <button
+              onClick={() => setEditingStudent({} as Student)}
+              className="mb-6 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Adicionar Novo Aluno
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {students.map((student) => (
+                <div 
+                  key={student.id} 
+                  className="bg-card text-card-foreground p-4 rounded-lg border shadow-sm hover:shadow-md transition-all space-y-3"
                 >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(student.id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  Excluir
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+                  <div className="space-y-2">
+                    <p className="font-semibold text-lg">{student.name}</p>
+                    <p className="text-sm text-muted-foreground">Idade: {student.age}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(student)}
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 rounded-md text-sm transition-colors"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDelete(student.id)}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-md text-sm transition-colors"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
