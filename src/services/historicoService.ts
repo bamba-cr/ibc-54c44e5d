@@ -1,7 +1,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export async function buscarHistorico(searchTerm: string) {
+export type HistoricoResponse = {
+  id: string;
+  period: string;
+  grade: number;
+  observations?: string;
+  student: {
+    id: string;
+    name: string;
+  };
+  project: {
+    id: string;
+    name: string;
+    code: string;
+  };
+};
+
+export async function buscarHistorico(searchTerm: string): Promise<HistoricoResponse[]> {
   console.log("Iniciando busca com termo:", searchTerm);
   
   if (!searchTerm.trim()) {
@@ -21,7 +37,9 @@ export async function buscarHistorico(searchTerm: string) {
         student:students(id, name), 
         project:projects(id, name, code)
       `)
-      .ilike("student.name", `%${searchTerm}%`);
+      .ilike("student.name", `%${searchTerm}%`)
+      .order('period', { ascending: true })
+      .order('student.name', { ascending: true });
 
     if (error) {
       console.error("Erro na query do Supabase:", error);

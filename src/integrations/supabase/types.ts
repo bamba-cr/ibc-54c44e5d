@@ -158,10 +158,10 @@ export type Database = {
       }
       students: {
         Row: {
-          address: string | null
+          address: string
           age: number | null
-          birth_date: string | null
-          city: string | null
+          birth_date: string
+          city: string
           cpf: string | null
           created_at: string
           guardian_cpf: string | null
@@ -177,10 +177,10 @@ export type Database = {
           rg: string | null
         }
         Insert: {
-          address?: string | null
+          address: string
           age?: number | null
-          birth_date?: string | null
-          city?: string | null
+          birth_date: string
+          city: string
           cpf?: string | null
           created_at?: string
           guardian_cpf?: string | null
@@ -196,10 +196,10 @@ export type Database = {
           rg?: string | null
         }
         Update: {
-          address?: string | null
+          address?: string
           age?: number | null
-          birth_date?: string | null
-          city?: string | null
+          birth_date?: string
+          city?: string
           cpf?: string | null
           created_at?: string
           guardian_cpf?: string | null
