@@ -9,6 +9,7 @@ import { AdminManagement } from '@/components/reports/AdminManagement';
 import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
+import { ErrorLogs } from '@/components/reports/ErrorLogs';
 
 const Relatorios = () => {
   const navigate = useNavigate();
@@ -43,11 +44,12 @@ const Relatorios = () => {
       </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px] bg-white shadow-sm">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 lg:w-[1000px] bg-white shadow-sm">
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
           <TabsTrigger value="admin">Administração</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar">
@@ -64,6 +66,10 @@ const Relatorios = () => {
 
         <TabsContent value="admin">
           <AdminManagement />
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <ErrorLogs />
         </TabsContent>
       </Tabs>
     </div>

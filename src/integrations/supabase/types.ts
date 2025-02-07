@@ -61,6 +61,45 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          additional_data: Json | null
+          created_at: string | null
+          error_type: Database["public"]["Enums"]["error_type"]
+          id: string
+          message: string
+          resolution_notes: string | null
+          resolved: boolean | null
+          route: string | null
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          additional_data?: Json | null
+          created_at?: string | null
+          error_type: Database["public"]["Enums"]["error_type"]
+          id?: string
+          message: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          route?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          additional_data?: Json | null
+          created_at?: string | null
+          error_type?: Database["public"]["Enums"]["error_type"]
+          id?: string
+          message?: string
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          route?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       grades: {
         Row: {
           created_at: string
@@ -281,6 +320,22 @@ export type Database = {
       }
     }
     Functions: {
+      get_error_logs_with_details: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          user_email: string
+          error_type: Database["public"]["Enums"]["error_type"]
+          message: string
+          stack_trace: string
+          additional_data: Json
+          route: string
+          created_at: string
+          resolved: boolean
+          resolution_notes: string
+        }[]
+      }
       get_project_rankings: {
         Args: {
           project_id_param: string
@@ -304,6 +359,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      error_type: "api" | "frontend" | "backend" | "database" | "auth" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
