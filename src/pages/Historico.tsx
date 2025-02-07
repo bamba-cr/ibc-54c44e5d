@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,16 +13,19 @@ const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const { data: historico = [], isLoading, refetch, isError, error } = useQuery({
+  const { data: historico, isLoading, refetch, isError, error } = useQuery<HistoricoResponse[]>({
     queryKey: ["historico", searchTerm],
-    queryFn: ({ queryKey }) => buscarHistorico(queryKey[1]), // Usar queryKey para evitar closure stale
+    queryFn: ({ queryKey }) => buscarHistorico(queryKey[1]),
     enabled: false,
-    onError: (error) => {
-      toast({
-        description: "Erro ao buscar histórico. Tente novamente.",
-        variant: "destructive",
-      });
+    meta: {
+      onError: () => {
+        toast({
+          description: "Erro ao buscar histórico. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     },
+    initialData: [] as HistoricoResponse[],
   });
 
   const handleSearch = async (e: React.FormEvent) => {
