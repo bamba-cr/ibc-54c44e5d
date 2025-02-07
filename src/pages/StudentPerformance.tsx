@@ -2,70 +2,18 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, Trophy, UserCheck, GraduationCap, BookOpen } from 'lucide-react';
+import { Loader2, Search, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-interface StudentDetails {
-  id: string;
-  name: string;
-  projects: {
-    id: string;
-    name: string;
-    grades: {
-      subject: string;
-      grade: number;
-    }[];
-    attendance: {
-      present: number;
-      total: number;
-    };
-  }[];
-}
-
-interface ProjectRanking {
-  student_id: string;
-  student_name: string;
-  average_grade: number;
-  attendance_rate: number;
-  grade_rank: number;
-  attendance_rank: number;
-}
+import ProjectRankings from '@/components/performance/ProjectRankings';
+import StudentDetails from '@/components/performance/StudentDetails';
 
 const StudentPerformance = () => {
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch projects
   const { data: projects } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -78,7 +26,6 @@ const StudentPerformance = () => {
     }
   });
 
-  // Fetch rankings for selected project
   const { data: rankings, isLoading: isLoadingRankings } = useQuery({
     queryKey: ['rankings', selectedProject],
     queryFn: async () => {
@@ -86,12 +33,11 @@ const StudentPerformance = () => {
       const { data, error } = await supabase
         .rpc('get_project_rankings', { project_id_param: selectedProject });
       if (error) throw error;
-      return data as ProjectRanking[];
+      return data;
     },
     enabled: !!selectedProject
   });
 
-  // Fetch detailed student info
   const { data: students, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['students', searchTerm],
     queryFn: async () => {
@@ -167,113 +113,13 @@ const StudentPerformance = () => {
           </TabsList>
 
           <TabsContent value="rankings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rankings por Projeto</CardTitle>
-                <CardDescription>
-                  Visualize o desempenho dos alunos em cada projeto
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <Select value={selectedProject} onValueChange={setSelectedProject}>
-                    <SelectTrigger className="w-full md:w-[300px]">
-                      <SelectValue placeholder="Selecione um projeto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Projetos</SelectLabel>
-                        {projects?.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-
-                  {isLoadingRankings && (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  )}
-
-                  {rankings && (
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Trophy className="h-5 w-5 text-yellow-500" />
-                            Melhores Notas
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ScrollArea className="h-[400px]">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Posição</TableHead>
-                                  <TableHead>Aluno</TableHead>
-                                  <TableHead>Média</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {rankings.map((student) => (
-                                  <TableRow key={student.student_id}>
-                                    <TableCell>
-                                      <Badge variant={student.grade_rank <= 3 ? "default" : "secondary"}>
-                                        {student.grade_rank}º
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>{student.student_name}</TableCell>
-                                    <TableCell>{student.average_grade.toFixed(1)}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </ScrollArea>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <UserCheck className="h-5 w-5 text-green-500" />
-                            Maior Frequência
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ScrollArea className="h-[400px]">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Posição</TableHead>
-                                  <TableHead>Aluno</TableHead>
-                                  <TableHead>Frequência</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {rankings.map((student) => (
-                                  <TableRow key={student.student_id}>
-                                    <TableCell>
-                                      <Badge variant={student.attendance_rank <= 3 ? "default" : "secondary"}>
-                                        {student.attendance_rank}º
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>{student.student_name}</TableCell>
-                                    <TableCell>{student.attendance_rate.toFixed(1)}%</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </ScrollArea>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <ProjectRankings
+              projects={projects}
+              rankings={rankings}
+              selectedProject={selectedProject}
+              onProjectSelect={setSelectedProject}
+              isLoading={isLoadingRankings}
+            />
           </TabsContent>
 
           <TabsContent value="individual">
@@ -305,61 +151,13 @@ const StudentPerformance = () => {
                     </div>
                   )}
 
-                  {students && students.map((student) => {
-                    const { averageGrade, attendanceRate } = getStudentOverallStats(student.id);
-                    return (
-                      <Card key={student.id} className="mt-4">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                            {student.name}
-                          </CardTitle>
-                          <div className="flex gap-4">
-                            <Badge variant="outline">
-                              Média Geral: {averageGrade.toFixed(1)}
-                            </Badge>
-                            <Badge variant="outline">
-                              Frequência Geral: {attendanceRate.toFixed(1)}%
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-6">
-                            <div>
-                              <h3 className="font-semibold mb-2">Projetos Inscritos</h3>
-                              <div className="flex flex-wrap gap-2">
-                                {student.student_projects.map(({ project }) => (
-                                  <Badge key={project.id} variant="secondary">
-                                    {project.name}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <h3 className="font-semibold mb-2">Notas por Disciplina</h3>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Disciplina</TableHead>
-                                    <TableHead>Nota</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {student.grades.map((grade, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell>{grade.subject}</TableCell>
-                                      <TableCell>{grade.grade.toFixed(1)}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  {students?.map((student) => (
+                    <StudentDetails
+                      key={student.id}
+                      student={student}
+                      stats={getStudentOverallStats(student.id)}
+                    />
+                  ))}
 
                   {students?.length === 0 && searchTerm && (
                     <div className="text-center py-8 text-gray-500">
