@@ -59,15 +59,19 @@ export const AdminManagement = () => {
         }
       });
 
-      if (signInError || !targetUser) {
+      if (signInError) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
+      }
+
+      if (!targetUser.user?.id) {
+        throw new Error("Não foi possível identificar o usuário alvo.");
       }
 
       // Check if user is already an admin
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("*")
-        .eq("user_id", targetUser.user?.id)
+        .eq("user_id", targetUser.user.id)
         .eq("role", "admin")
         .single();
 
@@ -82,7 +86,7 @@ export const AdminManagement = () => {
 
       // Add admin role
       const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: targetUser.user?.id,
+        user_id: targetUser.user.id,
         role: "admin",
       });
 
