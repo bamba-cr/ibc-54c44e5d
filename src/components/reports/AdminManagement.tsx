@@ -52,21 +52,21 @@ export const AdminManagement = () => {
       }
 
       // Get target user's ID from their email
-      const { data, error: signInError } = await supabase.auth.signInWithOtp({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
           shouldCreateUser: false,
         }
       });
 
-      if (signInError || !data?.user?.id) {
+      if (signInError || !signInData?.user) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
-      const targetUserId = data.user.id;
+      const targetUserId = signInData.user.id;
 
       // Check if user is already an admin
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: existingRoleError } = await supabase
         .from("user_roles")
         .select("*")
         .eq("user_id", targetUserId)
