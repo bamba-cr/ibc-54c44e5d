@@ -52,17 +52,16 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Get target user's ID from their email
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
-        email: email,
-        options: {
-          shouldCreateUser: false,
-        }
-      });
+      // Get target user's ID from their email by checking auth.users
+      const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
+      
+      if (usersError) {
+        throw new Error("Erro ao buscar usuários");
+      }
 
-      const targetUser = signInData?.user as User | null;
+      const targetUser = users.users.find(u => u.email === email);
 
-      if (signInError || !targetUser) {
+      if (!targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
