@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Index from "./pages/Index";
@@ -9,6 +10,7 @@ import Frequencia from "./pages/Frequencia";
 import Notas from "./pages/Notas";
 import Relatorios from "./pages/Relatorios";
 import Historico from "./pages/Historico";
+import StudentPerformance from "./pages/StudentPerformance";
 import NotFound from "./pages/NotFound";
 
 // Create a client
@@ -28,6 +30,7 @@ function App() {
           <Route path="/notas" element={<Notas />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/historico" element={<Historico />} />
+          <Route path="/desempenho" element={<StudentPerformance />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
