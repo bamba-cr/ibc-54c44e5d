@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/layout/Navbar";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -42,10 +41,13 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardHeader />
+        <DashboardHeader 
+          title="Instituto Brasileiro Cultural e Socioeducativo - IBC"
+          subtitle="Transformando vidas através da cultura e educação"
+        />
         
         {countsError && (
           <Alert variant="destructive" className="mb-6">
@@ -63,30 +65,34 @@ const Dashboard = () => {
             ) : (
               <>
                 <StatsCard
-                  title="Total de Alunos"
+                  title="Jovens Impactados"
                   value={counts?.students || "0"}
-                  description="Alunos matriculados"
-                  icon={<Users size={24} aria-label="Alunos" />}
+                  description="Jovens beneficiados pelos nossos programas"
+                  icon={<Users size={24} aria-label="Jovens" className="text-blue-600" />}
                   loading={isLoadingCounts}
+                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
-                  title="Projetos Ativos"
+                  title="Projetos Culturais"
                   value={counts?.projects || "0"}
-                  description="Em andamento"
-                  icon={<Calendar size={24} aria-label="Projetos" />}
+                  description="Projetos em andamento"
+                  icon={<Calendar size={24} aria-label="Projetos" className="text-green-600" />}
                   loading={isLoadingCounts}
+                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
-                  title="Frequência Média"
-                  value="85%"
-                  description="Últimos 30 dias"
-                  icon={<Activity size={24} aria-label="Frequência" />}
+                  title="Engajamento"
+                  value="92%"
+                  description="Taxa de participação nos últimos 6 meses"
+                  icon={<Activity size={24} aria-label="Engajamento" className="text-purple-600" />}
+                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
-                  title="Disciplinas"
-                  value="5"
-                  description="Em andamento"
-                  icon={<BookOpen size={24} aria-label="Disciplinas" />}
+                  title="Oficinas Realizadas"
+                  value="15"
+                  description="Oficinas de arte, cultura e educação"
+                  icon={<BookOpen size={24} aria-label="Oficinas" className="text-orange-600" />}
+                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
               </>
             )}
@@ -95,17 +101,27 @@ const Dashboard = () => {
           {/* Gráficos e Ações Rápidas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <OverviewChart />
+              <OverviewChart 
+                title="Desempenho dos Projetos"
+                description="Acompanhe o progresso dos projetos culturais e socioeducativos"
+              />
             </div>
             <div className="space-y-6">
-              <QuickActions />
+              <QuickActions 
+                title="Ações Rápidas"
+                actions={[
+                  { label: "Adicionar Novo Projeto", icon: <Calendar size={18} />, onClick: () => {} },
+                  { label: "Cadastrar Jovem", icon: <Users size={18} />, onClick: () => {} },
+                  { label: "Gerar Relatório", icon: <Activity size={18} />, onClick: () => {} },
+                ]}
+              />
             </div>
           </div>
 
           {/* Tabela de Projetos */}
-          <section aria-labelledby="projects-heading">
-            <h3 id="projects-heading" className="text-lg font-semibold mb-4">
-              Projetos Ativos
+          <section aria-labelledby="projects-heading" className="bg-white p-6 rounded-lg shadow-sm">
+            <h3 id="projects-heading" className="text-xl font-semibold mb-4 text-gray-800">
+              Projetos em Destaque
             </h3>
             <ProjectsTable />
           </section>
