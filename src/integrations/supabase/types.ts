@@ -49,6 +49,13 @@ export type Database = {
             foreignKeyName: "attendance_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
+            referencedRelation: "student_performance"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -92,6 +99,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_performance"
+            referencedColumns: ["student_id"]
           },
           {
             foreignKeyName: "grades_student_id_fkey"
@@ -146,6 +160,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_projects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_performance"
+            referencedColumns: ["student_id"]
           },
           {
             foreignKeyName: "student_projects_student_id_fkey"
@@ -239,9 +260,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      student_performance: {
+        Row: {
+          attendance_rate: number | null
+          average_grade: number | null
+          project_id: string | null
+          project_name: string | null
+          student_id: string | null
+          student_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_project_rankings: {
+        Args: {
+          project_id_param: string
+        }
+        Returns: {
+          student_id: string
+          student_name: string
+          average_grade: number
+          attendance_rate: number
+          grade_rank: number
+          attendance_rank: number
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
