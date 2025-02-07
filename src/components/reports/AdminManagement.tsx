@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
@@ -59,11 +60,13 @@ export const AdminManagement = () => {
         }
       });
 
-      if (signInError || !signInData?.user) {
+      const targetUser = signInData?.user as User | null;
+
+      if (signInError || !targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
-      const targetUserId = signInData.user.id;
+      const targetUserId = targetUser.id;
 
       // Check if user is already an admin
       const { data: existingRole, error: existingRoleError } = await supabase
