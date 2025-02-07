@@ -1,6 +1,14 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserPlus, FileSpreadsheet, Calendar, BookOpen } from "lucide-react";
+import { 
+  Users, 
+  CalendarCheck, 
+  GraduationCap, 
+  FileBarChart,
+  History,
+  Settings
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const QuickActions = () => {
@@ -15,32 +23,48 @@ export const QuickActions = () => {
           className="flex flex-col items-center gap-2 h-auto py-4"
           onClick={() => navigate("/alunos")}
         >
-          <UserPlus className="h-6 w-6" />
-          <span>Novo Aluno</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/notas")}
-        >
-          <FileSpreadsheet className="h-6 w-6" />
-          <span>Lançar Notas</span>
+          <Users className="h-6 w-6" />
+          <span>Gerenciar Alunos</span>
         </Button>
         <Button
           variant="outline"
           className="flex flex-col items-center gap-2 h-auto py-4"
           onClick={() => navigate("/frequencia")}
         >
-          <Calendar className="h-6 w-6" />
-          <span>Frequência</span>
+          <CalendarCheck className="h-6 w-6" />
+          <span>Registrar Frequência</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="flex flex-col items-center gap-2 h-auto py-4"
+          onClick={() => navigate("/notas")}
+        >
+          <GraduationCap className="h-6 w-6" />
+          <span>Lançar Notas</span>
         </Button>
         <Button
           variant="outline"
           className="flex flex-col items-center gap-2 h-auto py-4"
           onClick={() => navigate("/relatorios")}
         >
-          <BookOpen className="h-6 w-6" />
-          <span>Relatórios</span>
+          <FileBarChart className="h-6 w-6" />
+          <span>Gerar Relatórios</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="flex flex-col items-center gap-2 h-auto py-4"
+          onClick={() => navigate("/historico")}
+        >
+          <History className="h-6 w-6" />
+          <span>Ver Histórico</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="flex flex-col items-center gap-2 h-auto py-4"
+          onClick={() => navigate("/configuracoes")}
+        >
+          <Settings className="h-6 w-6" />
+          <span>Configurações</span>
         </Button>
       </div>
     </Card>
