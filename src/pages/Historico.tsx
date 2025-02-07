@@ -15,7 +15,7 @@ const Historico = () => {
 
   const { data: historico, isLoading, refetch, isError, error } = useQuery<HistoricoResponse[]>({
     queryKey: ["historico", searchTerm],
-    queryFn: ({ queryKey }) => buscarHistorico(queryKey[1]),
+    queryFn: ({ queryKey }) => buscarHistorico(queryKey[1] as string),
     enabled: false,
     meta: {
       onError: () => {
