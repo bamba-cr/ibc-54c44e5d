@@ -53,13 +53,13 @@ export const AdminManagement = () => {
       }
 
       // Get target user's ID from their email by checking auth.users
-      const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
       
       if (usersError) {
         throw new Error("Erro ao buscar usuários");
       }
 
-      const targetUser = users.users.find(u => u.email === email);
+      const targetUser = users.find((u: User) => u.email === email);
 
       if (!targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
