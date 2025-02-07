@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
-import { User } from "@supabase/supabase-js";
 
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
@@ -32,30 +32,42 @@ export const AdminManagement = () => {
 
     setIsLoading(true);
     try {
-      // First check if the user exists in auth
-      const { data: { users }, error: userError } = await supabase.auth.admin.listUsers({
-        page: 1,
-        perPage: 100
-      });
-
-      const user = users?.find((u: User) => u.email === email);
-
-      if (userError || !user) {
-        toast({
-          title: "Usuário não encontrado",
-          description: "O usuário precisa criar uma conta primeiro antes de ser promovido a administrador.",
-          variant: "destructive",
-        });
-        return;
+      // First get current user's session to get their ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("Usuário não autenticado");
       }
 
-      const userId = user.id;
+      // Check if current user has admin role
+      const { data: currentUserRole, error: roleCheckError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (roleCheckError || !currentUserRole) {
+        throw new Error("Você não tem permissão para adicionar administradores");
+      }
+
+      // Get target user's ID from their email
+      const { data: targetUser, error: signInError } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: false,
+        }
+      });
+
+      if (signInError || !targetUser) {
+        throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
+      }
 
       // Check if user is already an admin
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", targetUser.user?.id)
         .eq("role", "admin")
         .single();
 
@@ -70,7 +82,7 @@ export const AdminManagement = () => {
 
       // Add admin role
       const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: userId,
+        user_id: targetUser.user?.id,
         role: "admin",
       });
 
