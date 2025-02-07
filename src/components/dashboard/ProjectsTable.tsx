@@ -1,3 +1,5 @@
+
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,11 +9,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectForm } from "@/components/projects/ProjectForm";
 
 export const ProjectsTable = () => {
-  const { data: projects, isLoading } = useQuery({
+  const [showForm, setShowForm] = useState(false);
+
+  const { data: projects, isLoading, refetch } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,8 +33,25 @@ export const ProjectsTable = () => {
     return <div>Carregando projetos...</div>;
   }
 
+  if (showForm) {
+    return (
+      <ProjectForm
+        onSuccess={() => {
+          setShowForm(false);
+          refetch();
+        }}
+        onCancel={() => setShowForm(false)}
+      />
+    );
+  }
+
   return (
     <Card>
+      <div className="p-4">
+        <Button onClick={() => setShowForm(true)} className="mb-4">
+          Novo Projeto
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
