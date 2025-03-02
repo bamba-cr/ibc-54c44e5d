@@ -90,6 +90,7 @@ export async function buscarFrequenciaPorData(date: string, projectId: string): 
   }
 
   try {
+    // Corrigido o problema de ordenação - agora usando o formato correto
     const { data, error } = await supabase
       .from("attendance")
       .select(`
@@ -101,7 +102,7 @@ export async function buscarFrequenciaPorData(date: string, projectId: string): 
       `)
       .eq('date', date)
       .eq('project_id', projectId)
-      .order('student.name', { ascending: true });
+      .order('student(name)', { ascending: true });
 
     if (error) {
       console.error("Erro na query do Supabase:", error);
