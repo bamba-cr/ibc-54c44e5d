@@ -7,7 +7,8 @@ import {
   GraduationCap, 
   FileBarChart,
   History,
-  Settings
+  Settings,
+  Calendar
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -28,16 +29,16 @@ export const QuickActions = () => {
       color: "bg-green-50 hover:bg-green-100"
     },
     {
+      icon: <Calendar className="h-6 w-6" />,
+      title: "Consultar Frequência",
+      path: "/consulta-frequencia",
+      color: "bg-emerald-50 hover:bg-emerald-100"
+    },
+    {
       icon: <GraduationCap className="h-6 w-6" />,
       title: "Lançar Notas",
       path: "/notas",
       color: "bg-purple-50 hover:bg-purple-100"
-    },
-    {
-      icon: <FileBarChart className="h-6 w-6" />,
-      title: "Gerar Relatórios",
-      path: "/relatorios",
-      color: "bg-amber-50 hover:bg-amber-100"
     },
     {
       icon: <History className="h-6 w-6" />,
@@ -46,10 +47,10 @@ export const QuickActions = () => {
       color: "bg-rose-50 hover:bg-rose-100"
     },
     {
-      icon: <Settings className="h-6 w-6" />,
-      title: "Configurações",
-      path: "/configuracoes",
-      color: "bg-gray-50 hover:bg-gray-100"
+      icon: <FileBarChart className="h-6 w-6" />,
+      title: "Gerar Relatórios",
+      path: "/relatorios",
+      color: "bg-amber-50 hover:bg-amber-100"
     }
   ];
 
