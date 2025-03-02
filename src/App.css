@@ -1,4 +1,24 @@
-#root {
+/* globals.css */
+@font-face {
+  font-family: 'Milker';
+  src: url('/fonts/Milker-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Cinematografica';
+  src: url('/fonts/Cinematografica-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Draper';
+  src: url('/fonts/Draper-Regular.ttf') format('truetype');
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Montserrat', sans-serif;
+}#root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
