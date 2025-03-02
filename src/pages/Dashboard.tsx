@@ -1,8 +1,8 @@
+
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { OverviewChart } from "@/components/dashboard/OverviewChart";
-import { ProjectsTable } from "@/components/dashboard/ProjectsTable";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { Users, Calendar, BookOpen, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -10,15 +10,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Lazy load components para melhorar performance
+const OverviewChart = lazy(() => import("@/components/dashboard/OverviewChart").then(
+  module => ({ default: module.OverviewChart })
+));
+const ProjectsTable = lazy(() => import("@/components/dashboard/ProjectsTable").then(
+  module => ({ default: module.ProjectsTable })
+));
+
 const Dashboard = () => {
-  // Consultas combinadas para melhor desempenho
-  const { 
-    data: counts,
-    isLoading: isLoadingCounts,
-    error: countsError
-  } = useQuery({
-    queryKey: ["dashboardCounts"],
-    queryFn: async () => {
+  const [isClient, setIsClient] = useState(false);
+  
+  // Efeito para detectar renderização no cliente
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  // Memorizar a função de consulta para evitar re-renders desnecessários
+  const fetchDashboardCounts = useCallback(async () => {
+    try {
       const [students, projects] = await Promise.all([
         supabase.from("students").select("*", { count: "exact", head: true }),
         supabase.from("projects").select("*", { count: "exact", head: true })
@@ -30,7 +40,22 @@ const Dashboard = () => {
         students: students.count || 0,
         projects: projects.count || 0
       };
-    },
+    } catch (error) {
+      console.error("Erro ao buscar dados do dashboard:", error);
+      throw error;
+    }
+  }, []);
+  
+  // Consultas combinadas para melhor desempenho
+  const { 
+    data: counts,
+    isLoading: isLoadingCounts,
+    error: countsError
+  } = useQuery({
+    queryKey: ["dashboardCounts"],
+    queryFn: fetchDashboardCounts,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    refetchOnWindowFocus: false, // Evita refetch desnecessário
   });
 
   // Estados de loading e erro
@@ -66,7 +91,7 @@ const Dashboard = () => {
               <>
                 <StatsCard
                   title="Jovens Impactados"
-                  value={counts?.students || "0"}
+                  value={counts?.students.toString() || "0"}
                   description="Jovens beneficiados pelos nossos programas"
                   icon={<Users size={24} aria-label="Jovens" className="text-blue-600" />}
                   loading={isLoadingCounts}
@@ -74,7 +99,7 @@ const Dashboard = () => {
                 />
                 <StatsCard
                   title="Projetos Culturais"
-                  value={counts?.projects || "0"}
+                  value={counts?.projects.toString() || "0"}
                   description="Projetos em andamento"
                   icon={<Calendar size={24} aria-label="Projetos" className="text-green-600" />}
                   loading={isLoadingCounts}
@@ -101,20 +126,17 @@ const Dashboard = () => {
           {/* Gráficos e Ações Rápidas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <OverviewChart 
-                title="Desempenho dos Projetos"
-                description="Acompanhe o progresso dos projetos culturais e socioeducativos"
-              />
+              <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                {isClient && (
+                  <OverviewChart 
+                    title="Desempenho dos Projetos"
+                    description="Acompanhe o progresso dos projetos culturais e socioeducativos"
+                  />
+                )}
+              </Suspense>
             </div>
             <div className="space-y-6">
-              <QuickActions 
-                title="Ações Rápidas"
-                actions={[
-                  { label: "Adicionar Novo Projeto", icon: <Calendar size={18} />, onClick: () => {} },
-                  { label: "Cadastrar Jovem", icon: <Users size={18} />, onClick: () => {} },
-                  { label: "Gerar Relatório", icon: <Activity size={18} />, onClick: () => {} },
-                ]}
-              />
+              <QuickActions />
             </div>
           </div>
 
@@ -123,7 +145,9 @@ const Dashboard = () => {
             <h3 id="projects-heading" className="text-xl font-semibold mb-4 text-gray-800">
               Projetos em Destaque
             </h3>
-            <ProjectsTable />
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              {isClient && <ProjectsTable />}
+            </Suspense>
           </section>
         </div>
       </main>

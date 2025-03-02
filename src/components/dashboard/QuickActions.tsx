@@ -14,58 +14,60 @@ import { useNavigate } from "react-router-dom";
 export const QuickActions = () => {
   const navigate = useNavigate();
 
+  const actions = [
+    {
+      icon: <Users className="h-6 w-6" />,
+      title: "Gerenciar Alunos",
+      path: "/alunos",
+      color: "bg-blue-50 hover:bg-blue-100"
+    },
+    {
+      icon: <CalendarCheck className="h-6 w-6" />,
+      title: "Registrar Frequência",
+      path: "/frequencia",
+      color: "bg-green-50 hover:bg-green-100"
+    },
+    {
+      icon: <GraduationCap className="h-6 w-6" />,
+      title: "Lançar Notas",
+      path: "/notas",
+      color: "bg-purple-50 hover:bg-purple-100"
+    },
+    {
+      icon: <FileBarChart className="h-6 w-6" />,
+      title: "Gerar Relatórios",
+      path: "/relatorios",
+      color: "bg-amber-50 hover:bg-amber-100"
+    },
+    {
+      icon: <History className="h-6 w-6" />,
+      title: "Ver Histórico",
+      path: "/historico",
+      color: "bg-rose-50 hover:bg-rose-100"
+    },
+    {
+      icon: <Settings className="h-6 w-6" />,
+      title: "Configurações",
+      path: "/configuracoes",
+      color: "bg-gray-50 hover:bg-gray-100"
+    }
+  ];
+
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
       <div className="grid grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/alunos")}
-        >
-          <Users className="h-6 w-6" />
-          <span>Gerenciar Alunos</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/frequencia")}
-        >
-          <CalendarCheck className="h-6 w-6" />
-          <span>Registrar Frequência</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/notas")}
-        >
-          <GraduationCap className="h-6 w-6" />
-          <span>Lançar Notas</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/relatorios")}
-        >
-          <FileBarChart className="h-6 w-6" />
-          <span>Gerar Relatórios</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/historico")}
-        >
-          <History className="h-6 w-6" />
-          <span>Ver Histórico</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex flex-col items-center gap-2 h-auto py-4"
-          onClick={() => navigate("/configuracoes")}
-        >
-          <Settings className="h-6 w-6" />
-          <span>Configurações</span>
-        </Button>
+        {actions.map((action, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            className={`flex flex-col items-center gap-2 h-auto py-4 transition-all duration-200 ${action.color}`}
+            onClick={() => navigate(action.path)}
+          >
+            {action.icon}
+            <span>{action.title}</span>
+          </Button>
+        ))}
       </div>
     </Card>
   );

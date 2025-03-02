@@ -100,6 +100,36 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       grades: {
         Row: {
           created_at: string
@@ -347,6 +377,19 @@ export type Database = {
           attendance_rate: number
           grade_rank: number
           attendance_rank: number
+        }[]
+      }
+      get_user_events: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          id: string
+          title: string
+          date: string
+          description: string
+          type: string
+          created_at: string
         }[]
       }
       has_role: {
