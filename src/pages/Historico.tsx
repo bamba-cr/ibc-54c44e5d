@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,13 +16,11 @@ const Historico = () => {
     queryKey: ["historico", searchTerm],
     queryFn: ({ queryKey }) => buscarHistorico(queryKey[1] as string),
     enabled: false,
-    meta: {
-      onError: () => {
-        toast({
-          description: "Erro ao buscar histórico. Tente novamente.",
-          variant: "destructive",
-        });
-      }
+    onError: () => {
+      toast({
+        description: "Erro ao buscar histórico. Tente novamente.",
+        variant: "destructive",
+      });
     },
     initialData: [] as HistoricoResponse[],
   });
@@ -32,20 +29,25 @@ const Historico = () => {
     e.preventDefault();
     if (!searchTerm.trim()) {
       toast({
-        description: "Digite um nome para buscar.",
+        description: "Por favor, insira um nome válido para buscar.",
         variant: "destructive",
       });
       return;
     }
-    
+
     try {
       await refetch();
     } catch (err) {
       console.error("Erro na busca:", err);
+      toast({
+        description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
   const formatGrade = (grade: number): string => {
+    if (isNaN(grade)) return "N/A";
     return grade.toFixed(1).replace('.', ',');
   };
 
@@ -158,7 +160,7 @@ const Historico = () => {
           >
             <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <p className="text-lg">Erro ao buscar histórico</p>
-            <p className="text-sm">{error?.message || "Tente novamente mais tarde."}</p>
+            <p className="text-sm">{error ? error.message : "Tente novamente mais tarde."}</p>
           </motion.div>
         )}
 
