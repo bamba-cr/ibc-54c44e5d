@@ -95,7 +95,6 @@ const Dashboard = () => {
                   description="Jovens beneficiados pelos nossos programas"
                   icon={<Users size={24} aria-label="Jovens" className="text-blue-600" />}
                   loading={isLoadingCounts}
-                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
                   title="Projetos Culturais"
@@ -103,21 +102,18 @@ const Dashboard = () => {
                   description="Projetos em andamento"
                   icon={<Calendar size={24} aria-label="Projetos" className="text-green-600" />}
                   loading={isLoadingCounts}
-                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
                   title="Engajamento"
                   value="92%"
                   description="Taxa de participação nos últimos 6 meses"
                   icon={<Activity size={24} aria-label="Engajamento" className="text-purple-600" />}
-                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
                 <StatsCard
                   title="Oficinas Realizadas"
                   value="15"
                   description="Oficinas de arte, cultura e educação"
                   icon={<BookOpen size={24} aria-label="Oficinas" className="text-orange-600" />}
-                  className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 />
               </>
             )}
@@ -128,10 +124,7 @@ const Dashboard = () => {
             <div className="lg:col-span-2">
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
                 {isClient && (
-                  <OverviewChart 
-                    title="Desempenho dos Projetos"
-                    description="Acompanhe o progresso dos projetos culturais e socioeducativos"
-                  />
+                  <OverviewChart />
                 )}
               </Suspense>
             </div>
