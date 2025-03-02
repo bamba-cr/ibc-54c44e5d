@@ -41,18 +41,24 @@ type Project = {
 const ConsultaFrequencia = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedProject, setSelectedProject] = useState<string>("");
+  const [searchTriggered, setSearchTriggered] = useState(false);
   const { toast } = useToast();
 
   // Busca projetos disponíveis
   const { data: projects = [] } = useQuery<Project[]>({
     queryKey: ["projects"],
     queryFn: async () => {
+      console.log("Buscando lista de projetos...");
       const { data, error } = await supabase
         .from("projects")
         .select("id, name, code")
         .order("name");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar projetos:", error);
+        throw error;
+      }
+      console.log("Projetos encontrados:", data?.length || 0);
       return data || [];
     },
   });
@@ -68,10 +74,16 @@ const ConsultaFrequencia = () => {
     queryKey: ["frequencia", selectedDate, selectedProject],
     queryFn: async () => {
       if (!selectedDate || !selectedProject) return [];
-      return buscarFrequenciaPorData(
+      console.log("Buscando frequência com os seguintes parâmetros:");
+      console.log("- Data:", format(selectedDate, "yyyy-MM-dd"));
+      console.log("- Projeto ID:", selectedProject);
+      
+      const results = await buscarFrequenciaPorData(
         format(selectedDate, "yyyy-MM-dd"), 
         selectedProject
       );
+      console.log("Resultados da consulta:", results);
+      return results;
     },
     enabled: false,
   });
@@ -94,9 +106,14 @@ const ConsultaFrequencia = () => {
     }
 
     try {
+      setSearchTriggered(true);
       await refetch();
     } catch (err) {
       console.error("Erro na consulta de frequência:", err);
+      toast({
+        description: "Erro ao buscar dados de frequência.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -240,11 +257,11 @@ const ConsultaFrequencia = () => {
           >
             <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <p className="text-lg">Erro ao consultar frequência</p>
-            <p className="text-sm">{error?.message || "Tente novamente mais tarde."}</p>
+            <p className="text-sm">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
           </motion.div>
         )}
 
-        {frequencia.length === 0 && !isLoading && selectedProject && selectedDate && !isError && (
+        {frequencia.length === 0 && !isLoading && searchTriggered && !isError && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

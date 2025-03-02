@@ -40,9 +40,9 @@ export async function buscarHistorico(searchTerm: string): Promise<HistoricoResp
         student:student_id(id, name), 
         project:project_id(id, name, code)
       `)
-      .or(`student.name.ilike.%${searchTerm}%,student.name.ilike.${searchTerm}%,student.name.ilike.%${searchTerm}`)
+      .ilike('student.name', `%${searchTerm}%`)
       .order('period', { ascending: true })
-      .order('student.name', { ascending: true });
+      .order('student(name)', { ascending: true });
 
     if (error) {
       console.error("Erro na query do Supabase:", error);
@@ -90,7 +90,8 @@ export async function buscarFrequenciaPorData(date: string, projectId: string): 
   }
 
   try {
-    // Corrigido o problema de ordenação - agora usando o formato correto
+    console.log(`Executando query de frequência para data ${date} e projeto ${projectId}`);
+    
     const { data, error } = await supabase
       .from("attendance")
       .select(`
@@ -108,6 +109,8 @@ export async function buscarFrequenciaPorData(date: string, projectId: string): 
       console.error("Erro na query do Supabase:", error);
       throw error;
     }
+
+    console.log("Dados brutos de frequência:", data);
 
     const resultados = data?.map(item => ({
       id: item.id,
