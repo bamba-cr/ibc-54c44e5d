@@ -9,46 +9,91 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, User, Bell, Shield, Database, Eye } from "lucide-react";
+import { Settings, User, Bell, Shield, Database, Eye, Save, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Configuracoes = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
+  const [userName, setUserName] = useState("Usuário IBC");
+  const [userEmail, setUserEmail] = useState("usuario@ibc.org.br");
+  const [userBio, setUserBio] = useState("");
   
-  const handleSaveConfig = () => {
+  const handleSaveConfig = async () => {
     setLoading(true);
     
-    // Simulação de salvamento
-    setTimeout(() => {
-      setLoading(false);
+    // Simulação de salvamento das configurações
+    try {
+      // Aqui seria implementada a lógica de salvamento real
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       toast({
         title: "Configurações salvas",
         description: "Suas preferências foram atualizadas com sucesso."
       });
-    }, 1000);
-  };
-  
-  const handleDatabaseBackup = async () => {
-    setLoading(true);
-    try {
-      // Aqui seria implementada a lógica de backup
-      toast({
-        title: "Backup iniciado",
-        description: "O backup do banco de dados foi iniciado. Você será notificado quando for concluído."
-      });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao iniciar o backup.",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar suas configurações.",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleDatabaseBackup = async () => {
+    setBackupLoading(true);
+    try {
+      // Simulação de backup (aqui seria implementada a lógica real)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Backup concluído",
+        description: "O backup do banco de dados foi realizado com sucesso."
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao realizar o backup.",
+        variant: "destructive"
+      });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handlePasswordChange = () => {
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A alteração de senha estará disponível em breve."
+    });
+  };
+
+  const handleTwoFactorAuth = () => {
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A autenticação em dois fatores estará disponível em breve."
+    });
+  };
+
+  const handleManageDevices = () => {
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "O gerenciamento de dispositivos estará disponível em breve."
+    });
+  };
+
+  const handleViewLogs = () => {
+    toast({
+      title: "Visualização de logs",
+      description: "Redirecionando para a página de logs do sistema..."
+    });
+    // Aqui seria implementado o redirecionamento para a página de logs
   };
 
   return (
@@ -122,8 +167,18 @@ const Configuracoes = () => {
                   </div>
                 </div>
                 
-                <Button onClick={handleSaveConfig} disabled={loading}>
-                  {loading ? "Salvando..." : "Salvar preferências"}
+                <Button onClick={handleSaveConfig} disabled={loading} className="w-full sm:w-auto">
+                  {loading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar preferências
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -143,23 +198,49 @@ const Configuracoes = () => {
                     <Label htmlFor="name" className="text-right">
                       Nome
                     </Label>
-                    <Input id="name" defaultValue="Usuário IBC" className="col-span-3" />
+                    <Input 
+                      id="name" 
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="col-span-3" 
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="email" className="text-right">
                       Email
                     </Label>
-                    <Input id="email" defaultValue="usuario@ibc.org.br" className="col-span-3" />
+                    <Input 
+                      id="email" 
+                      value={userEmail}
+                      onChange={(e) => setUserEmail(e.target.value)}
+                      className="col-span-3" 
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="bio" className="text-right">
                       Bio
                     </Label>
-                    <Textarea id="bio" placeholder="Sobre você..." className="col-span-3" />
+                    <Textarea 
+                      id="bio" 
+                      placeholder="Sobre você..." 
+                      value={userBio}
+                      onChange={(e) => setUserBio(e.target.value)}
+                      className="col-span-3" 
+                    />
                   </div>
                 </div>
-                <Button onClick={handleSaveConfig} disabled={loading}>
-                  {loading ? "Salvando..." : "Atualizar perfil"}
+                <Button onClick={handleSaveConfig} disabled={loading} className="w-full sm:w-auto">
+                  {loading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Atualizar perfil
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -204,8 +285,18 @@ const Configuracoes = () => {
                   </div>
                 </div>
                 
-                <Button onClick={handleSaveConfig} disabled={loading}>
-                  {loading ? "Salvando..." : "Salvar preferências"}
+                <Button onClick={handleSaveConfig} disabled={loading} className="w-full sm:w-auto">
+                  {loading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar preferências
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -221,9 +312,18 @@ const Configuracoes = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
-                  <Button variant="outline">Alterar senha</Button>
-                  <Button variant="outline">Ativar autenticação em dois fatores</Button>
-                  <Button variant="outline">Gerenciar dispositivos conectados</Button>
+                  <Button variant="outline" onClick={handlePasswordChange} className="justify-start">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Alterar senha
+                  </Button>
+                  <Button variant="outline" onClick={handleTwoFactorAuth} className="justify-start">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Ativar autenticação em dois fatores
+                  </Button>
+                  <Button variant="outline" onClick={handleManageDevices} className="justify-start">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Gerenciar dispositivos conectados
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -255,12 +355,26 @@ const Configuracoes = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  <Button onClick={handleDatabaseBackup} disabled={loading} variant="outline" className="w-full">
-                    <Database className="mr-2 h-4 w-4" />
-                    {loading ? "Processando..." : "Fazer backup do banco de dados"}
+                  <Button 
+                    onClick={handleDatabaseBackup} 
+                    disabled={backupLoading} 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    {backupLoading ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Processando backup...
+                      </>
+                    ) : (
+                      <>
+                        <Database className="mr-2 h-4 w-4" />
+                        Fazer backup do banco de dados
+                      </>
+                    )}
                   </Button>
                   
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={handleViewLogs}>
                     <Eye className="mr-2 h-4 w-4" />
                     Ver logs do sistema
                   </Button>
