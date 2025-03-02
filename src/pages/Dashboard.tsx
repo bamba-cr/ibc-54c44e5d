@@ -1,8 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import Link from "next/link"; // Para navegação no Next.js
 import { Navbar } from "@/components/layout/Navbar";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { QuickActions } from "@/components/dashboard/QuickActions";
 import { Users, Calendar, BookOpen, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,10 +14,22 @@ const OverviewChart = lazy(() => import("@/components/dashboard/OverviewChart").
 const ProjectsTable = lazy(() => import("@/components/dashboard/ProjectsTable").then(
   module => ({ default: module.ProjectsTable })
 ));
-const StudentPerformance = lazy(() => import("@/components/dashboard/StudentPerformance").then(
-  module => ({ default: module.StudentPerformance })
-));
 
+// Componente de Cartões de Estatísticas
+const StatsCard = ({ title, value, description, icon, loading }) => {
+  return (
+    <div className="p-6 bg-white rounded-3xl shadow-lg flex flex-col items-center justify-center space-y-4">
+      <div className="text-4xl text-primary">{icon}</div>
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Draper' }}>{title}</h3>
+        <p className="text-lg text-gray-600 mt-2" style={{ fontFamily: 'Montserrat' }}>{description}</p>
+        <p className="text-3xl font-bold text-gray-900 mt-2" style={{ fontFamily: 'Milker' }}>{loading ? "Carregando..." : value}</p>
+      </div>
+    </div>
+  );
+};
+
+// Componente Principal - Dashboard
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
 
@@ -68,14 +78,17 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-montserrat">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <DashboardHeader 
-          title="Instituto Brasileiro Cultural e Socioeducativo - IBC"
-          subtitle="Transformando vidas através da cultura e educação"
-          className="text-center"
-        />
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2" style={{ fontFamily: 'Milker' }}>
+            Instituto Brasileiro Cultural e Socioeducativo - IBC
+          </h1>
+          <p className="text-lg text-gray-600" style={{ fontFamily: 'Draper' }}>
+            Transformando vidas através da cultura e educação
+          </p>
+        </header>
 
         {countsError && (
           <Alert variant="destructive" className="mb-6">
@@ -136,14 +149,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Desempenho dos Alunos */}
+          {/* Link para Desempenho dos Alunos */}
           <section aria-labelledby="performance-heading" className="bg-white p-8 rounded-3xl shadow-lg">
             <h3 id="performance-heading" className="text-3xl font-bold mb-6 text-center text-gray-800" style={{ fontFamily: 'Milker' }}>
               Desempenho dos Alunos
             </h3>
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              {isClient && <StudentPerformance />}
-            </Suspense>
+            <div className="flex justify-center">
+              <Link href="/student-performance">
+                <button className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                  Acessar Desempenho dos Alunos
+                </button>
+              </Link>
+            </div>
           </section>
 
           {/* Tabela de Projetos */}
