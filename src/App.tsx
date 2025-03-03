@@ -31,10 +31,8 @@ function App() {
         <Route path="/frequencia" element={<Frequencia />} />
         <Route path="/consulta-frequencia" element={<ConsultaFrequencia />} />
         <Route path="/notas" element={<Notas />} />
-        <Route path="/historico" element={<Historico />} />
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/student-performance/:id" element={<StudentPerformance />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
