@@ -13,10 +13,8 @@ import EditarAluno from '@/pages/EditarAluno';
 import Frequencia from '@/pages/Frequencia';
 import ConsultaFrequencia from '@/pages/ConsultaFrequencia';
 import Notas from '@/pages/Notas';
-import Historico from '@/pages/Historico';
 import Relatorios from '@/pages/Relatorios';
 import StudentPerformance from '@/pages/StudentPerformance';
-import Configuracoes from '@/pages/Configuracoes';
 import NotFound from '@/pages/NotFound';
 
 function App() {
