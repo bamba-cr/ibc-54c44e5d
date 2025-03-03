@@ -28,7 +28,7 @@ const StatCard = ({ title, value, description, icon, color }) => (
     initial={{ y: 20, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
     transition={{ duration: 0.5, delay: Math.random() * 0.3 }}
-    className={`glass-card p-6 rounded-2xl ${color} border-l-4`}
+    className={`glass-card shimmer p-6 rounded-2xl ${color} border-l-4 scale-in-effect`}
   >
     <div className="flex items-center justify-between">
       <div className="space-y-1">
@@ -95,19 +95,28 @@ const Dashboard = () => {
     ));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-secondary/5">
+    <div className="min-h-screen gradient-bg relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="blob-shape w-[400px] h-[400px] bg-primary/10 top-[-100px] right-[-100px]"></div>
+      <div className="blob-shape w-[300px] h-[300px] bg-secondary/20 bottom-[10%] left-[-50px]"></div>
+      <div className="wave-pattern absolute inset-0 z-0 opacity-20"></div>
+      <div className="dot-pattern absolute inset-0 z-0 opacity-30"></div>
+      
       <Navbar />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-10 text-center"
         >
-          <h1 className="text-4xl md:text-5xl font-milker text-primary-dark mb-2">
-            Instituto Brasileiro Cultural
-          </h1>
+          <div className="inline-block relative">
+            <h1 className="text-4xl md:text-5xl font-milker text-primary-dark mb-2 relative z-10">
+              Instituto Brasileiro Cultural
+            </h1>
+            <div className="absolute -bottom-2 left-0 w-full h-3 bg-secondary/30 rounded-full z-0"></div>
+          </div>
           <p className="text-lg text-gray-600 font-montserrat">
             Transformando vidas através da cultura e educação
           </p>
@@ -158,9 +167,13 @@ const Dashboard = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="w-full"
           >
-            <Card className="overflow-hidden border-0 shadow-xl">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-milker text-gray-800 mb-4">Evolução do Impacto</h2>
+            <Card className="overflow-hidden border-0 shadow-xl card-gradient relative">
+              <div className="absolute top-0 left-0 w-full h-full opacity-5 hero-pattern"></div>
+              <CardContent className="p-6 relative z-10">
+                <h2 className="text-2xl font-milker text-gray-800 mb-4 flex items-center">
+                  <span className="w-2 h-8 bg-primary rounded-full mr-2"></span>
+                  Evolução do Impacto
+                </h2>
                 <div className="h-[350px]">
                   <Suspense fallback={<Skeleton className="h-[350px] w-full" />}>
                     {isClient && <OverviewChart />}
@@ -176,8 +189,13 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <section className="bg-white rounded-2xl shadow-xl p-8">
-              <h2 className="section-title font-milker mb-6">Projetos em Andamento</h2>
+            <section className="content-section">
+              <div className="absolute top-0 left-0 w-full h-full opacity-10 hero-pattern"></div>
+              <h2 className="section-title font-milker mb-6 flex items-center justify-center">
+                <span className="w-2 h-8 bg-secondary rounded-full mr-2"></span>
+                Projetos em Andamento
+                <span className="w-2 h-8 bg-secondary rounded-full ml-2"></span>
+              </h2>
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
                 {isClient && <ProjectsTable />}
               </Suspense>
