@@ -9,22 +9,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Cinematografica';
-  src: url('/fonts/Cinematografica.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Draper';
-  src: url('/fonts/Draper.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -61,12 +45,8 @@
     @apply bg-background text-foreground font-montserrat;
   }
 
-  h1, h2, h3 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-milker;
-  }
-
-  h4, h5, h6 {
-    @apply font-draper;
   }
 }
 

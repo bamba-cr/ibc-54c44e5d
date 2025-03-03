@@ -32,7 +32,7 @@ const StatCard = ({ title, value, description, icon, color }) => (
   >
     <div className="flex items-center justify-between">
       <div className="space-y-1">
-        <h3 className="text-xl font-draper text-gray-700">{title}</h3>
+        <h3 className="text-xl font-milker text-gray-700">{title}</h3>
         <p className="text-3xl font-bold text-gray-900">{value}</p>
         <p className="text-sm text-gray-500 font-montserrat">{description}</p>
       </div>
@@ -160,7 +160,7 @@ const Dashboard = () => {
           >
             <Card className="overflow-hidden border-0 shadow-xl">
               <CardContent className="p-6">
-                <h2 className="text-2xl font-cinematografica text-gray-800 mb-4">Evolução do Impacto</h2>
+                <h2 className="text-2xl font-milker text-gray-800 mb-4">Evolução do Impacto</h2>
                 <div className="h-[350px]">
                   <Suspense fallback={<Skeleton className="h-[350px] w-full" />}>
                     {isClient && <OverviewChart />}
@@ -177,7 +177,7 @@ const Dashboard = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <section className="bg-white rounded-2xl shadow-xl p-8">
-              <h2 className="section-title mb-6 font-cinematografica">Projetos em Andamento</h2>
+              <h2 className="section-title font-milker mb-6">Projetos em Andamento</h2>
               <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
                 {isClient && <ProjectsTable />}
               </Suspense>

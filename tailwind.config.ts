@@ -65,8 +65,6 @@ export default {
         sans: ["Inter", "sans-serif"],
         montserrat: ["Montserrat", "sans-serif"],
         milker: ["Milker", "serif"],
-        cinematografica: ["Cinematografica", "sans-serif"],
-        draper: ["Draper", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
