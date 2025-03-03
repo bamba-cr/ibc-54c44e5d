@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -31,6 +32,8 @@ export default {
         },
         secondary: {
           DEFAULT: "#00e676",
+          dark: "#00c853",
+          light: "#69f0ae",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -58,6 +61,13 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+        montserrat: ["Montserrat", "sans-serif"],
+        milker: ["Milker", "serif"],
+        cinematografica: ["Cinematografica", "sans-serif"],
+        draper: ["Draper", "sans-serif"],
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -71,15 +81,16 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        slideUp: {
+          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.5s ease-out",
-      },
-      fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        heading: ["Poppins", "sans-serif"],
+        slideUp: "slideUp 0.6s ease-out",
       },
     },
   },
