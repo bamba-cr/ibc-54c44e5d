@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,23 +12,25 @@ const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const { data: historico, isLoading, refetch, isError, error } = useQuery({
+  // Configuração do useQuery
+  const { data: historico = [], isLoading, refetch, isError, error } = useQuery({
     queryKey: ["historico", searchTerm],
     queryFn: () => buscarHistorico(searchTerm),
-    enabled: false,
-    meta: {
-      onError: () => {
-        toast({
-          description: "Erro ao buscar histórico. Tente novamente.",
-          variant: "destructive",
-        });
-      }
+    enabled: false, // A busca é acionada manualmente via refetch
+    onError: (err) => {
+      console.error("Erro na busca:", err);
+      toast({
+        description: "Erro ao buscar histórico. Tente novamente.",
+        variant: "destructive",
+      });
     },
-    initialData: [] as HistoricoResponse[],
   });
 
+  // Função para lidar com a busca
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validação do campo de busca
     if (!searchTerm.trim()) {
       toast({
         description: "Por favor, insira um nome válido para buscar.",
@@ -39,9 +40,10 @@ const Historico = () => {
     }
 
     try {
-      await refetch();
+      console.log("Buscando histórico para:", searchTerm);
+      await refetch(); // Aciona a busca manualmente
     } catch (err) {
-      console.error("Erro na busca:", err);
+      console.error("Erro inesperado durante a busca:", err);
       toast({
         description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
         variant: "destructive",
@@ -49,6 +51,7 @@ const Historico = () => {
     }
   };
 
+  // Função para formatar notas
   const formatGrade = (grade: number): string => {
     if (isNaN(grade)) return "N/A";
     return grade.toFixed(1).replace('.', ',');
@@ -61,11 +64,13 @@ const Historico = () => {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto"
       >
+        {/* Cabeçalho */}
         <h1 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
           <BookOpen className="h-8 w-8 text-primary" />
           Histórico Escolar
         </h1>
 
+        {/* Formulário de Busca */}
         <Card className="p-6 mb-8 shadow-lg">
           <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -78,8 +83,8 @@ const Historico = () => {
                 className="pl-10"
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading || !searchTerm.trim()}
               className="min-w-[120px]"
             >
@@ -98,7 +103,33 @@ const Historico = () => {
           </form>
         </Card>
 
+        {/* Resultados da Busca */}
         <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-8 text-gray-500"
+            >
+              <Loader2 className="h-12 w-12 mx-auto animate-spin mb-4" />
+              <p className="text-lg">Carregando...</p>
+            </motion.div>
+          )}
+
+          {isError && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-8 text-gray-500"
+            >
+              <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg">Erro ao buscar histórico</p>
+              <p className="text-sm">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
+            </motion.div>
+          )}
+
           {historico.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -110,11 +141,7 @@ const Historico = () => {
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ 
-                    opacity: 1, 
-                    y: 0,
-                    transition: { delay: index * 0.1 }
-                  }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
                 >
                   <Card className="p-4 shadow hover:shadow-md transition-shadow duration-200">
                     <div className="space-y-3">
@@ -125,9 +152,9 @@ const Historico = () => {
                         </div>
                         <span className="text-sm font-medium text-gray-500">{item.project.code}</span>
                       </div>
-                      
+
                       <p className="font-medium text-gray-700">{item.project.name}</p>
-                      
+
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="h-4 w-4" />
@@ -135,9 +162,7 @@ const Historico = () => {
                         </div>
                         <div className="text-right">
                           <span className="text-sm text-gray-500">Nota</span>
-                          <p className="text-lg font-semibold text-primary">
-                            {formatGrade(item.grade)}
-                          </p>
+                          <p className="text-lg font-semibold text-primary">{formatGrade(item.grade)}</p>
                         </div>
                       </div>
 
@@ -153,31 +178,20 @@ const Historico = () => {
               ))}
             </motion.div>
           )}
+
+          {historico.length === 0 && !isLoading && searchTerm && !isError && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-8 text-gray-500"
+            >
+              <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg">Nenhum registro encontrado para "{searchTerm}"</p>
+              <p className="text-sm">Tente buscar por outro nome</p>
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        {isError && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-8 text-gray-500"
-          >
-            <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-lg">Erro ao buscar histórico</p>
-            <p className="text-sm">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
-          </motion.div>
-        )}
-
-        {historico.length === 0 && !isLoading && searchTerm && !isError && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-8 text-gray-500"
-          >
-            <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-lg">Nenhum registro encontrado para "{searchTerm}"</p>
-            <p className="text-sm">Tente buscar por outro nome</p>
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );
