@@ -23,9 +23,15 @@ const ProjectsTable = lazy(() =>
   }))
 );
 
-// Instead of importing StudentPerformance, use the component we already have
-// Import the existing StudentPerformance component from the file
-import { StudentPerformance } from "./Dashboard"; // This is a self-reference to the current file
+// Create StudentPerformance component within this file instead of importing it
+const StudentPerformance = () => {
+  return (
+    <div className="p-4 text-center">
+      <h4 className="text-lg font-medium text-gray-600 mb-2">Visualização de Desempenho</h4>
+      <p>Dados de desempenho serão exibidos aqui.</p>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
@@ -76,7 +82,6 @@ const Dashboard = () => {
         <DashboardHeader 
           title="Instituto Brasileiro Cultural e Socioeducativo - IBC"
           subtitle="Transformando vidas através da cultura e educação"
-          className="text-center"
         />
         
         {countsError && (

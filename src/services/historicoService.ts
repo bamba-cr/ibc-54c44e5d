@@ -1,6 +1,4 @@
 
-// Add the missing functions that are causing errors in Historico.tsx
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface HistoricoResponse {
@@ -19,10 +17,22 @@ export interface HistoricoResponse {
   observations?: string;
 }
 
+export interface FrequenciaResponse {
+  id: string;
+  student: {
+    id: string;
+    name: string;
+  };
+  date: string;
+  status: string;
+  observations?: string;
+}
+
 export const buscarHistorico = async (searchTerm: string): Promise<HistoricoResponse[]> => {
   try {
+    // Instead of using student_history which doesn't exist, we'll use grades and join related data
     const { data, error } = await supabase
-      .from('student_history')
+      .from('grades')
       .select(`
         id,
         grade,
@@ -32,7 +42,7 @@ export const buscarHistorico = async (searchTerm: string): Promise<HistoricoResp
         project:project_id (id, name, code)
       `)
       .or(`student.name.ilike.%${searchTerm}%`)
-      .order('student(name)', { ascending: true });
+      .order('period', { ascending: false });
 
     if (error) {
       console.error('Erro ao buscar histórico:', error);
@@ -46,14 +56,15 @@ export const buscarHistorico = async (searchTerm: string): Promise<HistoricoResp
   }
 };
 
-export const buscarFrequenciaPorData = async (date: string) => {
+export const buscarFrequenciaPorData = async (date: string): Promise<FrequenciaResponse[]> => {
   try {
     const { data, error } = await supabase
       .from('attendance')
       .select(`
         id,
         date,
-        present,
+        status,
+        observations,
         student:student_id (id, name)
       `)
       .eq('date', date)
@@ -70,3 +81,4 @@ export const buscarFrequenciaPorData = async (date: string) => {
     throw err;
   }
 };
+

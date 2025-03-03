@@ -73,15 +73,11 @@ const ConsultaFrequencia = () => {
   } = useQuery<FrequenciaResponse[]>({
     queryKey: ["frequencia", selectedDate, selectedProject],
     queryFn: async () => {
-      if (!selectedDate || !selectedProject) return [];
+      if (!selectedDate) return [];
       console.log("Buscando frequência com os seguintes parâmetros:");
       console.log("- Data:", format(selectedDate, "yyyy-MM-dd"));
-      console.log("- Projeto ID:", selectedProject);
       
-      const results = await buscarFrequenciaPorData(
-        format(selectedDate, "yyyy-MM-dd"), 
-        selectedProject
-      );
+      const results = await buscarFrequenciaPorData(format(selectedDate, "yyyy-MM-dd"));
       console.log("Resultados da consulta:", results);
       return results;
     },
