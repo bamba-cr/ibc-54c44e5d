@@ -1,15 +1,17 @@
 
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import { Users, Calendar, Sparkles, TrendingUp, GraduationCap } from "lucide-react";
+import { Users, Calendar, Sparkles, TrendingUp, GraduationCap, ArrowRight, ArrowUpRight, Award } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-// Lazy load components to improve performance
+// Lazy load components para melhorar performance
 const OverviewChart = lazy(() => 
   import("@/components/dashboard/OverviewChart").then((module) => ({
     default: module.OverviewChart
@@ -22,23 +24,30 @@ const ProjectsTable = lazy(() =>
   }))
 );
 
-// Stat card component with consistent font usage
-const StatCard = ({ title, value, description, icon, color }) => (
+// Componente card de estatísticas com design moderno
+const StatCard = ({ title, value, description, icon, color, trend }) => (
   <motion.div 
     initial={{ y: 20, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
     transition={{ duration: 0.5, delay: Math.random() * 0.3 }}
-    className={`glass-card shimmer p-6 rounded-2xl ${color} border-l-4 scale-in-effect`}
+    className={`frosted-glass rounded-2xl overflow-hidden card-hover`}
   >
-    <div className="flex items-center justify-between">
-      <div className="space-y-1">
-        <h3 className="text-xl font-milker text-gray-700">{title}</h3>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500 font-montserrat">{description}</p>
+    <div className={`h-1 ${color}`}></div>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`rounded-full p-3 ${color} bg-opacity-10`}>
+          {icon}
+        </div>
+        {trend && (
+          <div className="flex items-center text-sm font-medium text-green-500">
+            <ArrowUpRight className="w-4 h-4 mr-1" />
+            {trend}
+          </div>
+        )}
       </div>
-      <div className={`rounded-full p-3 ${color.replace('border-l-4', 'bg-opacity-10')} bg-opacity-20`}>
-        {icon}
-      </div>
+      <h3 className="text-lg text-gray-500 font-medium mb-1">{title}</h3>
+      <p className="text-3xl font-bold mb-2">{value}</p>
+      <p className="text-sm text-gray-500">{description}</p>
     </div>
   </motion.div>
 );
@@ -46,12 +55,12 @@ const StatCard = ({ title, value, description, icon, color }) => (
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
 
-  // Effect to detect client-side rendering
+  // Detecta renderização client-side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Memoize the query function to avoid unnecessary rerenders
+  // Query function memoizada para evitar re-renders desnecessários
   const fetchDashboardData = useCallback(async () => {
     try {
       const [students, projects, attendance] = await Promise.all([
@@ -63,7 +72,7 @@ const Dashboard = () => {
       if (students.error || projects.error || attendance.error) 
         throw new Error("Erro ao carregar dados");
 
-      // Calculate attendance rate
+      // Calcula taxa de presença
       const attendanceCount = attendance.count || 0;
       const presentCount = attendance.data?.filter(a => a.status === 'presente').length || 0;
       const attendanceRate = attendanceCount > 0 
@@ -81,7 +90,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Query for dashboard data
+  // Query para dados do dashboard
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboardData"],
     queryFn: fetchDashboardData,
@@ -91,16 +100,16 @@ const Dashboard = () => {
 
   const renderLoadingSkeletons = () => 
     Array(3).fill(0).map((_, index) => (
-      <Skeleton key={index} className="h-[150px] w-full rounded-xl" />
+      <Skeleton key={index} className="h-[180px] w-full rounded-xl" />
     ));
 
   return (
     <div className="min-h-screen gradient-bg relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="blob-shape w-[400px] h-[400px] bg-primary/10 top-[-100px] right-[-100px]"></div>
-      <div className="blob-shape w-[300px] h-[300px] bg-secondary/20 bottom-[10%] left-[-50px]"></div>
-      <div className="wave-pattern absolute inset-0 z-0 opacity-20"></div>
-      <div className="dot-pattern absolute inset-0 z-0 opacity-30"></div>
+      {/* Elementos decorativos */}
+      <div className="blob-shape w-[600px] h-[600px] bg-primary/5 top-[-200px] right-[-200px]"></div>
+      <div className="blob-shape w-[500px] h-[500px] bg-secondary/10 bottom-[10%] left-[-150px]"></div>
+      <div className="wave-pattern absolute inset-0 z-0 opacity-10"></div>
+      <div className="dot-pattern absolute inset-0 z-0 opacity-20"></div>
       
       <Navbar />
       
@@ -108,16 +117,16 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-10 text-center"
+          transition={{ duration: 0.6 }}
+          className="mb-12 text-center"
         >
           <div className="inline-block relative">
-            <h1 className="text-4xl md:text-5xl font-milker text-primary-dark mb-2 relative z-10">
+            <h1 className="text-4xl md:text-5xl font-milker text-primary-dark mb-3 relative z-10">
               Instituto Brasileiro Cultural
             </h1>
             <div className="absolute -bottom-2 left-0 w-full h-3 bg-secondary/30 rounded-full z-0"></div>
           </div>
-          <p className="text-lg text-gray-600 font-montserrat">
+          <p className="text-lg text-gray-600 mt-2">
             Transformando vidas através da cultura e educação
           </p>
         </motion.div>
@@ -130,50 +139,93 @@ const Dashboard = () => {
           </Alert>
         )}
         
-        <div className="space-y-10">
-          {/* Stats Cards - Only showing data that's fully implemented */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {isLoading ? renderLoadingSkeletons() : (
-              <>
-                <StatCard 
-                  title="Jovens Impactados" 
-                  value={data?.students.toString() || "0"}
-                  description="Jovens beneficiados pelo IBC" 
-                  icon={<Users size={28} className="text-blue-600" />}
-                  color="border-blue-500"
-                />
-                <StatCard 
-                  title="Projetos Ativos" 
-                  value={data?.projects.toString() || "0"} 
-                  description="Projetos culturais em andamento" 
-                  icon={<Sparkles size={28} className="text-purple-600" />}
-                  color="border-purple-500"
-                />
-                <StatCard 
-                  title="Taxa de Presença" 
-                  value={`${data?.attendanceRate || 0}%`} 
-                  description="Média de presença nos eventos" 
-                  icon={<TrendingUp size={28} className="text-green-600" />}
-                  color="border-green-500"
-                />
-              </>
-            )}
-          </div>
-
-          {/* Only showing chart and projects table as they're fully functional */}
+        <div className="space-y-12">
+          {/* Header com Call-to-action */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
+            className="rounded-3xl overflow-hidden relative"
+          >
+            <div className="bg-gradient-to-r from-primary/90 to-primary-dark p-8 md:p-12 relative z-10">
+              <div className="max-w-3xl">
+                <h2 className="text-3xl md:text-4xl font-milker text-white mb-4">Bem-vindo ao IBC Connect</h2>
+                <p className="text-white/90 text-lg mb-6">
+                  Acompanhe o progresso educacional e cultural dos jovens de nossa comunidade em tempo real.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Link to="/alunos">
+                    <Button className="bg-white text-primary hover:bg-white/90 rounded-lg flex items-center gap-2 group">
+                      Gerenciar Alunos
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
+                  <Link to="/relatorios">
+                    <Button variant="outline" className="bg-transparent border-white text-white hover:bg-white/10 rounded-lg">
+                      Ver Relatórios
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-secondary/20 to-transparent md:block hidden"></div>
+            </div>
+            <div className="absolute inset-0 hero-pattern opacity-5 z-0"></div>
+          </motion.div>
+
+          {/* Cards de Estatísticas */}
+          <div>
+            <h2 className="text-2xl font-milker text-primary-dark mb-6 flex items-center">
+              <span className="w-1 h-6 bg-secondary rounded-full mr-2"></span>
+              Visão Geral
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {isLoading ? renderLoadingSkeletons() : (
+                <>
+                  <StatCard 
+                    title="Jovens Impactados" 
+                    value={data?.students.toString() || "0"}
+                    description="Jovens beneficiados pelo IBC" 
+                    icon={<Users size={24} className="text-blue-600" />}
+                    color="bg-blue-500"
+                    trend="+12% este mês"
+                  />
+                  <StatCard 
+                    title="Projetos Ativos" 
+                    value={data?.projects.toString() || "0"} 
+                    description="Projetos culturais em andamento" 
+                    icon={<Sparkles size={24} className="text-purple-600" />}
+                    color="bg-purple-500"
+                    trend="+3 novos"
+                  />
+                  <StatCard 
+                    title="Taxa de Presença" 
+                    value={`${data?.attendanceRate || 0}%`} 
+                    description="Média de presença nos eventos" 
+                    icon={<TrendingUp size={24} className="text-green-600" />}
+                    color="bg-green-500"
+                    trend="+5% de aumento"
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Gráfico de Evolução */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             className="w-full"
           >
-            <Card className="overflow-hidden border-0 shadow-xl card-gradient relative">
+            <Card className="overflow-hidden border-0 shadow-xl frosted-glass relative card-hover">
               <div className="absolute top-0 left-0 w-full h-full opacity-5 hero-pattern"></div>
-              <CardContent className="p-6 relative z-10">
-                <h2 className="text-2xl font-milker text-gray-800 mb-4 flex items-center">
-                  <span className="w-2 h-8 bg-primary rounded-full mr-2"></span>
+              <CardHeader className="pb-0">
+                <CardTitle className="text-2xl font-milker text-gray-800 flex items-center">
+                  <span className="w-1 h-6 bg-primary rounded-full mr-2"></span>
                   Evolução do Impacto
-                </h2>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 relative z-10">
                 <div className="h-[350px]">
                   <Suspense fallback={<Skeleton className="h-[350px] w-full" />}>
                     {isClient && <OverviewChart />}
@@ -183,23 +235,78 @@ const Dashboard = () => {
             </Card>
           </motion.div>
           
-          {/* Projects Table Section */}
+          {/* Seção de Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Registrar Presença",
+                description: "Faça o controle de presença dos alunos nos projetos e atividades.",
+                icon: <Calendar className="h-10 w-10 text-primary" />,
+                link: "/frequencia",
+                color: "from-primary/10 to-primary/5"
+              },
+              {
+                title: "Lançar Notas",
+                description: "Atualize o desempenho acadêmico dos alunos no sistema.",
+                icon: <GraduationCap className="h-10 w-10 text-primary" />,
+                link: "/notas",
+                color: "from-secondary/10 to-secondary/5"
+              },
+              {
+                title: "Conquistas",
+                description: "Acompanhe as conquistas e premiações dos alunos.",
+                icon: <Award className="h-10 w-10 text-primary" />,
+                link: "/student-performance/1",
+                color: "from-blue-500/10 to-blue-500/5"
+              }
+            ].map((action, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * index + 0.3 }}
+              >
+                <Link to={action.link} className="block h-full">
+                  <Card className={`h-full card-hover border-0 shadow-md bg-gradient-to-br ${action.color}`}>
+                    <CardContent className="p-6 flex flex-col h-full">
+                      <div className="rounded-full w-16 h-16 flex items-center justify-center bg-white mb-4">
+                        {action.icon}
+                      </div>
+                      <h3 className="text-xl font-milker mb-2">{action.title}</h3>
+                      <p className="text-gray-600 text-sm mb-4">{action.description}</p>
+                      <div className="mt-auto">
+                        <Button variant="ghost" className="text-primary hover:text-primary-dark hover:bg-primary/5 p-0 flex items-center gap-2 group animated-border">
+                          Acessar
+                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* Tabela de Projetos */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <section className="content-section">
-              <div className="absolute top-0 left-0 w-full h-full opacity-10 hero-pattern"></div>
-              <h2 className="section-title font-milker mb-6 flex items-center justify-center">
-                <span className="w-2 h-8 bg-secondary rounded-full mr-2"></span>
-                Projetos em Andamento
-                <span className="w-2 h-8 bg-secondary rounded-full ml-2"></span>
-              </h2>
-              <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-                {isClient && <ProjectsTable />}
-              </Suspense>
-            </section>
+            <Card className="frosted-glass border-0 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full opacity-5 hero-pattern"></div>
+              <CardHeader className="pb-0">
+                <CardTitle className="text-2xl font-milker text-gray-800 flex items-center">
+                  <span className="w-1 h-6 bg-secondary rounded-full mr-2"></span>
+                  Projetos em Andamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 relative z-10">
+                <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                  {isClient && <ProjectsTable />}
+                </Suspense>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </main>
