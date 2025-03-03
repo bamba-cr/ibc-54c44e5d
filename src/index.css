@@ -99,5 +99,5 @@
 }
 
 .section-title {
-  @apply text-3xl font-bold mb-6 text-center text-gray-800 font-cinematografica;
+  @apply text-3xl font-bold mb-6 text-center text-gray-800;
 }
