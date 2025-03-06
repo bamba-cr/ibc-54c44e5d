@@ -26,14 +26,14 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#6a1b9a",
-          dark: "#47065a",
-          light: "#d7aefb",
+          DEFAULT: "#420d73", // Roxo escuro
+          dark: "#2D0750",
+          light: "#7b2cbf",
         },
         secondary: {
-          DEFAULT: "#00e676",
-          dark: "#00c853",
-          light: "#69f0ae",
+          DEFAULT: "#00ff4c", // Verde neon
+          dark: "#00d940",
+          light: "#39ff6e",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -62,8 +62,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        montserrat: ["Montserrat", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
+        manrope: ["Manrope", "sans-serif"],
         milker: ["Milker", "serif"],
       },
       keyframes: {

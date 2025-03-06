@@ -54,7 +54,7 @@ const Historico = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-[#f8f9fc]">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -62,34 +62,34 @@ const Historico = () => {
           transition={{ duration: 0.5 }}
           className="space-y-8"
         >
-          {/* Cabeçalho com design harmônico */}
+          {/* Cabeçalho com design harmonioso e novas cores */}
           <div className="mb-4 text-center sm:text-left">
-            <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2 sm:inline-flex">
-              <BookOpen className="h-7 w-7 text-primary" />
+            <h1 className="text-3xl font-bold text-primary flex items-center gap-2 sm:inline-flex tracking-tight">
+              <BookOpen className="h-7 w-7 text-secondary" />
               Histórico Escolar
             </h1>
-            <p className="text-gray-500 mt-1.5 max-w-lg">
+            <p className="text-gray-500 mt-1.5 max-w-lg font-poppins text-sm">
               Consulte o histórico acadêmico dos alunos por nome
             </p>
           </div>
 
-          {/* Formulário de Busca com design refinado */}
-          <Card className="p-5 mb-6 shadow-sm border-0 bg-white rounded-xl overflow-hidden">
+          {/* Formulário de Busca com design aprimorado */}
+          <Card className="p-5 mb-6 shadow-md border-0 bg-white rounded-xl overflow-hidden">
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary/60" />
                 <Input
                   type="text"
                   placeholder="Nome do aluno..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-50/70 border-none h-11 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/60 shadow-sm"
+                  className="pl-10 bg-gray-50/70 border-gray-100 h-11 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40 shadow-sm font-poppins"
                 />
               </div>
               <Button
                 type="submit"
                 disabled={isLoading || !searchTerm.trim()}
-                className="h-11 px-5 rounded-lg shadow-sm transition-all duration-200 font-medium"
+                className="h-11 px-5 rounded-lg shadow-sm transition-all duration-200 font-medium bg-primary hover:bg-primary-dark text-white"
               >
                 {isLoading ? (
                   <>
@@ -116,7 +116,7 @@ const Historico = () => {
                 exit={{ opacity: 0 }}
                 className="flex justify-center py-12"
               >
-                <Loader2 className="h-10 w-10 animate-spin text-primary/70" />
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
               </motion.div>
             )}
 
@@ -126,7 +126,7 @@ const Historico = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-center py-10 text-gray-500"
+                className="text-center py-10 text-gray-500 font-poppins"
               >
                 <div className="bg-gray-50 inline-flex p-4 rounded-full mb-3">
                   <Search className="h-8 w-8 text-gray-400" />
@@ -152,36 +152,36 @@ const Historico = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md border-0 bg-white rounded-xl group">
-                      <div className="border-l-4 border-primary h-full p-5 space-y-3">
+                    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg bg-white rounded-xl group border-l-4 border-l-secondary border-t-0 border-r-0 border-b-0">
+                      <div className="p-5 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="bg-primary/10 p-2.5 rounded-full text-primary">
                               <School className="h-5 w-5" />
                             </div>
                             <div>
-                              <h3 className="text-base font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200">{item.student.name}</h3>
-                              <p className="text-xs text-gray-500 mt-0.5">{item.project.code}</p>
+                              <h3 className="text-base font-semibold text-gray-800 group-hover:text-primary transition-colors duration-200 font-manrope">{item.student.name}</h3>
+                              <p className="text-xs text-gray-500 mt-0.5 font-poppins">{item.project.code}</p>
                             </div>
                           </div>
-                          <div className="bg-gray-50 rounded-full h-12 w-12 flex items-center justify-center shadow-sm">
-                            <span className="font-semibold text-lg text-primary">{formatGrade(item.grade)}</span>
+                          <div className="bg-secondary/10 rounded-full h-12 w-12 flex items-center justify-center shadow-sm">
+                            <span className="font-bold text-lg text-primary">{formatGrade(item.grade)}</span>
                           </div>
                         </div>
 
                         <div className="pt-2">
-                          <p className="text-sm font-medium text-gray-700">{item.project.name}</p>
+                          <p className="text-sm font-medium text-gray-700 font-manrope">{item.project.name}</p>
                           
                           <div className="flex items-center gap-1.5 mt-3 text-gray-500">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span className="text-xs">{item.period}</span>
+                            <Calendar className="h-3.5 w-3.5 text-primary/70" />
+                            <span className="text-xs font-poppins">{item.period}</span>
                           </div>
                         </div>
 
                         {item.observations && (
                           <div className="pt-3 border-t border-gray-100 text-sm text-gray-600">
-                            <p className="text-xs font-medium text-gray-500 mb-1">Observações:</p>
-                            <p className="text-sm text-gray-600">{item.observations}</p>
+                            <p className="text-xs font-medium text-gray-500 mb-1 font-manrope">Observações:</p>
+                            <p className="text-sm text-gray-600 font-poppins">{item.observations}</p>
                           </div>
                         )}
                       </div>
@@ -202,8 +202,8 @@ const Historico = () => {
                 <div className="bg-white inline-flex p-4 rounded-full mb-3 shadow-sm">
                   <Search className="h-8 w-8 text-gray-300" />
                 </div>
-                <p className="text-base font-medium text-gray-600">Nenhum registro encontrado</p>
-                <p className="text-sm text-gray-500 mt-1.5">Tente buscar por outro nome</p>
+                <p className="text-lg font-medium text-gray-600 font-manrope">Nenhum registro encontrado</p>
+                <p className="text-sm mt-1.5 max-w-md mx-auto font-poppins text-gray-500">Tente buscar por outro nome</p>
               </motion.div>
             )}
           </AnimatePresence>
