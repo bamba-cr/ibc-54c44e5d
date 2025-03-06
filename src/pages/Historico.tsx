@@ -64,141 +64,150 @@ const Historico = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 min-h-screen bg-gray-50/50">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-4xl mx-auto"
-      >
-        {/* Cabeçalho */}
-        <h1 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
-          <BookOpen className="h-8 w-8 text-primary" />
-          Histórico Escolar
-        </h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Cabeçalho simplificado */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
+              <BookOpen className="h-7 w-7 text-primary" />
+              Histórico Escolar
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Consulte o histórico acadêmico dos alunos por nome
+            </p>
+          </div>
 
-        {/* Formulário de Busca */}
-        <Card className="p-6 mb-8 shadow-lg">
-          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Digite o nome do aluno para buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={isLoading || !searchTerm.trim()}
-              className="min-w-[120px]"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Buscando...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4 mr-2" />
-                  Buscar
-                </>
-              )}
-            </Button>
-          </form>
-        </Card>
+          {/* Formulário de Busca com design minimalista */}
+          <Card className="p-5 mb-8 shadow-sm border-0 bg-white rounded-xl">
+            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Nome do aluno..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-gray-50 border-none h-12 rounded-lg focus-visible:ring-1 focus-visible:ring-primary"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isLoading || !searchTerm.trim()}
+                className="h-12 px-6 rounded-lg font-normal text-sm"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Buscando...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Buscar
+                  </>
+                )}
+              </Button>
+            </form>
+          </Card>
 
-        {/* Resultados da Busca */}
-        <AnimatePresence>
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-8 text-gray-500"
-            >
-              <Loader2 className="h-12 w-12 mx-auto animate-spin mb-4" />
-              <p className="text-lg">Carregando...</p>
-            </motion.div>
-          )}
+          {/* Resultados da Busca */}
+          <AnimatePresence>
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-center py-12"
+              >
+                <Loader2 className="h-10 w-10 animate-spin text-primary/60" />
+              </motion.div>
+            )}
 
-          {isError && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-8 text-gray-500"
-            >
-              <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg">Erro ao buscar histórico</p>
-              <p className="text-sm">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
-            </motion.div>
-          )}
+            {isError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-12 text-gray-500"
+              >
+                <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium">Erro ao buscar histórico</p>
+                <p className="text-sm mt-2">{error instanceof Error ? error.message : "Tente novamente mais tarde."}</p>
+              </motion.div>
+            )}
 
-          {historico.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid gap-4 md:grid-cols-2"
-            >
-              {historico.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
-                >
-                  <Card className="p-4 shadow hover:shadow-md transition-shadow duration-200">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b pb-2">
-                        <div className="flex items-center gap-2">
-                          <School className="h-5 w-5 text-primary" />
-                          <h3 className="text-lg font-semibold">{item.student.name}</h3>
+            {historico.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid gap-5 md:grid-cols-2"
+              >
+                {historico.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
+                  >
+                    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md border-0 bg-white rounded-xl">
+                      <div className="border-l-4 border-primary h-full p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="bg-primary/10 p-2 rounded-full">
+                              <School className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-medium text-gray-800">{item.student.name}</h3>
+                              <p className="text-xs text-gray-500">{item.project.code}</p>
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-full h-12 w-12 flex items-center justify-center">
+                            <span className="font-medium text-lg text-primary">{formatGrade(item.grade)}</span>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium text-gray-500">{item.project.code}</span>
+
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">{item.project.name}</p>
+                          
+                          <div className="flex items-center gap-1 mt-3 text-gray-500">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span className="text-xs">{item.period}</span>
+                          </div>
+                        </div>
+
+                        {item.observations && (
+                          <div className="pt-3 border-t border-gray-100 text-sm text-gray-600">
+                            <p className="text-xs text-gray-500 mb-1">Observações:</p>
+                            <p className="text-sm">{item.observations}</p>
+                          </div>
+                        )}
                       </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
 
-                      <p className="font-medium text-gray-700">{item.project.name}</p>
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="h-4 w-4" />
-                          <span className="text-sm">{item.period}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-sm text-gray-500">Nota</span>
-                          <p className="text-lg font-semibold text-primary">{formatGrade(item.grade)}</p>
-                        </div>
-                      </div>
-
-                      {item.observations && (
-                        <div className="mt-3 pt-3 border-t text-sm text-gray-600">
-                          <p className="font-medium mb-1">Observações:</p>
-                          <p>{item.observations}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-
-          {historico.length === 0 && !isLoading && searchTerm && !isError && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-8 text-gray-500"
-            >
-              <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg">Nenhum registro encontrado para "{searchTerm}"</p>
-              <p className="text-sm">Tente buscar por outro nome</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+            {historico.length === 0 && !isLoading && searchTerm && !isError && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-16 bg-gray-50/50 rounded-xl"
+              >
+                <Search className="h-10 w-10 mx-auto mb-4 text-gray-300" />
+                <p className="text-base font-medium text-gray-600">Nenhum registro encontrado</p>
+                <p className="text-sm text-gray-500 mt-2">Tente buscar por outro nome</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
     </div>
   );
 };
