@@ -1,4 +1,3 @@
-
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import {
@@ -10,6 +9,7 @@ import {
   ArrowRight,
   Award,
   ArrowUpRight,
+  BookOpen,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-// Lazy load components para melhorar a performance
 const OverviewChart = lazy(() =>
   import("@/components/dashboard/OverviewChart").then((module) => ({
     default: module.OverviewChart,
@@ -33,7 +32,6 @@ const ProjectsTable = lazy(() =>
   }))
 );
 
-// Componente card de estatísticas com design moderno
 const StatCard = ({ title, value, description, icon, color, trend }) => (
   <Card className={`border-none shadow-md ${color}`}>
     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -56,12 +54,10 @@ const StatCard = ({ title, value, description, icon, color, trend }) => (
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
 
-  // Detecta renderização client-side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Query function memoizada para evitar re-renders desnecessários
   const fetchDashboardData = useCallback(async () => {
     try {
       const [students, projects, attendance] = await Promise.all([
@@ -73,7 +69,6 @@ const Dashboard = () => {
       if (students.error || projects.error || attendance.error)
         throw new Error("Erro ao carregar dados");
 
-      // Calcula taxa de presença
       const attendanceCount = attendance.count || 0;
       const presentCount =
         attendance.data?.filter((a) => a.status === "presente").length || 0;
@@ -93,7 +88,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Query para dados do dashboard
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboardData"],
     queryFn: fetchDashboardData,
@@ -110,10 +104,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar */}
       <Navbar />
 
-      {/* Header */}
       <header className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold">Bem-vindo ao IBC Connect</h1>
         <p className="text-muted-foreground mt-2">
@@ -122,7 +114,6 @@ const Dashboard = () => {
         </p>
       </header>
 
-      {/* Cards de Estatísticas */}
       <section className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         {isLoading ? (
           renderLoadingSkeletons()
@@ -156,7 +147,6 @@ const Dashboard = () => {
         )}
       </section>
 
-      {/* Gráfico de Evolução */}
       <section className="container mx-auto px-4 mt-8">
         <h2 className="text-xl font-bold mb-4">Evolução do Impacto</h2>
         <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
@@ -164,10 +154,9 @@ const Dashboard = () => {
         </Suspense>
       </section>
 
-      {/* Seção de Quick Actions */}
       <section className="container mx-auto px-4 mt-8">
         <h2 className="text-xl font-bold mb-4">Ações Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             {
               title: "Registrar Presença",
@@ -192,6 +181,14 @@ const Dashboard = () => {
               icon: <TrendingUp size={24} />,
               link: "/student-performance/1",
               color: "from-blue-500/10 to-blue-500/5",
+            },
+            {
+              title: "Histórico Escolar",
+              description:
+                "Consulte o histórico acadêmico completo dos alunos.",
+              icon: <BookOpen size={24} />,
+              link: "/historico",
+              color: "from-purple-500/10 to-purple-500/5",
             },
           ].map((action, index) => (
             <Card
@@ -219,15 +216,13 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Tabela de Projetos */}
-      <section className="container mx-auto px-4 mt-8">
+      <section className="container mx-auto px-4 mt-8 mb-8">
         <h2 className="text-xl font-bold mb-4">Projetos em Andamento</h2>
         <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
           {isClient && <ProjectsTable />}
         </Suspense>
       </section>
 
-      {/* Mensagem de Erro */}
       {error && (
         <Alert className="container mx-auto px-4 mt-8">
           <AlertDescription>
