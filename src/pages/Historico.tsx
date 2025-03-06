@@ -18,16 +18,15 @@ const Historico = () => {
     queryKey: ["historico", searchTerm],
     queryFn: () => buscarHistorico(searchTerm),
     enabled: false, // A busca é acionada manualmente via refetch
-    // Removido onError e adicionado onSettled
-    onSettled: (data, error) => {
-      if (error) {
+    meta: {
+      onError: (error: Error) => {
         console.error("Erro na busca:", error);
         toast({
           description: "Erro ao buscar histórico. Tente novamente.",
           variant: "destructive",
         });
       }
-    },
+    }
   });
 
   // Corrigindo o tipo de dados para HistoricoResponse[]
