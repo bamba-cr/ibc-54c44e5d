@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import {
@@ -8,6 +9,7 @@ import {
   GraduationCap,
   ArrowRight,
   Award,
+  ArrowUpRight,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
