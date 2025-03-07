@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -7,8 +6,6 @@ import {
   CalendarCheck, 
   GraduationCap,
   FileBarChart,
-  History,
-  Settings,
   LogOut,
   Menu,
   X
@@ -22,8 +19,6 @@ const navigationItems = [
   { icon: <CalendarCheck className="w-4 h-4 mr-2" />, label: "Frequência", path: "/frequencia" },
   { icon: <GraduationCap className="w-4 h-4 mr-2" />, label: "Notas", path: "/notas" },
   { icon: <FileBarChart className="w-4 h-4 mr-2" />, label: "Relatórios", path: "/relatorios" },
-  { icon: <History className="w-4 h-4 mr-2" />, label: "Histórico", path: "/historico" },
-  { icon: <Settings className="w-4 h-4 mr-2" />, label: "Configurações", path: "/configuracoes" },
 ];
 
 export const Navbar = () => {

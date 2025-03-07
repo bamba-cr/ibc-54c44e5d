@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Award,
   ArrowUpRight,
-  BookOpen,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,7 +155,7 @@ const Dashboard = () => {
 
       <section className="container mx-auto px-4 mt-8">
         <h2 className="text-xl font-bold mb-4">Ações Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
               title: "Registrar Presença",
@@ -181,14 +180,6 @@ const Dashboard = () => {
               icon: <TrendingUp size={24} />,
               link: "/student-performance/1",
               color: "from-blue-500/10 to-blue-500/5",
-            },
-            {
-              title: "Histórico Escolar",
-              description:
-                "Consulte o histórico acadêmico completo dos alunos.",
-              icon: <BookOpen size={24} />,
-              link: "/historico",
-              color: "from-purple-500/10 to-purple-500/5",
             },
           ].map((action, index) => (
             <Card
