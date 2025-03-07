@@ -53,18 +53,20 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Check if the target user exists in the auth system
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single();
-        
-      if (userError || !userData) {
+      // Get user ID from auth API
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+      
+      if (usersError || !users) {
+        throw new Error("Erro ao buscar usuários");
+      }
+      
+      const targetUser = users.find(user => user.email === email);
+      
+      if (!targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
-      const targetUserId = userData.id;
+      const targetUserId = targetUser.id;
 
       // Check if user is already an admin
       const { data: existingRole, error: existingRoleError } = await supabase

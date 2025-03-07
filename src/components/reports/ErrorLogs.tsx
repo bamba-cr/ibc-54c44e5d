@@ -6,9 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Json } from "@/integrations/supabase/types";
 
 interface ErrorLog {
   id: string;
+  user_id: string | null;
   user_email: string | null;
   error_type: string;
   message: string;
@@ -16,6 +18,8 @@ interface ErrorLog {
   route: string | null;
   created_at: string;
   resolved: boolean;
+  resolution_notes: string | null;
+  additional_data?: Json | null;
 }
 
 export const ErrorLogs = () => {
@@ -27,13 +31,28 @@ export const ErrorLogs = () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('error_logs')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_error_logs_with_details');
       
       if (error) throw error;
       
-      setLogs(data || []);
+      if (data) {
+        // Ensure data conforms to ErrorLog interface
+        const typedLogs: ErrorLog[] = data.map(log => ({
+          id: log.id,
+          user_id: log.user_id,
+          user_email: log.user_email,
+          error_type: log.error_type,
+          message: log.message,
+          stack_trace: log.stack_trace,
+          route: log.route,
+          created_at: log.created_at,
+          resolved: log.resolved,
+          resolution_notes: log.resolution_notes,
+          additional_data: log.additional_data
+        }));
+        
+        setLogs(typedLogs);
+      }
     } catch (error) {
       console.error('Error fetching logs:', error);
       toast({
