@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -5,18 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRateLimited, setIsRateLimited] = useState(false);
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [activeTab, setActiveTab] = useState("login");
+  const [errors, setErrors] = useState({ email: "", password: "", username: "" });
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateForm = () => {
-    const newErrors = { email: "", password: "" };
+  const validateForm = (isSignUp = false) => {
+    const newErrors = { email: "", password: "", username: "" };
     let isValid = true;
 
     if (!email) {
@@ -35,11 +39,19 @@ export const LoginForm = () => {
       isValid = false;
     }
 
+    if (isSignUp && !username) {
+      newErrors.username = "Nome de usuário é obrigatório";
+      isValid = false;
+    } else if (isSignUp && username.length < 3) {
+      newErrors.username = "O nome de usuário deve ter pelo menos 3 caracteres";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -92,8 +104,10 @@ export const LoginForm = () => {
     }
   };
 
-  const handleSignUp = async () => {
-    if (!validateForm()) {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm(true)) {
       return;
     }
 
@@ -113,6 +127,11 @@ export const LoginForm = () => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username,
+          }
+        }
       });
 
       if (error) {
@@ -142,6 +161,9 @@ export const LoginForm = () => {
       setTimeout(() => {
         setIsRateLimited(false);
       }, 60000);
+      
+      // Voltar para a aba de login
+      setActiveTab("login");
     } catch (error: any) {
       console.error("Unexpected signup error:", error);
       toast({
@@ -158,81 +180,153 @@ export const LoginForm = () => {
     <Card className="w-full max-w-md p-6 space-y-6 animate-fadeIn">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-primary-dark">IBC CONNECT</h1>
-        <p className="text-gray-500">Faça login para continuar</p>
+        <p className="text-gray-500">Acesse sua conta</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="email" className="label">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors({ ...errors, email: "" });
-            }}
-            required
-            className={`input-field ${errors.email ? "border-red-500" : ""}`}
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-          )}
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="login">Login</TabsTrigger>
+          <TabsTrigger value="signup">Cadastro</TabsTrigger>
+        </TabsList>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="label">
-            Senha
-          </label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors({ ...errors, password: "" });
-            }}
-            required
-            className={`input-field ${errors.password ? "border-red-500" : ""}`}
-          />
-          {errors.password && (
-            <p className="text-sm text-red-500 mt-1">{errors.password}</p>
-          )}
-        </div>
+        <TabsContent value="login" className="mt-4">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email-login" className="label">
+                Email
+              </label>
+              <Input
+                id="email-login"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({ ...errors, email: "" });
+                }}
+                required
+                className={`input-field ${errors.email ? "border-red-500" : ""}`}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+              )}
+            </div>
 
-        <div className="space-y-4">
-          <Button
-            type="submit"
-            className="w-full btn-primary"
-            disabled={isLoading}
-          >
-            {isLoading ? "Entrando..." : "Entrar"}
-          </Button>
+            <div className="space-y-2">
+              <label htmlFor="password-login" className="label">
+                Senha
+              </label>
+              <Input
+                id="password-login"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors({ ...errors, password: "" });
+                }}
+                required
+                className={`input-field ${errors.password ? "border-red-500" : ""}`}
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+              )}
+            </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleSignUp}
-            disabled={isLoading || isRateLimited}
-          >
-            {isRateLimited ? "Aguarde..." : "Criar conta"}
-          </Button>
-        </div>
+            <Button
+              type="submit"
+              className="w-full btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "Entrar"}
+            </Button>
 
-        <div className="text-center">
-          <a
-            href="#"
-            className="text-sm text-primary hover:text-primary-dark transition-colors"
-          >
-            Esqueceu sua senha?
-          </a>
-        </div>
-      </form>
+            <div className="text-center">
+              <a
+                href="#"
+                className="text-sm text-primary hover:text-primary-dark transition-colors"
+              >
+                Esqueceu sua senha?
+              </a>
+            </div>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="signup" className="mt-4">
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="username" className="label">
+                Nome de Usuário
+              </label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="seunome"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (errors.username) setErrors({ ...errors, username: "" });
+                }}
+                required
+                className={`input-field ${errors.username ? "border-red-500" : ""}`}
+              />
+              {errors.username && (
+                <p className="text-sm text-red-500 mt-1">{errors.username}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="email-signup" className="label">
+                Email
+              </label>
+              <Input
+                id="email-signup"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({ ...errors, email: "" });
+                }}
+                required
+                className={`input-field ${errors.email ? "border-red-500" : ""}`}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="password-signup" className="label">
+                Senha
+              </label>
+              <Input
+                id="password-signup"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors({ ...errors, password: "" });
+                }}
+                required
+                className={`input-field ${errors.password ? "border-red-500" : ""}`}
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || isRateLimited}
+            >
+              {isRateLimited ? "Aguarde..." : "Criar conta"}
+            </Button>
+          </form>
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 };
