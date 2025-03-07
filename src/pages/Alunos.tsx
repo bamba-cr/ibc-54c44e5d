@@ -92,7 +92,7 @@ const Alunos = () => {
   // Filter students based on search term
   const filteredStudents = students?.filter(student => 
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (student.guardian_email && student.guardian_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (student.cpf && student.cpf.includes(searchTerm))
   );
 
@@ -133,8 +133,8 @@ const Alunos = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Telefone</TableHead>
+                      <TableHead>Email do Responsável</TableHead>
+                      <TableHead>Telefone do Responsável</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -142,8 +142,8 @@ const Alunos = () => {
                     {filteredStudents.map((student) => (
                       <TableRow key={student.id}>
                         <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.email || "-"}</TableCell>
-                        <TableCell>{student.phone || "-"}</TableCell>
+                        <TableCell>{student.guardian_email || "-"}</TableCell>
+                        <TableCell>{student.guardian_phone || "-"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button 
@@ -179,7 +179,7 @@ const Alunos = () => {
         </TabsContent>
         
         <TabsContent value="cadastro">
-          <StudentForm onSuccess={() => {
+          <StudentForm onSubmit={async () => {
             refetch();
             toast({
               title: "Sucesso!",

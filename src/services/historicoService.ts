@@ -122,7 +122,7 @@ export const buscarFrequenciaPorData = async (date: string): Promise<FrequenciaR
       throw new Error("Erro ao buscar frequência: " + error.message);
     }
 
-    // Formata os dados para o tipo FrequenciaResponse
+    // Formata os dados para o tipo FrequenciaResponse e garante que status seja do tipo correto
     const formattedResults: FrequenciaResponse[] = data ? data.map(item => ({
       id: item.id,
       student: {
@@ -135,7 +135,7 @@ export const buscarFrequenciaPorData = async (date: string): Promise<FrequenciaR
         code: item.projects.code
       },
       date: item.date,
-      status: item.status,
+      status: item.status === "presente" ? "presente" : "ausente", // Garante que status seja apenas "presente" ou "ausente"
       observations: item.observations
     })) : [];
 
