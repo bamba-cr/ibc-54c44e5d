@@ -11,27 +11,26 @@ import { Shield, UserPlus } from "lucide-react";
 interface AdminUser {
   id: string;
   email?: string;
+  user_metadata?: {
+    username?: string;
+  };
   // Add other properties if needed
 }
 
 export const AdminManagement = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const validateEmail = (email: string) => {
-    return String(email)
-      .toLowerCase()
-      .match(
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-      );
+  const validateUsername = (username: string) => {
+    return username.length >= 3;
   };
 
   const handleAddAdmin = async () => {
-    if (!validateEmail(email)) {
+    if (!validateUsername(username)) {
       toast({
-        title: "Email inválido",
-        description: "Por favor, insira um email válido.",
+        title: "Nome de usuário inválido",
+        description: "O nome de usuário deve ter pelo menos 3 caracteres.",
         variant: "destructive",
       });
       return;
@@ -70,9 +69,9 @@ export const AdminManagement = () => {
       // Cast the users array to the defined AdminUser type
       const users = data.users as AdminUser[];
       
-      // Now TypeScript knows that user.email exists
+      // Find user by username in metadata
       const targetUser = users.find(user => 
-        user.email?.toLowerCase() === email.toLowerCase()
+        user.user_metadata?.username?.toLowerCase() === username.toLowerCase()
       );
       
       if (!targetUser) {
@@ -113,7 +112,7 @@ export const AdminManagement = () => {
         description: "Usuário promovido a administrador com sucesso.",
       });
 
-      setEmail("");
+      setUsername("");
     } catch (error) {
       console.error("Error adding admin:", error);
       toast({
@@ -138,10 +137,10 @@ export const AdminManagement = () => {
       <CardContent className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
-            type="email"
-            placeholder="Email do usuário"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Nome de usuário"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="flex-1"
           />
           <Button
