@@ -54,13 +54,13 @@ export const AdminManagement = () => {
       }
 
       // Get user ID from auth API
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+      const { data, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError || !users) {
+      if (usersError || !data?.users) {
         throw new Error("Erro ao buscar usuários");
       }
       
-      const targetUser = users.find(user => user.email === email);
+      const targetUser = data.users.find(user => user.email?.toLowerCase() === email.toLowerCase());
       
       if (!targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
