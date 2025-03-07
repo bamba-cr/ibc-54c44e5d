@@ -7,6 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
 
+// Define interface for Admin User type to solve the TypeScript error
+interface AdminUser {
+  id: string;
+  email?: string;
+  // Add other properties if needed
+}
+
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,14 +60,20 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Get user ID from auth API
+      // Get user ID from auth API - with proper typing
       const { data, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError || !data?.users) {
+      if (usersError || !data) {
         throw new Error("Erro ao buscar usuários");
       }
       
-      const targetUser = data.users.find(user => user.email?.toLowerCase() === email.toLowerCase());
+      // Cast the users array to the defined AdminUser type
+      const users = data.users as AdminUser[];
+      
+      // Now TypeScript knows that user.email exists
+      const targetUser = users.find(user => 
+        user.email?.toLowerCase() === email.toLowerCase()
+      );
       
       if (!targetUser) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
