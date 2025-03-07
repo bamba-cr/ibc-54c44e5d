@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus } from "lucide-react";
-import { User } from "@supabase/supabase-js";
 
 export const AdminManagement = () => {
   const [email, setEmail] = useState("");
@@ -34,17 +33,19 @@ export const AdminManagement = () => {
     setIsLoading(true);
     try {
       // First get current user's session to get their ID
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!user) {
+      if (sessionError || !sessionData.session) {
         throw new Error("Usuário não autenticado");
       }
+      
+      const currentUserId = sessionData.session.user.id;
 
       // Check if current user has admin role
       const { data: currentUserRole, error: roleCheckError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
         .eq('role', 'admin')
         .single();
 
@@ -52,30 +53,27 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Get target user's ID from their email by checking auth.users
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) {
-        throw new Error("Erro ao buscar usuários");
-      }
-
-      const targetUser = users.find((u: User) => u.email === email);
-
-      if (!targetUser) {
+      // Check if the target user exists in the auth system
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+        
+      if (userError || !userData) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
-      const targetUserId = targetUser.id;
+      const targetUserId = userData.id;
 
       // Check if user is already an admin
       const { data: existingRole, error: existingRoleError } = await supabase
         .from("user_roles")
         .select("*")
         .eq("user_id", targetUserId)
-        .eq("role", "admin")
-        .single();
+        .eq("role", "admin");
 
-      if (existingRole) {
+      if (existingRole && existingRole.length > 0) {
         toast({
           title: "Usuário já é admin",
           description: "Este usuário já possui privilégios de administrador.",

@@ -41,12 +41,19 @@ export const CalendarSection = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Aqui seria a chamada para obter eventos do usuário
-        // Quando implementado com autenticação, deve usar o user.id real
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .order('date', { ascending: false });
+        setLoading(true);
+        // Obter ID do usuário atual se disponível
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || null;
+        
+        let query = supabase.from('events').select('*');
+        
+        // Se houver um userId, filtrar por ele
+        if (userId) {
+          query = query.eq('user_id', userId);
+        }
+        
+        const { data, error } = await query.order('date', { ascending: false });
           
         if (error) throw error;
         
@@ -68,6 +75,8 @@ export const CalendarSection = () => {
           description: "Não foi possível carregar seus eventos. Tente novamente mais tarde.",
           variant: "destructive"
         });
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -98,16 +107,19 @@ export const CalendarSection = () => {
     setLoading(true);
     
     try {
+      // Obter ID do usuário atual se disponível
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      
       // Criar evento no banco de dados
-      // Quando implementado com autenticação, deve usar auth.user().id
       const { data, error } = await supabase
         .from('events')
         .insert({
           title: newEvent.title,
-          date: newEvent.date.toISOString(),
+          date: format(newEvent.date, 'yyyy-MM-dd'),
           type: newEvent.type,
           description: newEvent.description,
-          user_id: '00000000-0000-0000-0000-000000000000' // Placeholder, será substituído pelo ID do usuário autenticado
+          user_id: userId || '00000000-0000-0000-0000-000000000000' // Placeholder ou ID real
         })
         .select();
         
@@ -265,6 +277,7 @@ export const CalendarSection = () => {
                       <div className="col-span-3">
                         <Input
                           id="date"
+                          name="date"
                           type="date"
                           value={format(newEvent.date, 'yyyy-MM-dd')}
                           onChange={(e) => setNewEvent(prev => ({ 

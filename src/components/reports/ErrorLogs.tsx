@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface ErrorLog {
   id: string;
@@ -24,7 +25,11 @@ export const ErrorLogs = () => {
 
   const fetchLogs = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_error_logs_with_details');
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('error_logs')
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       
@@ -45,16 +50,43 @@ export const ErrorLogs = () => {
     fetchLogs();
   }, []);
 
+  const markAsResolved = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('error_logs')
+        .update({ resolved: true })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setLogs(prev => prev.map(log => 
+        log.id === id ? { ...log, resolved: true } : log
+      ));
+      
+      toast({
+        title: "Log resolvido",
+        description: "O log foi marcado como resolvido."
+      });
+    } catch (error) {
+      console.error('Error updating log:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar o log como resolvido.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getErrorTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      api: "bg-yellow-500",
-      frontend: "bg-red-500",
-      backend: "bg-purple-500",
-      database: "bg-blue-500",
-      auth: "bg-orange-500",
-      other: "bg-gray-500"
+      api: "bg-[#00fe9b] text-[#00041f]",
+      frontend: "bg-[#6765e0] text-[#f7f7ff]",
+      backend: "bg-[#00041f] text-[#f7f7ff]",
+      database: "bg-blue-500 text-white",
+      auth: "bg-orange-500 text-white",
+      other: "bg-gray-500 text-white"
     };
-    return colors[type] || colors.other;
+    return colors[type.toLowerCase()] || colors.other;
   };
 
   return (
@@ -74,11 +106,18 @@ export const ErrorLogs = () => {
         ) : (
           <div className="space-y-4">
             {logs.map((log) => (
-              <div key={log.id} className="border rounded-lg p-4 space-y-2">
+              <div key={log.id} className={`border rounded-lg p-4 space-y-2 ${log.resolved ? 'bg-gray-50' : ''}`}>
                 <div className="flex items-center justify-between">
-                  <Badge className={`${getErrorTypeColor(log.error_type)} text-white`}>
-                    {log.error_type.toUpperCase()}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getErrorTypeColor(log.error_type)}>
+                      {log.error_type.toUpperCase()}
+                    </Badge>
+                    {log.resolved && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" /> Resolvido
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-sm text-gray-500">
                     {new Date(log.created_at).toLocaleString()}
                   </span>
@@ -99,6 +138,18 @@ export const ErrorLogs = () => {
                       {log.stack_trace}
                     </pre>
                   </details>
+                )}
+                {!log.resolved && (
+                  <div className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => markAsResolved(log.id)}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Marcar como resolvido
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
