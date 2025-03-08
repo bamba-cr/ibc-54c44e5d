@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentForm } from "@/components/students/StudentForm";
@@ -88,19 +89,62 @@ const Alunos = () => {
     }
   };
 
-  // Handle student registration
+  // Handle student registration - Corrigindo para o formato correto
   const handleStudentSubmit = async (data: any) => {
-    console.log("Dados do aluno a serem cadastrados:", data); // Verificando os dados antes de enviar
+    console.log("Dados do aluno recebidos:", data);
 
     try {
-      // Tente inserir os dados no Supabase
-      const { error } = await supabase
+      // Ajustando o formato dos dados para corresponder ao esperado pelo Supabase
+      const studentData = {
+        name: data.name,
+        age: data.age ? parseInt(data.age) : null,
+        birth_date: data.birth_date || data.birthDate,
+        rg: data.rg,
+        cpf: data.cpf,
+        address: data.address,
+        city: data.city,
+        guardian_name: data.guardian_name || data.guardianName,
+        guardian_relationship: data.guardian_relationship || data.guardianRelationship,
+        guardian_cpf: data.guardian_cpf || data.guardianCpf,
+        guardian_rg: data.guardian_rg || data.guardianRg,
+        guardian_phone: data.guardian_phone || data.guardianPhone,
+        guardian_email: data.guardian_email || data.guardianEmail,
+        notes: data.notes || data.observations,
+        photo_url: data.photo_url
+      };
+
+      console.log("Dados formatados para inserção:", studentData);
+
+      // Tentar inserir os dados no Supabase
+      const { data: insertedData, error } = await supabase
         .from("students")
-        .insert([data]);
+        .insert([studentData])
+        .select();
 
       if (error) {
-        console.error("Erro ao cadastrar aluno:", error); // Exibe erro no console
+        console.error("Erro ao cadastrar aluno:", error);
         throw error;
+      }
+
+      console.log("Aluno cadastrado com sucesso:", insertedData);
+
+      // Se tiver projetos selecionados, cadastrar a relação
+      if (data.projects && data.projects.length > 0 && insertedData?.[0]?.id) {
+        const studentId = insertedData[0].id;
+        const projectRelations = data.projects.map((projectId: string) => ({
+          student_id: studentId,
+          project_id: projectId
+        }));
+
+        console.log("Relacionando aluno a projetos:", projectRelations);
+
+        const { error: projectError } = await supabase
+          .from("student_projects")
+          .insert(projectRelations);
+
+        if (projectError) {
+          console.error("Erro ao relacionar aluno com projetos:", projectError);
+        }
       }
 
       toast({
@@ -108,13 +152,13 @@ const Alunos = () => {
         description: "Aluno cadastrado com sucesso.",
       });
 
-      refetch(); // Atualiza a lista de alunos após o cadastro
-    } catch (error) {
-      console.error("Erro ao cadastrar aluno:", error); // Exibe erro no console
+      refetch();
+    } catch (error: any) {
+      console.error("Erro completo ao cadastrar aluno:", error);
       toast({
         title: "Erro!",
-        description: "Não foi possível cadastrar o aluno.",
-        variant: "destructive", // Variável para mostrar um erro no toast
+        description: error.message || "Não foi possível cadastrar o aluno.",
+        variant: "destructive",
       });
     }
   };
