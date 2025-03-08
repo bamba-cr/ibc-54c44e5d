@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ type Student = Database['public']['Tables']['students']['Row'];
 
 interface StudentFormProps {
   initialValues?: Student;
-  onSubmit?: (student: Partial<Student>) => Promise<void>;
+  onSubmit?: (student: Partial<Student> & {projects?: string[]}) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -82,7 +83,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
   };
 
   const validateForm = () => {
-    if (!formValues.name || !formValues.birthDate || !formValues.address) {
+    if (!formValues.name || !formValues.birthDate || !formValues.address || !formValues.city) {
       toast({
         title: "Erro de validação",
         description: "Por favor, preencha todos os campos obrigatórios",
@@ -138,9 +139,10 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         photoUrl = publicUrl;
       }
 
+      // Format data properly for submission
       const studentData = {
         name: formValues.name,
-        age: parseInt(formValues.age),
+        age: formValues.age ? parseInt(formValues.age) : null,
         birth_date: formValues.birthDate,
         rg: formValues.rg,
         cpf: formValues.cpf,
@@ -154,6 +156,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         guardian_email: formValues.guardianEmail,
         notes: formValues.observations,
         photo_url: photoUrl || initialValues?.photo_url,
+        projects: selectedProjects
       };
 
       if (onSubmit) {
@@ -163,13 +166,29 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
 
       const { data: student, error: studentError } = await supabase
         .from("students")
-        .insert(studentData)
+        .insert({
+          name: studentData.name,
+          age: studentData.age,
+          birth_date: studentData.birth_date,
+          rg: studentData.rg,
+          cpf: studentData.cpf,
+          address: studentData.address,
+          city: studentData.city,
+          guardian_name: studentData.guardian_name,
+          guardian_relationship: studentData.guardian_relationship,
+          guardian_cpf: studentData.guardian_cpf,
+          guardian_rg: studentData.guardian_rg,
+          guardian_phone: studentData.guardian_phone,
+          guardian_email: studentData.guardian_email,
+          notes: studentData.notes,
+          photo_url: studentData.photo_url
+        })
         .select()
         .single();
 
       if (studentError) throw studentError;
 
-      if (selectedProjects.length > 0) {
+      if (selectedProjects.length > 0 && student) {
         const projectMappings = selectedProjects.map(projectId => ({
           student_id: student.id,
           project_id: projectId,
@@ -207,6 +226,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
       });
       setSelectedProjects([]);
     } catch (error: any) {
+      console.error("Erro ao processar o cadastro:", error);
       toast({
         title: "Erro ao cadastrar aluno",
         description: error.message || "Ocorreu um erro ao cadastrar o aluno",

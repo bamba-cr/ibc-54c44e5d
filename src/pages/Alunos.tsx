@@ -15,9 +15,10 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Search, User, Edit, Trash2, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Alunos = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Alunos = () => {
   }, [navigate]);
 
   // Fetch students
-  const { data: students, isLoading, refetch } = useQuery({
+  const { data: students, isLoading, error: fetchError, refetch } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -79,43 +80,43 @@ const Alunos = () => {
       });
       
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao remover aluno:", error);
       toast({
         title: "Erro!",
-        description: "Não foi possível remover o aluno.",
+        description: error.message || "Não foi possível remover o aluno.",
         variant: "destructive",
       });
     }
   };
 
-  // Handle student registration - Corrigindo para o formato correto
+  // Handle student registration
   const handleStudentSubmit = async (data: any) => {
     console.log("Dados do aluno recebidos:", data);
 
     try {
-      // Ajustando o formato dos dados para corresponder ao esperado pelo Supabase
+      // Verificar se os dados estão no formato correto
       const studentData = {
         name: data.name,
         age: data.age ? parseInt(data.age) : null,
-        birth_date: data.birth_date || data.birthDate,
+        birth_date: data.birth_date,
         rg: data.rg,
         cpf: data.cpf,
         address: data.address,
         city: data.city,
-        guardian_name: data.guardian_name || data.guardianName,
-        guardian_relationship: data.guardian_relationship || data.guardianRelationship,
-        guardian_cpf: data.guardian_cpf || data.guardianCpf,
-        guardian_rg: data.guardian_rg || data.guardianRg,
-        guardian_phone: data.guardian_phone || data.guardianPhone,
-        guardian_email: data.guardian_email || data.guardianEmail,
-        notes: data.notes || data.observations,
+        guardian_name: data.guardian_name,
+        guardian_relationship: data.guardian_relationship,
+        guardian_cpf: data.guardian_cpf,
+        guardian_rg: data.guardian_rg,
+        guardian_phone: data.guardian_phone,
+        guardian_email: data.guardian_email,
+        notes: data.notes,
         photo_url: data.photo_url
       };
 
       console.log("Dados formatados para inserção:", studentData);
 
-      // Tentar inserir os dados no Supabase
+      // Inserir o aluno no Supabase
       const { data: insertedData, error } = await supabase
         .from("students")
         .insert([studentData])
@@ -144,6 +145,11 @@ const Alunos = () => {
 
         if (projectError) {
           console.error("Erro ao relacionar aluno com projetos:", projectError);
+          toast({
+            title: "Atenção",
+            description: "Aluno cadastrado, mas houve um erro ao relacionar com os projetos.",
+            variant: "destructive",
+          });
         }
       }
 
@@ -172,6 +178,15 @@ const Alunos = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
+      {fetchError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Erro ao carregar alunos</AlertTitle>
+          <AlertDescription>
+            {fetchError.message || "Não foi possível carregar a lista de alunos."}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Tabs defaultValue="lista" className="max-w-5xl mx-auto">
         <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">
           <TabsTrigger value="lista">Lista de Alunos</TabsTrigger>
