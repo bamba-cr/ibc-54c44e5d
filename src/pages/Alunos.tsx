@@ -90,20 +90,19 @@ const Alunos = () => {
 
   // Handle student registration
   const handleStudentSubmit = async (data: any) => {
+    console.log("Dados do aluno a serem cadastrados:", data); // Verificando os dados antes de enviar
+
     try {
-      console.log("Dados do aluno a serem cadastrados:", data);  // Log para verificar os dados
-      
       // Tente inserir os dados no Supabase
       const { error } = await supabase
         .from("students")
-        .insert([data]);  // O Supabase espera um array de objetos, então isso está correto
+        .insert([data]);
 
       if (error) {
-        console.error("Erro ao cadastrar aluno:", error); // Log de erro
-        throw error;  // Se ocorrer um erro, ele é lançado para ser capturado no catch
+        console.error("Erro ao cadastrar aluno:", error); // Exibe erro no console
+        throw error;
       }
 
-      // Exibe o toast de sucesso
       toast({
         title: "Sucesso!",
         description: "Aluno cadastrado com sucesso.",
@@ -111,7 +110,7 @@ const Alunos = () => {
 
       refetch(); // Atualiza a lista de alunos após o cadastro
     } catch (error) {
-      console.error("Erro ao cadastrar aluno:", error);  // Log de erro detalhado
+      console.error("Erro ao cadastrar aluno:", error); // Exibe erro no console
       toast({
         title: "Erro!",
         description: "Não foi possível cadastrar o aluno.",
