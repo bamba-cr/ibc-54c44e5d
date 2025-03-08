@@ -1,18 +1,31 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Search, GraduationCap } from 'lucide-react';
+import { Loader2, Search, GraduationCap, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import ProjectRankings from '@/components/performance/ProjectRankings';
 import StudentDetails from '@/components/performance/StudentDetails';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const StudentPerformance = () => {
+  const { id } = useParams();
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInitiated, setSearchInitiated] = useState(false);
+
+  useEffect(() => {
+    // If we have a student ID in the URL, set it as search term
+    if (id) {
+      setSearchTerm(id);
+      setSearchInitiated(true);
+    }
+  }, [id]);
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
@@ -21,7 +34,10 @@ const StudentPerformance = () => {
         .from('projects')
         .select('*')
         .order('name');
-      if (error) throw error;
+      if (error) {
+        toast.error(`Erro ao carregar projetos: ${error.message}`);
+        throw error;
+      }
       return data;
     }
   });
@@ -32,15 +48,22 @@ const StudentPerformance = () => {
       if (!selectedProject) return null;
       const { data, error } = await supabase
         .rpc('get_project_rankings', { project_id_param: selectedProject });
-      if (error) throw error;
+      if (error) {
+        toast.error(`Erro ao carregar rankings: ${error.message}`);
+        throw error;
+      }
       return data;
     },
     enabled: !!selectedProject
   });
 
-  const { data: students, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ['students', searchTerm],
+  const { data: students, isLoading: isLoadingStudents, error: studentsError } = useQuery({
+    queryKey: ['students', searchTerm, searchInitiated],
     queryFn: async () => {
+      if (!searchTerm || !searchInitiated) return [];
+      
+      console.log("Fetching students with search term:", searchTerm);
+      
       let query = supabase
         .from('students')
         .select(`
@@ -57,20 +80,32 @@ const StudentPerformance = () => {
             grade,
             project_id
           ),
-          attendance!inner (
+          attendance (
             status,
             project_id
           )
         `);
 
-      if (searchTerm) {
+      // Check if searchTerm is a UUID (for direct student ID lookup)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(searchTerm)) {
+        query = query.eq('id', searchTerm);
+      } else {
         query = query.ilike('name', `%${searchTerm}%`);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    }
+      
+      if (error) {
+        toast.error(`Erro ao buscar alunos: ${error.message}`);
+        console.error("Error fetching students:", error);
+        throw error;
+      }
+      
+      console.log("Students data:", data);
+      return data || [];
+    },
+    enabled: searchInitiated && !!searchTerm
   });
 
   const getStudentOverallStats = (studentId: string) => {
@@ -92,6 +127,10 @@ const StudentPerformance = () => {
       : 0;
 
     return { averageGrade, attendanceRate };
+  };
+
+  const handleSearch = () => {
+    setSearchInitiated(true);
   };
 
   return (
@@ -140,10 +179,30 @@ const StudentPerformance = () => {
                         placeholder="Digite o nome do aluno..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSearch();
+                          }
+                        }}
                         className="pl-10"
                       />
                     </div>
+                    <button
+                      onClick={handleSearch}
+                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                    >
+                      Pesquisar
+                    </button>
                   </div>
+
+                  {studentsError && (
+                    <Alert variant="destructive" className="my-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Erro ao buscar alunos: {studentsError.message}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {isLoadingStudents && (
                     <div className="flex justify-center py-8">
@@ -151,20 +210,20 @@ const StudentPerformance = () => {
                     </div>
                   )}
 
-                  {students?.map((student) => (
+                  {searchInitiated && !isLoadingStudents && students && students.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p>Nenhum aluno encontrado com o termo "{searchTerm}"</p>
+                    </div>
+                  )}
+
+                  {students && students.length > 0 && students.map((student) => (
                     <StudentDetails
                       key={student.id}
                       student={student}
                       stats={getStudentOverallStats(student.id)}
                     />
                   ))}
-
-                  {students?.length === 0 && searchTerm && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p>Nenhum aluno encontrado com o termo "{searchTerm}"</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
