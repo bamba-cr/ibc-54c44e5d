@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentForm } from "@/components/students/StudentForm";
@@ -84,6 +83,31 @@ const Alunos = () => {
       toast({
         title: "Erro!",
         description: "Não foi possível remover o aluno.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle student registration
+  const handleStudentSubmit = async (data: any) => {
+    try {
+      // Aqui você deve chamar a função para cadastrar o aluno, como um insert no Supabase
+      const { error } = await supabase
+        .from("students")
+        .insert([data]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Aluno cadastrado com sucesso.",
+      });
+      refetch(); // Atualiza a lista de alunos
+    } catch (error) {
+      console.error("Erro ao cadastrar aluno:", error);
+      toast({
+        title: "Erro!",
+        description: "Não foi possível cadastrar o aluno.",
         variant: "destructive",
       });
     }
@@ -179,13 +203,7 @@ const Alunos = () => {
         </TabsContent>
         
         <TabsContent value="cadastro">
-          <StudentForm onSubmit={async () => {
-            refetch();
-            toast({
-              title: "Sucesso!",
-              description: "Aluno cadastrado com sucesso.",
-            });
-          }} />
+          <StudentForm onSubmit={handleStudentSubmit} />
         </TabsContent>
       </Tabs>
     </div>
