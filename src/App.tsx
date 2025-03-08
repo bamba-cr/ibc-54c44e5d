@@ -5,7 +5,7 @@ import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from './integrations/supabase/client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster'
-import { Toaster as SonnerToaster } from '@/components/ui/Toaster'
+import { Toaster as SonnerToaster } from '@/components/ui/sonner'
 
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
