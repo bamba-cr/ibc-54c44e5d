@@ -143,8 +143,8 @@ const StudentDetails = ({ student, stats }: StudentDetailsProps) => {
                         <TableCell>{grade.subject}</TableCell>
                         <TableCell className="text-right font-medium">
                           <Badge variant={
-                            grade.grade >= 7 ? "success" : 
-                            grade.grade >= 5 ? "warning" : "destructive"
+                            grade.grade >= 7 ? "default" : 
+                            grade.grade >= 5 ? "secondary" : "destructive"
                           }>
                             {grade.grade.toFixed(1)}
                           </Badge>
