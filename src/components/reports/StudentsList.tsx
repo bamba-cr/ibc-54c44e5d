@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Filter, Search, Edit2, Trash2, Eye, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -64,6 +67,34 @@ export const StudentsList = () => {
     photo: null
   });
 
+  const { data: studentProjects } = useQuery({
+    queryKey: ["studentProjects", selectedStudent?.id],
+    queryFn: async () => {
+      if (!selectedStudent?.id) return [];
+      const { data, error } = await supabase
+        .from("student_projects")
+        .select("project_id")
+        .eq("student_id", selectedStudent.id);
+      
+      if (error) throw error;
+      return data.map(sp => sp.project_id);
+    },
+    enabled: !!selectedStudent?.id
+  });
+  
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: students, isLoading, refetch: fetchStudents } = useQuery({
     queryKey: ["students", filters],
     queryFn: async () => {
@@ -103,7 +134,7 @@ export const StudentsList = () => {
 
       const studentData = {
         name: editForm.name,
-        age: parseInt(editForm.age || '0'),
+        age: editForm.age ? parseInt(editForm.age) : null,
         birth_date: editForm.birthDate,
         rg: editForm.rg,
         cpf: editForm.cpf,
@@ -126,6 +157,24 @@ export const StudentsList = () => {
 
       if (error) throw error;
 
+      await supabase
+        .from('student_projects')
+        .delete()
+        .eq('student_id', selectedStudent.id);
+      
+      if (editForm.projects.length > 0) {
+        const projectMappings = editForm.projects.map(projectId => ({
+          student_id: selectedStudent.id,
+          project_id: projectId,
+        }));
+
+        const { error: projectError } = await supabase
+          .from("student_projects")
+          .insert(projectMappings);
+
+        if (projectError) throw projectError;
+      }
+
       toast({
         title: "Sucesso",
         description: "Dados do aluno atualizados com sucesso!"
@@ -134,12 +183,22 @@ export const StudentsList = () => {
       setIsEditDialogOpen(false);
       fetchStudents();
     } catch (error: any) {
+      console.error("Erro ao atualizar aluno:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar os dados do aluno.",
+        description: "Não foi possível atualizar os dados do aluno: " + (error.message || ""),
         variant: "destructive"
       });
     }
+  };
+
+  const handleProjectChange = (projectId: string, checked: boolean) => {
+    setEditForm(prev => {
+      if (checked) {
+        return { ...prev, projects: [...prev.projects, projectId] };
+      }
+      return { ...prev, projects: prev.projects.filter(id => id !== projectId) };
+    });
   };
 
   const deleteStudent = async (id: string) => {
@@ -178,7 +237,8 @@ export const StudentsList = () => {
       });
       
       fetchStudents();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao remover aluno:", error);
       toast({
         title: "Erro",
         description: "Não foi possível remover o aluno. " + (error.message || ''),
@@ -350,111 +410,136 @@ export const StudentsList = () => {
       </CardContent>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Editar Aluno</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="name" className="text-sm font-medium">Nome</label>
-              <Input
-                id="name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              />
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name" className="text-sm font-medium">Nome</Label>
+                    <Input
+                      id="name"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="age" className="text-sm font-medium">Idade</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      value={editForm.age}
+                      onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="birthDate" className="text-sm font-medium">Data de Nascimento</Label>
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={editForm.birthDate}
+                      onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="rg" className="text-sm font-medium">RG</Label>
+                    <Input
+                      id="rg"
+                      value={editForm.rg}
+                      onChange={(e) => setEditForm({ ...editForm, rg: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cpf" className="text-sm font-medium">CPF</Label>
+                    <Input
+                      id="cpf"
+                      value={editForm.cpf}
+                      onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="address" className="text-sm font-medium">Endereço</Label>
+                    <Input
+                      id="address"
+                      value={editForm.address}
+                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="city" className="text-sm font-medium">Cidade</Label>
+                    <Input
+                      id="city"
+                      value={editForm.city}
+                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guardianName" className="text-sm font-medium">Nome do Responsável</Label>
+                    <Input
+                      id="guardianName"
+                      value={editForm.guardianName}
+                      onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guardianPhone" className="text-sm font-medium">Telefone do Responsável</Label>
+                    <Input
+                      id="guardianPhone"
+                      value={editForm.guardianPhone}
+                      onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="guardianEmail" className="text-sm font-medium">Email do Responsável</Label>
+                    <Input
+                      id="guardianEmail"
+                      type="email"
+                      value={editForm.guardianEmail}
+                      onChange={(e) => setEditForm({ ...editForm, guardianEmail: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2 mt-2">
+                <Label className="text-sm font-medium">Projetos</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 bg-gray-50">
+                  {projects?.map((project) => (
+                    <div key={project.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`project-${project.id}`}
+                        checked={editForm.projects.includes(project.id)}
+                        onCheckedChange={(checked) => 
+                          handleProjectChange(project.id, checked as boolean)
+                        }
+                      />
+                      <Label 
+                        htmlFor={`project-${project.id}`} 
+                        className="text-sm capitalize cursor-pointer"
+                      >
+                        {project.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="observations" className="text-sm font-medium">Observações</Label>
+                <Input
+                  id="observations"
+                  value={editForm.observations}
+                  onChange={(e) => setEditForm({ ...editForm, observations: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="age" className="text-sm font-medium">Idade</label>
-              <Input
-                id="age"
-                type="number"
-                value={editForm.age}
-                onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="birthDate" className="text-sm font-medium">Data de Nascimento</label>
-              <Input
-                id="birthDate"
-                type="date"
-                value={editForm.birthDate}
-                onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="rg" className="text-sm font-medium">RG</label>
-              <Input
-                id="rg"
-                value={editForm.rg}
-                onChange={(e) => setEditForm({ ...editForm, rg: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="cpf" className="text-sm font-medium">CPF</label>
-              <Input
-                id="cpf"
-                value={editForm.cpf}
-                onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="address" className="text-sm font-medium">Endereço</label>
-              <Input
-                id="address"
-                value={editForm.address}
-                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="city" className="text-sm font-medium">Cidade</label>
-              <Input
-                id="city"
-                value={editForm.city}
-                onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="guardianName" className="text-sm font-medium">Nome do Responsável</label>
-              <Input
-                id="guardianName"
-                value={editForm.guardianName}
-                onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="guardianRelationship" className="text-sm font-medium">Parentesco</label>
-              <Input
-                id="guardianRelationship"
-                value={editForm.guardianRelationship}
-                onChange={(e) => setEditForm({ ...editForm, guardianRelationship: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="guardianPhone" className="text-sm font-medium">Telefone do Responsável</label>
-              <Input
-                id="guardianPhone"
-                value={editForm.guardianPhone}
-                onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="guardianEmail" className="text-sm font-medium">Email do Responsável</label>
-              <Input
-                id="guardianEmail"
-                type="email"
-                value={editForm.guardianEmail}
-                onChange={(e) => setEditForm({ ...editForm, guardianEmail: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="observations" className="text-sm font-medium">Observações</label>
-              <Input
-                id="observations"
-                value={editForm.observations}
-                onChange={(e) => setEditForm({ ...editForm, observations: e.target.value })}
-              />
-            </div>
-          </div>
+          </ScrollArea>
           <div className="flex justify-end gap-4">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancelar
