@@ -17,6 +17,14 @@ interface UserWithRole {
   role_id: string;
 }
 
+// Define the Profile type that matches our Supabase profiles table
+interface Profile {
+  id: string;
+  email: string | null;
+  username: string | null;
+  created_at: string | null;
+}
+
 export const AdminManagement = () => {
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +48,7 @@ export const AdminManagement = () => {
       // Get all users with admin role
       const { data: adminRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("*, profiles(email, username)")
+        .select("*")
         .eq("role", "admin");
       
       if (rolesError) {
@@ -53,20 +61,35 @@ export const AdminManagement = () => {
         return;
       }
 
-      // Map admin users with their details from the profiles table
-      const adminsList = adminRoles
-        .map(role => {
-          // Check if profiles data exists and has the expected structure
-          const profile = role.profiles as { email?: string; username?: string } | null;
+      // Create an array of admin users with profile info
+      const adminsList: UserWithRole[] = [];
+      
+      // For each admin role, fetch the corresponding profile
+      for (const role of adminRoles) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", role.user_id)
+          .single();
           
-          return {
+        if (profileError) {
+          console.warn(`Could not fetch profile for user ${role.user_id}:`, profileError);
+          // Still add the user with default values
+          adminsList.push({
             id: role.user_id,
-            email: profile?.email || "Email não disponível",
-            username: profile?.username || "Usuário sem nome",
+            email: "Email não disponível",
+            username: "Usuário sem nome",
             role_id: role.id
-          };
-        })
-        .filter(Boolean) as UserWithRole[];
+          });
+        } else if (profile) {
+          adminsList.push({
+            id: role.user_id,
+            email: profile.email || "Email não disponível",
+            username: profile.username || "Usuário sem nome",
+            role_id: role.id
+          });
+        }
+      }
 
       setAdmins(adminsList);
     } catch (error) {
@@ -125,7 +148,7 @@ export const AdminManagement = () => {
         .eq("username", username)
         .single();
       
-      if (profileError || !targetProfile) {
+      if (profileError) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
