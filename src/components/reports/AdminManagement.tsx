@@ -62,16 +62,19 @@ export const AdminManagement = () => {
       }
 
       // Get user details from auth API
-      const { data: authData, error: usersError } = await supabase.auth.admin.listUsers();
+      // Using data.users with proper typing
+      const { data, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError || !authData) {
+      if (usersError || !data) {
         throw new Error("Erro ao buscar informações dos usuários");
       }
 
       // Map admin users with their details
+      // Fixed by ensuring we have a properly typed users array
+      const users = data.users as AdminUser[];
       const adminsList = adminRoles
         .map(role => {
-          const user = authData.users.find(u => u.id === role.user_id);
+          const user = users.find(u => u.id === role.user_id);
           return user ? {
             id: user.id,
             email: user.email || "Email não disponível",
