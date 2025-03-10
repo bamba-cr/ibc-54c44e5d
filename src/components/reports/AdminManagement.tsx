@@ -66,7 +66,7 @@ export const AdminManagement = () => {
       
       // For each admin role, fetch the corresponding profile
       for (const role of adminRoles) {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", role.user_id)
@@ -81,11 +81,11 @@ export const AdminManagement = () => {
             username: "Usuário sem nome",
             role_id: role.id
           });
-        } else if (profile) {
+        } else if (profileData) {
           adminsList.push({
             id: role.user_id,
-            email: profile.email || "Email não disponível",
-            username: profile.username || "Usuário sem nome",
+            email: profileData.email || "Email não disponível",
+            username: profileData.username || "Usuário sem nome",
             role_id: role.id
           });
         }
@@ -145,7 +145,7 @@ export const AdminManagement = () => {
       const { data: targetProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
-        .eq("username", username)
+        .ilike("username", username)
         .single();
       
       if (profileError) {
