@@ -9,15 +9,7 @@ import { Shield, UserPlus, Trash2, RefreshCw, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-// Define interface for Admin User type
-interface AdminUser {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    username?: string;
-  };
-}
-
+// Define interface for User with Role
 interface UserWithRole {
   id: string;
   email: string;
@@ -48,7 +40,7 @@ export const AdminManagement = () => {
       // Get all users with admin role
       const { data: adminRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("*")
+        .select("*, profiles(email, username)")
         .eq("role", "admin");
       
       if (rolesError) {
@@ -61,26 +53,18 @@ export const AdminManagement = () => {
         return;
       }
 
-      // Get user details from auth API
-      // Using data.users with proper typing
-      const { data, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError || !data) {
-        throw new Error("Erro ao buscar informações dos usuários");
-      }
-
-      // Map admin users with their details
-      // Fixed by ensuring we have a properly typed users array
-      const users = data.users as AdminUser[];
+      // Map admin users with their details from the profiles table
       const adminsList = adminRoles
         .map(role => {
-          const user = users.find(u => u.id === role.user_id);
-          return user ? {
-            id: user.id,
-            email: user.email || "Email não disponível",
-            username: user.user_metadata?.username || "Usuário sem nome",
+          // Check if profiles data exists and has the expected structure
+          const profile = role.profiles as { email?: string; username?: string } | null;
+          
+          return {
+            id: role.user_id,
+            email: profile?.email || "Email não disponível",
+            username: profile?.username || "Usuário sem nome",
             role_id: role.id
-          } : null;
+          };
         })
         .filter(Boolean) as UserWithRole[];
 
@@ -134,26 +118,18 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Get user ID from auth API
-      const { data, error: usersError } = await supabase.auth.admin.listUsers();
+      // Find user by username in profiles table
+      const { data: targetProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .single();
       
-      if (usersError || !data) {
-        throw new Error("Erro ao buscar usuários");
-      }
-      
-      // Cast the users array to the defined AdminUser type
-      const users = data.users as AdminUser[];
-      
-      // Find user by username in metadata
-      const targetUser = users.find(user => 
-        user.user_metadata?.username?.toLowerCase() === username.toLowerCase()
-      );
-      
-      if (!targetUser) {
+      if (profileError || !targetProfile) {
         throw new Error("Usuário não encontrado. O usuário precisa criar uma conta primeiro.");
       }
 
-      const targetUserId = targetUser.id;
+      const targetUserId = targetProfile.id;
 
       // Check if user is already an admin
       const { data: existingRole, error: existingRoleError } = await supabase
