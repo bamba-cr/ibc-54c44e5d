@@ -55,8 +55,9 @@ export const AdminManagement = () => {
         throw rolesError;
       }
 
-      if (!adminRoles.length) {
+      if (!adminRoles || !adminRoles.length) {
         setAdmins([]);
+        setIsLoadingAdmins(false);
         return;
       }
 
@@ -68,15 +69,17 @@ export const AdminManagement = () => {
       }
 
       // Map admin users with their details
-      const adminsList = adminRoles.map(role => {
-        const user = authData.users.find(u => u.id === role.user_id);
-        return user ? {
-          id: user.id,
-          email: user.email || "Email não disponível",
-          username: user.user_metadata?.username || "Usuário sem nome",
-          role_id: role.id
-        } : null;
-      }).filter(Boolean) as UserWithRole[];
+      const adminsList = adminRoles
+        .map(role => {
+          const user = authData.users.find(u => u.id === role.user_id);
+          return user ? {
+            id: user.id,
+            email: user.email || "Email não disponível",
+            username: user.user_metadata?.username || "Usuário sem nome",
+            role_id: role.id
+          } : null;
+        })
+        .filter(Boolean) as UserWithRole[];
 
       setAdmins(adminsList);
     } catch (error) {

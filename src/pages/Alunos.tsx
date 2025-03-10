@@ -135,13 +135,24 @@ const Alunos = () => {
       return data.map(sp => sp.project_id);
     },
     enabled: !!selectedStudent?.id,
-    onSuccess: (data) => {
-      setEditForm(prev => ({
-        ...prev,
-        projects: data || []
-      }));
+    meta: {
+      onSuccess: (data: string[]) => {
+        setEditForm(prev => ({
+          ...prev,
+          projects: data || []
+        }));
+      }
     }
   });
+
+  useEffect(() => {
+    if (studentProjects) {
+      setEditForm(prev => ({
+        ...prev,
+        projects: studentProjects || []
+      }));
+    }
+  }, [studentProjects]);
 
   const handleDeleteStudent = async (id: string) => {
     try {
