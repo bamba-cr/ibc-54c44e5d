@@ -9,7 +9,6 @@ import { Shield, UserPlus, Trash2, RefreshCw, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-// Define interface for User with Role
 interface UserWithRole {
   id: string;
   email: string;
@@ -29,7 +28,6 @@ export const AdminManagement = () => {
   });
   const { toast } = useToast();
 
-  // Fetch current admins on component mount
   useEffect(() => {
     fetchAdmins();
   }, []);
@@ -37,19 +35,10 @@ export const AdminManagement = () => {
   const fetchAdmins = async () => {
     setIsLoadingAdmins(true);
     try {
-      // Get all users with admin role
+      // Buscar usuários com role admin
       const { data: adminRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select(`
-          id,
-          user_id,
-          role,
-          profiles!inner(
-            id,
-            username,
-            email
-          )
-        `)
+        .select("*")
         .eq("role", "admin");
       
       if (rolesError) {
@@ -63,13 +52,28 @@ export const AdminManagement = () => {
         return;
       }
 
-      // Map the data to our interface
-      const adminsList: UserWithRole[] = adminRoles.map(role => ({
-        id: role.user_id,
-        email: (role.profiles as any)?.email || "Email não disponível",
-        username: (role.profiles as any)?.username || "Usuário sem nome",
-        role_id: role.id
-      }));
+      // Buscar perfis dos administradores
+      const userIds = adminRoles.map(role => role.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+
+      // Combinar dados
+      const adminsList: UserWithRole[] = adminRoles.map(role => {
+        const profile = profiles?.find(p => p.id === role.user_id);
+        return {
+          id: role.user_id,
+          email: profile?.email || "Email não disponível",
+          username: profile?.username || "Usuário sem nome",
+          role_id: role.id
+        };
+      });
 
       setAdmins(adminsList);
     } catch (error) {
@@ -100,7 +104,7 @@ export const AdminManagement = () => {
 
     setIsLoading(true);
     try {
-      // First get current user's session to get their ID
+      // Verificar se o usuário atual é admin
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
@@ -109,7 +113,7 @@ export const AdminManagement = () => {
       
       const currentUserId = sessionData.session.user.id;
 
-      // Check if current user has admin role
+      // Verificar se o usuário atual tem role admin
       const { data: currentUserRole, error: roleCheckError } = await supabase
         .from('user_roles')
         .select('role')
@@ -121,7 +125,7 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Find user by username in profiles table (exact match)
+      // Buscar usuário pelo username no profiles
       const { data: targetProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
@@ -134,12 +138,16 @@ export const AdminManagement = () => {
 
       const targetUserId = targetProfile.id;
 
-      // Check if user is already an admin
+      // Verificar se o usuário já é admin
       const { data: existingRole, error: existingRoleError } = await supabase
         .from("user_roles")
         .select("*")
         .eq("user_id", targetUserId)
         .eq("role", "admin");
+
+      if (existingRoleError) {
+        throw existingRoleError;
+      }
 
       if (existingRole && existingRole.length > 0) {
         toast({
@@ -150,7 +158,7 @@ export const AdminManagement = () => {
         return;
       }
 
-      // Add admin role
+      // Adicionar role admin
       const { error: roleError } = await supabase.from("user_roles").insert({
         user_id: targetUserId,
         role: "admin",
@@ -167,7 +175,6 @@ export const AdminManagement = () => {
       });
 
       setUsername("");
-      // Refresh admin list
       fetchAdmins();
     } catch (error) {
       console.error("Error adding admin:", error);
@@ -184,20 +191,20 @@ export const AdminManagement = () => {
   const handleRemoveAdmin = async (userId: string) => {
     setIsLoading(true);
     try {
-      // Find the role_id for this user
+      // Verificar se o usuário atual não está removendo a si mesmo
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.user.id === userId) {
+        throw new Error("Você não pode remover seus próprios privilégios de administrador");
+      }
+
+      // Buscar o role_id para este usuário
       const adminToRemove = admins.find(admin => admin.id === userId);
       
       if (!adminToRemove) {
         throw new Error("Administrador não encontrado");
       }
-
-      // Check if current user is the same as the one being removed
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session?.user.id === userId) {
-        throw new Error("Você não pode remover seus próprios privilégios de administrador");
-      }
       
-      // Delete the role
+      // Deletar o role
       const { error: deleteError } = await supabase
         .from("user_roles")
         .delete()
@@ -212,7 +219,6 @@ export const AdminManagement = () => {
         description: "O usuário foi removido da lista de administradores com sucesso.",
       });
 
-      // Refresh the admin list
       fetchAdmins();
     } catch (error) {
       console.error("Error removing admin:", error);
@@ -314,13 +320,12 @@ export const AdminManagement = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertCircle className="h-10 w-10 text-muted-foreground mb-2" />
-              <p className="text-muted-foreground">Nenhum administrador encontrado ou você não tem permissão para visualizá-los.</p>
+              <p className="text-muted-foreground">Nenhum administrador encontrado.</p>
             </div>
           )}
         </div>
       </CardContent>
 
-      {/* Confirmation Dialog */}
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({...confirmDialog, open})}>
         <DialogContent>
           <DialogHeader>
