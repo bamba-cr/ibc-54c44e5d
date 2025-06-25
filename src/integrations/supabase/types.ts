@@ -371,6 +371,24 @@ export type Database = {
       }
     }
     Functions: {
+      find_user_by_identifier: {
+        Args: { identifier: string }
+        Returns: {
+          user_id: string
+          email: string
+          username: string
+        }[]
+      }
+      get_admin_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          email: string
+          username: string
+          role_id: string
+          created_at: string
+        }[]
+      }
       get_error_logs_with_details: {
         Args: Record<PropertyKey, never>
         Returns: {

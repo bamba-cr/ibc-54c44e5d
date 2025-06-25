@@ -9,7 +9,7 @@ import { AdminManagement } from '@/components/reports/AdminManagement';
 import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
-import { ErrorLogs } from '@/components/reports/ErrorLogs';
+import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
 
 const Relatorios = () => {
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="logs">
-          <ErrorLogs />
+          <ErrorLogsImproved />
         </TabsContent>
       </Tabs>
     </div>
