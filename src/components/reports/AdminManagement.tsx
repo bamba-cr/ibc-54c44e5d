@@ -17,14 +17,6 @@ interface UserWithRole {
   role_id: string;
 }
 
-// Define the Profile type that matches our Supabase profiles table
-interface Profile {
-  id: string;
-  email: string | null;
-  username: string | null;
-  created_at: string | null;
-}
-
 export const AdminManagement = () => {
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,10 +40,20 @@ export const AdminManagement = () => {
       // Get all users with admin role
       const { data: adminRoles, error: rolesError } = await supabase
         .from("user_roles")
-        .select("*")
+        .select(`
+          id,
+          user_id,
+          role,
+          profiles!inner(
+            id,
+            username,
+            email
+          )
+        `)
         .eq("role", "admin");
       
       if (rolesError) {
+        console.error("Error fetching admin roles:", rolesError);
         throw rolesError;
       }
 
@@ -61,35 +63,13 @@ export const AdminManagement = () => {
         return;
       }
 
-      // Create an array of admin users with profile info
-      const adminsList: UserWithRole[] = [];
-      
-      // For each admin role, fetch the corresponding profile
-      for (const role of adminRoles) {
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", role.user_id)
-          .single();
-          
-        if (profileError) {
-          console.warn(`Could not fetch profile for user ${role.user_id}:`, profileError);
-          // Still add the user with default values
-          adminsList.push({
-            id: role.user_id,
-            email: "Email não disponível",
-            username: "Usuário sem nome",
-            role_id: role.id
-          });
-        } else if (profileData) {
-          adminsList.push({
-            id: role.user_id,
-            email: profileData.email || "Email não disponível",
-            username: profileData.username || "Usuário sem nome",
-            role_id: role.id
-          });
-        }
-      }
+      // Map the data to our interface
+      const adminsList: UserWithRole[] = adminRoles.map(role => ({
+        id: role.user_id,
+        email: (role.profiles as any)?.email || "Email não disponível",
+        username: (role.profiles as any)?.username || "Usuário sem nome",
+        role_id: role.id
+      }));
 
       setAdmins(adminsList);
     } catch (error) {
@@ -141,11 +121,11 @@ export const AdminManagement = () => {
         throw new Error("Você não tem permissão para adicionar administradores");
       }
 
-      // Find user by username in profiles table
+      // Find user by username in profiles table (exact match)
       const { data: targetProfile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
-        .ilike("username", username)
+        .eq("username", username)
         .single();
       
       if (profileError) {

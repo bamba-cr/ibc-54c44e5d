@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,6 +81,13 @@ export const StudentsList = () => {
     },
     enabled: !!selectedStudent?.id
   });
+
+  // Initialize edit form projects when studentProjects data is loaded
+  useEffect(() => {
+    if (studentProjects && selectedStudent && isEditDialogOpen) {
+      setEditForm(prev => ({ ...prev, projects: studentProjects }));
+    }
+  }, [studentProjects, selectedStudent, isEditDialogOpen]);
   
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -157,6 +164,7 @@ export const StudentsList = () => {
 
       if (error) throw error;
 
+      // Update student projects
       await supabase
         .from('student_projects')
         .delete()
