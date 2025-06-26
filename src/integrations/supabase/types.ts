@@ -187,21 +187,33 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
+          full_name: string | null
           id: string
+          phone: string | null
+          updated_at: string | null
           username: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id: string
+          phone?: string | null
+          updated_at?: string | null
           username?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
+          phone?: string | null
+          updated_at?: string | null
           username?: string | null
         }
         Relationships: []
@@ -371,6 +383,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_initial_admin: {
+        Args: { admin_email: string }
+        Returns: boolean
+      }
       find_user_by_identifier: {
         Args: { identifier: string }
         Returns: {
@@ -427,11 +443,29 @@ export type Database = {
           created_at: string
         }[]
       }
+      get_user_profile: {
+        Args: { user_id?: string }
+        Returns: {
+          id: string
+          email: string
+          username: string
+          full_name: string
+          avatar_url: string
+          phone: string
+          is_admin: boolean
+          created_at: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { user_id?: string }
         Returns: boolean
       }
     }
