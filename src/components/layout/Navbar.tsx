@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigationItems = [
   { icon: <LayoutDashboard className="w-4 h-4 mr-2" />, label: "Dashboard", path: "/dashboard" },
@@ -23,9 +25,15 @@ const navigationItems = [
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { signOut } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsOpen(false);
   };
 
   return (
@@ -54,15 +62,14 @@ export const Navbar = () => {
                 </Button>
               </Link>
             ))}
-            <Link to="/login">
-              <Button 
-                variant="ghost" 
-                className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-500 transition-colors"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              className="flex items-center px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-500 transition-colors"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
           </div>
           
           {/* Mobile menu button */}
@@ -105,15 +112,15 @@ export const Navbar = () => {
                   </div>
                 </Link>
               ))}
-              <Link 
-                to="/login"
-                onClick={() => setIsOpen(false)}
+              <button 
+                onClick={handleSignOut}
+                className="w-full text-left"
               >
                 <div className="flex items-center px-3 py-3 rounded-lg text-red-500 hover:bg-red-50">
                   <LogOut className="w-4 h-4 mr-2" />
                   <span>Sair</span>
                 </div>
-              </Link>
+              </button>
             </div>
           </motion.div>
         )}
