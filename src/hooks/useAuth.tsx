@@ -138,13 +138,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ) => {
     try {
       setIsLoading(true);
-      const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             username: userData?.username || '',
             full_name: userData?.full_name || '',

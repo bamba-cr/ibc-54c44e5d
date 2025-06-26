@@ -102,7 +102,7 @@ export const SignUpForm = ({ onSwitchToSignIn }: SignUpFormProps) => {
     } else {
       toast({
         title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta antes de fazer login.",
+        description: "Você já pode fazer login com suas credenciais.",
       });
       onSwitchToSignIn();
     }
