@@ -3,12 +3,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Calendar, Users, FileText, BookOpen, Settings, Shield } from "lucide-react";
+import { LogoDisplay } from "@/components/layout/LogoDisplay";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-dark to-primary">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <LogoDisplay className="text-white text-4xl md:text-6xl" />
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
             Sistema de Gestão Acadêmica
           </h1>

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { LogoDisplay } from "./LogoDisplay";
 
 export const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -25,10 +26,10 @@ export const Header = () => {
   const initials = getInitials(displayName);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3">
+    <header className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold text-primary-dark">IBC CONNECT</h1>
+          <LogoDisplay />
           {profile.is_admin && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
               <Shield className="h-3 w-3" />

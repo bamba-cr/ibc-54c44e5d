@@ -5,13 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AdminManagement } from '@/components/reports/AdminManagement';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
-import { UserManagement } from '@/components/admin/UserManagement';
-import { InitialAdminSetup } from '@/components/admin/InitialAdminSetup';
 import { useAuth } from '@/hooks/useAuth';
 
 const Relatorios = () => {
@@ -51,15 +49,13 @@ const Relatorios = () => {
       </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-6">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3 lg:grid-cols-7 lg:w-[1400px]' : 'grid-cols-2 lg:grid-cols-3 lg:w-[600px]'} bg-white shadow-sm`}>
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3 lg:grid-cols-6 lg:w-[1200px]' : 'grid-cols-2 lg:grid-cols-3 lg:w-[600px]'} bg-white shadow-sm`}>
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
           {isAdmin && (
             <>
-              <TabsTrigger value="users">Usuários</TabsTrigger>
               <TabsTrigger value="admin">Administração</TabsTrigger>
-              <TabsTrigger value="setup">Configurar Admin</TabsTrigger>
               <TabsTrigger value="logs">Logs</TabsTrigger>
             </>
           )}
@@ -79,16 +75,8 @@ const Relatorios = () => {
 
         {isAdmin && (
           <>
-            <TabsContent value="users">
-              <UserManagement />
-            </TabsContent>
-
             <TabsContent value="admin">
-              <AdminManagement />
-            </TabsContent>
-
-            <TabsContent value="setup">
-              <InitialAdminSetup />
+              <AdminDashboard />
             </TabsContent>
 
             <TabsContent value="logs">

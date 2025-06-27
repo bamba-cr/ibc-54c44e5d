@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { LogoDisplay } from "./LogoDisplay";
 
 const navigationItems = [
   { icon: <LayoutDashboard className="w-4 h-4 mr-2" />, label: "Dashboard", path: "/dashboard" },
@@ -37,15 +38,13 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="border-b frosted-glass sticky top-0 z-50">
+    <nav className="border-b frosted-glass sticky top-0 z-50 bg-white/95 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-milker text-primary bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-                IBC CONNECT
-              </span>
+              <LogoDisplay />
             </Link>
           </div>
           
@@ -99,7 +98,7 @@ export const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 frosted-glass">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-white/95 backdrop-blur-sm border-t">
               {navigationItems.map((item, index) => (
                 <Link 
                   key={index} 
