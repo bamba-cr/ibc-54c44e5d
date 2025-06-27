@@ -102,7 +102,7 @@ export const SignUpForm = ({ onSwitchToSignIn }: SignUpFormProps) => {
     } else {
       toast({
         title: "Conta criada com sucesso!",
-        description: "Você já pode fazer login com suas credenciais.",
+        description: "Sua conta foi criada e está aguardando aprovação de um administrador. Você receberá um email quando for aprovada.",
       });
       onSwitchToSignIn();
     }

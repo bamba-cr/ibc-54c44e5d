@@ -10,9 +10,13 @@ import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
+import { UserManagement } from '@/components/admin/UserManagement';
+import { InitialAdminSetup } from '@/components/admin/InitialAdminSetup';
+import { useAuth } from '@/hooks/useAuth';
 
 const Relatorios = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const { data: students } = useQuery({
     queryKey: ["students"],
@@ -33,6 +37,9 @@ const Relatorios = () => {
     checkSession();
   }, [navigate]);
 
+  // Se o usuário não é admin, não mostrar certas abas
+  const isAdmin = profile?.is_admin || false;
+
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50">
       <motion.h1 
@@ -44,12 +51,18 @@ const Relatorios = () => {
       </motion.h1>
       
       <Tabs defaultValue="calendar" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 lg:w-[1000px] bg-white shadow-sm">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3 lg:grid-cols-7 lg:w-[1400px]' : 'grid-cols-2 lg:grid-cols-3 lg:w-[600px]'} bg-white shadow-sm`}>
           <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
-          <TabsTrigger value="admin">Administração</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
+          {isAdmin && (
+            <>
+              <TabsTrigger value="users">Usuários</TabsTrigger>
+              <TabsTrigger value="admin">Administração</TabsTrigger>
+              <TabsTrigger value="setup">Configurar Admin</TabsTrigger>
+              <TabsTrigger value="logs">Logs</TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <TabsContent value="calendar">
@@ -64,13 +77,25 @@ const Relatorios = () => {
           <ExportSection students={students} />
         </TabsContent>
 
-        <TabsContent value="admin">
-          <AdminManagement />
-        </TabsContent>
+        {isAdmin && (
+          <>
+            <TabsContent value="users">
+              <UserManagement />
+            </TabsContent>
 
-        <TabsContent value="logs">
-          <ErrorLogsImproved />
-        </TabsContent>
+            <TabsContent value="admin">
+              <AdminManagement />
+            </TabsContent>
+
+            <TabsContent value="setup">
+              <InitialAdminSetup />
+            </TabsContent>
+
+            <TabsContent value="logs">
+              <ErrorLogsImproved />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );

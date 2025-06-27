@@ -12,8 +12,18 @@ interface UserProfile {
   avatar_url: string | null;
   phone: string | null;
   is_admin: boolean;
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
+}
+
+interface PendingUser {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  created_at: string;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 interface AuthContextType {
@@ -25,6 +35,10 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData?: { username?: string; full_name?: string }) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  getPendingUsers: () => Promise<PendingUser[]>;
+  approveUser: (userId: string) => Promise<{ error: any }>;
+  rejectUser: (userId: string, reason?: string) => Promise<{ error: any }>;
+  setupInitialAdmin: (email: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,7 +87,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
@@ -81,7 +94,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Buscar perfil do usuário se estiver logado
         if (session?.user) {
           setTimeout(() => {
             fetchUserProfile(session.user.id);
@@ -94,7 +106,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -188,6 +199,89 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const getPendingUsers = async (): Promise<PendingUser[]> => {
+    try {
+      const { data, error } = await supabase.rpc('get_pending_users');
+      
+      if (error) {
+        console.error('Error fetching pending users:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      return [];
+    }
+  };
+
+  const approveUser = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('approve_user', { 
+        user_id_param: userId 
+      });
+      
+      if (error) {
+        console.error('Error approving user:', error);
+        return { error };
+      }
+      
+      if (!data) {
+        return { error: { message: 'Não foi possível aprovar o usuário' } };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error approving user:', error);
+      return { error };
+    }
+  };
+
+  const rejectUser = async (userId: string, reason?: string) => {
+    try {
+      const { data, error } = await supabase.rpc('reject_user', { 
+        user_id_param: userId,
+        reason: reason || null
+      });
+      
+      if (error) {
+        console.error('Error rejecting user:', error);
+        return { error };
+      }
+      
+      if (!data) {
+        return { error: { message: 'Não foi possível rejeitar o usuário' } };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      return { error };
+    }
+  };
+
+  const setupInitialAdmin = async (email: string) => {
+    try {
+      const { data, error } = await supabase.rpc('setup_initial_admin', { 
+        admin_email: email 
+      });
+      
+      if (error) {
+        console.error('Error setting up admin:', error);
+        return { error };
+      }
+      
+      if (!data) {
+        return { error: { message: 'Não foi possível configurar o administrador' } };
+      }
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error setting up admin:', error);
+      return { error };
+    }
+  };
+
   const value = {
     user,
     session,
@@ -197,6 +291,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signOut,
     refreshProfile,
+    getPendingUsers,
+    approveUser,
+    rejectUser,
+    setupInitialAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

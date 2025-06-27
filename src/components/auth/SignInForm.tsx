@@ -34,9 +34,6 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
     if (!password) {
       newErrors.password = "Senha é obrigatória";
       isValid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "A senha deve ter pelo menos 6 caracteres";
-      isValid = false;
     }
 
     setErrors(newErrors);
@@ -57,6 +54,12 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
           description: "Email ou senha incorretos. Verifique suas credenciais e tente novamente.",
           variant: "destructive",
         });
+      } else if (error.message.includes("Email not confirmed")) {
+        toast({
+          title: "Email não confirmado",
+          description: "Verifique sua caixa de entrada e confirme seu email antes de fazer login.",
+          variant: "destructive",
+        });
       } else {
         toast({
           title: "Erro no login",
@@ -64,11 +67,6 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
           variant: "destructive",
         });
       }
-    } else {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao IBC CONNECT",
-      });
     }
   };
 
