@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
+  user_id: string;
   email: string;
   username: string;
   full_name: string;
@@ -20,6 +21,7 @@ interface UserProfile {
 
 interface PendingUser {
   id: string;
+  user_id: string;
   email: string;
   username: string;
   full_name: string;
@@ -39,7 +41,7 @@ interface AuthContextType {
   getPendingUsers: () => Promise<PendingUser[]>;
   approveUser: (userId: string) => Promise<{ error: any }>;
   rejectUser: (userId: string, reason?: string) => Promise<{ error: any }>;
-  setupInitialAdmin: (email: string) => Promise<{ error: any }>;
+  promoteToAdmin: (userId: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('get_user_profile', { user_id: userId });
+        .rpc('get_user_profile', { user_uuid: userId });
       
       if (error) {
         console.error('Error fetching user profile:', error);
@@ -219,7 +221,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const approveUser = async (userId: string) => {
     try {
       const { data, error } = await supabase.rpc('approve_user', { 
-        user_id_param: userId 
+        target_user_id: userId 
       });
       
       if (error) {
@@ -241,7 +243,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const rejectUser = async (userId: string, reason?: string) => {
     try {
       const { data, error } = await supabase.rpc('reject_user', { 
-        user_id_param: userId,
+        target_user_id: userId,
         reason: reason || null
       });
       
@@ -261,24 +263,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const setupInitialAdmin = async (email: string) => {
+  const promoteToAdmin = async (userId: string) => {
     try {
-      const { data, error } = await supabase.rpc('setup_initial_admin', { 
-        admin_email: email 
+      const { data, error } = await supabase.rpc('promote_to_admin', { 
+        target_user_id: userId 
       });
       
       if (error) {
-        console.error('Error setting up admin:', error);
+        console.error('Error promoting to admin:', error);
         return { error };
       }
       
       if (!data) {
-        return { error: { message: 'Não foi possível configurar o administrador' } };
+        return { error: { message: 'Não foi possível promover o usuário' } };
       }
       
       return { error: null };
     } catch (error) {
-      console.error('Error setting up admin:', error);
+      console.error('Error promoting to admin:', error);
       return { error };
     }
   };
@@ -295,7 +297,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     getPendingUsers,
     approveUser,
     rejectUser,
-    setupInitialAdmin,
+    promoteToAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

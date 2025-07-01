@@ -194,6 +194,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_admin: boolean | null
           phone: string | null
           rejection_reason: string | null
           status: Database["public"]["Enums"]["user_status"] | null
@@ -208,6 +209,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_admin?: boolean | null
           phone?: string | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
@@ -222,6 +224,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           phone?: string | null
           rejection_reason?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
@@ -396,7 +399,7 @@ export type Database = {
     }
     Functions: {
       approve_user: {
-        Args: { user_id_param: string }
+        Args: { target_user_id: string }
         Returns: boolean
       }
       create_initial_admin: {
@@ -441,6 +444,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           id: string
+          user_id: string
           email: string
           username: string
           full_name: string
@@ -471,9 +475,10 @@ export type Database = {
         }[]
       }
       get_user_profile: {
-        Args: { user_id?: string }
+        Args: { user_uuid?: string }
         Returns: {
           id: string
+          user_id: string
           email: string
           username: string
           full_name: string
@@ -493,19 +498,19 @@ export type Database = {
         Returns: boolean
       }
       is_admin: {
-        Args: { user_id?: string }
+        Args: { user_uuid?: string }
         Returns: boolean
       }
       is_user_approved: {
         Args: { user_id?: string }
         Returns: boolean
       }
-      reject_user: {
-        Args: { user_id_param: string; reason?: string }
+      promote_to_admin: {
+        Args: { target_user_id: string }
         Returns: boolean
       }
-      setup_initial_admin: {
-        Args: { admin_email: string }
+      reject_user: {
+        Args: { target_user_id: string; reason?: string }
         Returns: boolean
       }
     }

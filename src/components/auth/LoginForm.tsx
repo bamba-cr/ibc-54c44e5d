@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogoDisplay } from "@/components/layout/LogoDisplay";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -36,6 +37,9 @@ export const LoginForm = () => {
 
     if (!password) {
       newErrors.password = "Senha é obrigatória";
+      isValid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
       isValid = false;
     }
 
@@ -67,10 +71,15 @@ export const LoginForm = () => {
         });
       } else {
         toast({
-          title: "Conta criada!",
-          description: "Sua conta foi criada e está aguardando aprovação.",
+          title: "Conta criada com sucesso!",
+          description: "Sua conta foi criada e está aguardando aprovação do administrador.",
         });
         setIsSignUp(false);
+        // Limpar formulário
+        setEmail("");
+        setPassword("");
+        setUsername("");
+        setFullName("");
       }
     } else {
       const { error } = await signIn(email, password);
@@ -90,148 +99,240 @@ export const LoginForm = () => {
           });
         }
       } else {
-        // Login bem-sucedido - redirecionamento será feito pelo AuthProvider
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo ao sistema.",
+        });
         navigate("/relatorios");
       }
     }
   };
 
   return (
-    <Card className="w-full animate-fadeIn">
-      <CardHeader className="text-center space-y-2">
-        <LogoDisplay className="mx-auto" />
-        <CardTitle className="text-2xl font-bold text-primary-dark">
-          {isSignUp ? "Criar Conta" : "Entrar"}
-        </CardTitle>
-        <CardDescription>
-          {isSignUp ? "Crie sua conta no sistema" : "Acesse sua conta"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors({ ...errors, email: "" });
-              }}
-              className={errors.email ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email}</p>
-            )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full max-w-md"
+    >
+      <Card className="backdrop-blur-sm bg-white/95 shadow-2xl border-0">
+        <CardHeader className="text-center space-y-4 pb-6">
+          <motion.div
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <LogoDisplay className="mx-auto mb-4" />
+          </motion.div>
+          <div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+              {isSignUp ? "Criar Conta" : "Bem-vindo"}
+            </CardTitle>
+            <CardDescription className="text-gray-600 mt-2">
+              {isSignUp ? "Crie sua conta no sistema" : "Acesse sua conta no sistema"}
+            </CardDescription>
           </div>
-
-          {isSignUp && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="username">Nome de usuário</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="nomedeusuario"
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    if (errors.username) setErrors({ ...errors, username: "" });
-                  }}
-                  className={errors.username ? "border-red-500" : ""}
-                  disabled={isLoading}
-                />
-                {errors.username && (
-                  <p className="text-sm text-red-500">{errors.username}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nome completo (opcional)</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Seu nome completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-            </>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <div className="relative">
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-2"
+            >
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email
+              </Label>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
                 onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (errors.password) setErrors({ ...errors, password: "" });
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({ ...errors, email: "" });
                 }}
-                className={`pr-10 ${errors.password ? "border-red-500" : ""}`}
+                className={`transition-colors ${
+                  errors.email 
+                    ? "border-red-500 focus:border-red-500" 
+                    : "border-gray-300 focus:border-primary"
+                }`}
                 disabled={isLoading}
               />
+              {errors.email && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-red-500"
+                >
+                  {errors.email}
+                </motion.p>
+              )}
+            </motion.div>
+
+            {isSignUp && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="space-y-2"
+                >
+                  <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+                    Nome de usuário
+                  </Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="nomedeusuario"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (errors.username) setErrors({ ...errors, username: "" });
+                    }}
+                    className={`transition-colors ${
+                      errors.username 
+                        ? "border-red-500 focus:border-red-500" 
+                        : "border-gray-300 focus:border-primary"
+                    }`}
+                    disabled={isLoading}
+                  />
+                  {errors.username && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-red-500"
+                    >
+                      {errors.username}
+                    </motion.p>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="space-y-2"
+                >
+                  <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                    Nome completo (opcional)
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="border-gray-300 focus:border-primary transition-colors"
+                    disabled={isLoading}
+                  />
+                </motion.div>
+              </>
+            )}
+
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: isSignUp ? 0.6 : 0.4 }}
+              className="space-y-2"
+            >
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Senha
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({ ...errors, password: "" });
+                  }}
+                  className={`pr-10 transition-colors ${
+                    errors.password 
+                      ? "border-red-500 focus:border-red-500" 
+                      : "border-gray-300 focus:border-primary"
+                  }`}
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  )}
+                </Button>
+              </div>
+              {errors.password && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm text-red-500"
+                >
+                  {errors.password}
+                </motion.p>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: isSignUp ? 0.7 : 0.5 }}
+            >
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white py-3 text-lg font-medium transition-all duration-200 transform hover:scale-105"
                 disabled={isLoading}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-500" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    {isSignUp ? "Criando..." : "Entrando..."}
+                  </>
                 ) : (
-                  <Eye className="h-4 w-4 text-gray-500" />
+                  <>
+                    {isSignUp ? (
+                      <UserPlus className="h-5 w-5 mr-2" />
+                    ) : (
+                      <LogIn className="h-5 w-5 mr-2" />
+                    )}
+                    {isSignUp ? "Criar Conta" : "Entrar"}
+                  </>
                 )}
               </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password}</p>
-            )}
-          </div>
+            </motion.div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {isSignUp ? "Criando..." : "Entrando..."}
-              </>
-            ) : (
-              <>
-                <LogIn className="h-4 w-4 mr-2" />
-                {isSignUp ? "Criar Conta" : "Entrar"}
-              </>
-            )}
-          </Button>
-
-          <div className="text-center">
-            <Button
-              type="button"
-              variant="link"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({ email: "", password: "", username: "" });
-              }}
-              disabled={isLoading}
-              className="text-sm"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: isSignUp ? 0.8 : 0.6 }}
+              className="text-center pt-4"
             >
-              {isSignUp ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre-se"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setErrors({ email: "", password: "", username: "" });
+                }}
+                disabled={isLoading}
+                className="text-primary hover:text-primary-dark font-medium"
+              >
+                {isSignUp ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre-se"}
+              </Button>
+            </motion.div>
+          </form>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
