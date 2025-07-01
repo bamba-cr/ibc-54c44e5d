@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
@@ -19,7 +18,6 @@ import Historico from "./pages/Historico";
 import Configuracoes from "./pages/Configuracoes";
 import StudentPerformance from "./pages/StudentPerformance";
 import NotFound from "./pages/NotFound";
-import LocalAdminSetupPage from "./pages/LocalAdminSetup";
 
 const queryClient = new QueryClient();
 
@@ -32,9 +30,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/setup-admin" element={<LocalAdminSetupPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/alunos" element={<Alunos />} />
             <Route path="/alunos/editar/:id" element={<EditarAluno />} />

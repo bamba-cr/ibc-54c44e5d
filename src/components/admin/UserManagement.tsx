@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Users, Check, X, Clock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Users, Check, X, Clock, UserPlus, Shield } from 'lucide-react';
 
 interface PendingUser {
   id: string;
@@ -23,7 +25,9 @@ export const UserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [rejectionReason, setRejectionReason] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const { getPendingUsers, approveUser, rejectUser } = useAuth();
+  const [adminEmail, setAdminEmail] = useState('');
+  const [isPromotingAdmin, setIsPromotingAdmin] = useState(false);
+  const { getPendingUsers, approveUser, rejectUser, setupInitialAdmin } = useAuth();
   const { toast } = useToast();
 
   const loadPendingUsers = async () => {
@@ -85,113 +89,188 @@ export const UserManagement = () => {
     }
   };
 
+  const handlePromoteAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPromotingAdmin(true);
+
+    const { error } = await setupInitialAdmin(adminEmail);
+    
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível promover o usuário a administrador.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Administrador criado",
+        description: "O usuário foi promovido a administrador com sucesso.",
+      });
+      setAdminEmail('');
+    }
+    
+    setIsPromotingAdmin(false);
+  };
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            Gerenciamento de Usuários
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">Carregando usuários...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Gerenciamento de Usuários
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Carregando usuários...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Users className="h-5 w-5 mr-2" />
-          Gerenciamento de Usuários
-        </CardTitle>
-        <CardDescription>
-          Gerencie aprovações e rejeições de novos usuários
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {pendingUsers.length === 0 ? (
-          <div className="text-center py-8">
-            <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">Nenhum usuário pendente de aprovação</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pendingUsers.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="font-medium">{user.full_name || user.username}</h3>
-                    <Badge variant="secondary">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Pendente
-                    </Badge>
+    <div className="space-y-6">
+      {/* Promover Administrador */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Shield className="h-5 w-5 mr-2" />
+            Promover Administrador
+          </CardTitle>
+          <CardDescription>
+            Promova um usuário existente a administrador
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePromoteAdmin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">Email do usuário</Label>
+              <Input
+                id="admin-email"
+                type="email"
+                placeholder="usuario@exemplo.com"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                disabled={isPromotingAdmin}
+              />
+              <p className="text-xs text-gray-600">
+                O usuário deve já estar cadastrado no sistema
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={isPromotingAdmin || !adminEmail.trim()}
+            >
+              {isPromotingAdmin ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Promovendo...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Promover a Admin
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Usuários Pendentes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Usuários Pendentes
+          </CardTitle>
+          <CardDescription>
+            Gerencie aprovações de novos usuários
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pendingUsers.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Nenhum usuário pendente de aprovação</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingUsers.map((user) => (
+                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="font-medium">{user.full_name || user.username}</h3>
+                      <Badge variant="secondary">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pendente
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <p className="text-xs text-gray-500">
+                      Cadastrado em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600">{user.email}</p>
-                  <p className="text-xs text-gray-500">
-                    Cadastrado em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleApprove(user.id)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Aprovar
-                  </Button>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setSelectedUser(user.id)}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Rejeitar
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Rejeitar Usuário</DialogTitle>
-                        <DialogDescription>
-                          Você está prestes a rejeitar o acesso de {user.full_name || user.username}.
-                          Opcionalmente, você pode fornecer um motivo.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <Textarea
-                          placeholder="Motivo da rejeição (opcional)"
-                          value={rejectionReason}
-                          onChange={(e) => setRejectionReason(e.target.value)}
-                        />
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setSelectedUser(null)}>
-                          Cancelar
-                        </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleApprove(user.id)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Aprovar
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <Button
+                          size="sm"
                           variant="destructive"
-                          onClick={() => handleReject(user.id)}
+                          onClick={() => setSelectedUser(user.id)}
                         >
-                          Confirmar Rejeição
+                          <X className="h-4 w-4 mr-1" />
+                          Rejeitar
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Rejeitar Usuário</DialogTitle>
+                          <DialogDescription>
+                            Você está prestes a rejeitar o acesso de {user.full_name || user.username}.
+                            Opcionalmente, você pode fornecer um motivo.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Textarea
+                            placeholder="Motivo da rejeição (opcional)"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                          />
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                            Cancelar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleReject(user.id)}
+                          >
+                            Confirmar Rejeição
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
