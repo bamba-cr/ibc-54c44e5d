@@ -40,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/login-improved" element={<ImprovedLogin />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/alunos" element={<Alunos />} />
             <Route path="/alunos/editar/:id" element={<EditarAluno />} />
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/consulta-frequencia" element={<ConsultaFrequencia />} />
             <Route path="/notas" element={<Notas />} />
             <Route path="/relatorios" element={<RelatoriosImproved />} />
+            <Route path="/relatorios-improved" element={<ImprovedRelatorios />} />
             <Route path="/relatorios-old" element={<Relatorios />} />
             <Route path="/historico" element={<Historico />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
