@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogoDisplay } from "@/components/layout/LogoDisplay";
+import { UserRegistrationForm } from "./UserRegistrationForm";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -16,15 +17,13 @@ export const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [username, setUsername] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [errors, setErrors] = useState({ email: "", password: "", username: "" });
-  const { signIn, signUp, isLoading } = useAuth();
+  const [errors, setErrors] = useState({ email: "", password: "" });
+  const { signIn, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const validateForm = () => {
-    const newErrors = { email: "", password: "", username: "" };
+    const newErrors = { email: "", password: "" };
     let isValid = true;
 
     if (!email.trim()) {
@@ -38,14 +37,6 @@ export const LoginForm = () => {
     if (!password) {
       newErrors.password = "Senha é obrigatória";
       isValid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "Senha deve ter pelo menos 6 caracteres";
-      isValid = false;
-    }
-
-    if (isSignUp && !username.trim()) {
-      newErrors.username = "Nome de usuário é obrigatório";
-      isValid = false;
     }
 
     setErrors(newErrors);
@@ -57,56 +48,56 @@ export const LoginForm = () => {
     
     if (!validateForm()) return;
 
-    if (isSignUp) {
-      const { error } = await signUp(email, password, {
-        username,
-        full_name: fullName,
-      });
+    const { error } = await signIn(email, password);
 
-      if (error) {
+    if (error) {
+      if (error.message === "Invalid login credentials") {
         toast({
-          title: "Erro no cadastro",
-          description: error.message || "Ocorreu um erro ao criar a conta.",
+          title: "Credenciais inválidas",
+          description: "Email ou senha incorretos.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Conta criada com sucesso!",
-          description: "Sua conta foi criada e está aguardando aprovação do administrador.",
+          title: "Erro no login",
+          description: error.message || "Ocorreu um erro ao tentar fazer login.",
+          variant: "destructive",
         });
-        setIsSignUp(false);
-        // Limpar formulário
-        setEmail("");
-        setPassword("");
-        setUsername("");
-        setFullName("");
       }
     } else {
-      const { error } = await signIn(email, password);
-
-      if (error) {
-        if (error.message === "Invalid login credentials") {
-          toast({
-            title: "Credenciais inválidas",
-            description: "Email ou senha incorretos.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro no login",
-            description: error.message || "Ocorreu um erro ao tentar fazer login.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Login realizado!",
-          description: "Bem-vindo ao sistema.",
-        });
-        navigate("/relatorios");
-      }
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo ao sistema.",
+      });
+      navigate("/relatorios");
     }
   };
+
+  const handleRegistrationSuccess = () => {
+    setIsSignUp(false);
+    toast({
+      title: "Cadastro realizado!",
+      description: "Agora você pode fazer login com suas credenciais.",
+    });
+  };
+
+  if (isSignUp) {
+    return (
+      <div className="w-full max-w-md space-y-4">
+        <UserRegistrationForm onSuccess={handleRegistrationSuccess} />
+        <div className="text-center">
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => setIsSignUp(false)}
+            className="text-primary hover:text-primary-dark font-medium"
+          >
+            Já tem uma conta? Faça login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -126,10 +117,10 @@ export const LoginForm = () => {
           </motion.div>
           <div>
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-              {isSignUp ? "Criar Conta" : "Bem-vindo"}
+              Bem-vindo
             </CardTitle>
             <CardDescription className="text-gray-600 mt-2">
-              {isSignUp ? "Crie sua conta no sistema" : "Acesse sua conta no sistema"}
+              Acesse sua conta no sistema
             </CardDescription>
           </div>
         </CardHeader>
@@ -171,70 +162,10 @@ export const LoginForm = () => {
               )}
             </motion.div>
 
-            {isSignUp && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="space-y-2"
-                >
-                  <Label htmlFor="username" className="text-sm font-medium text-gray-700">
-                    Nome de usuário
-                  </Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="nomedeusuario"
-                    value={username}
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      if (errors.username) setErrors({ ...errors, username: "" });
-                    }}
-                    className={`transition-colors ${
-                      errors.username 
-                        ? "border-red-500 focus:border-red-500" 
-                        : "border-gray-300 focus:border-primary"
-                    }`}
-                    disabled={isLoading}
-                  />
-                  {errors.username && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-sm text-red-500"
-                    >
-                      {errors.username}
-                    </motion.p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="space-y-2"
-                >
-                  <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
-                    Nome completo (opcional)
-                  </Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="border-gray-300 focus:border-primary transition-colors"
-                    disabled={isLoading}
-                  />
-                </motion.div>
-              </>
-            )}
-
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: isSignUp ? 0.6 : 0.4 }}
+              transition={{ delay: 0.4 }}
               className="space-y-2"
             >
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
@@ -286,7 +217,7 @@ export const LoginForm = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: isSignUp ? 0.7 : 0.5 }}
+              transition={{ delay: 0.5 }}
             >
               <Button
                 type="submit"
@@ -296,16 +227,12 @@ export const LoginForm = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    {isSignUp ? "Criando..." : "Entrando..."}
+                    Entrando...
                   </>
                 ) : (
                   <>
-                    {isSignUp ? (
-                      <UserPlus className="h-5 w-5 mr-2" />
-                    ) : (
-                      <LogIn className="h-5 w-5 mr-2" />
-                    )}
-                    {isSignUp ? "Criar Conta" : "Entrar"}
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Entrar
                   </>
                 )}
               </Button>
@@ -314,20 +241,17 @@ export const LoginForm = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: isSignUp ? 0.8 : 0.6 }}
+              transition={{ delay: 0.6 }}
               className="text-center pt-4"
             >
               <Button
                 type="button"
                 variant="link"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setErrors({ email: "", password: "", username: "" });
-                }}
+                onClick={() => setIsSignUp(true)}
                 disabled={isLoading}
                 className="text-primary hover:text-primary-dark font-medium"
               >
-                {isSignUp ? "Já tem uma conta? Faça login" : "Não tem uma conta? Cadastre-se"}
+                Não tem uma conta? Cadastre-se
               </Button>
             </motion.div>
           </form>

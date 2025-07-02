@@ -1,37 +1,104 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AdminDashboardImproved } from '@/components/admin/AdminDashboardImproved';
 import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LogOut, Calendar, Users, FileText, Settings, BarChart3, Shield } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogOut, Calendar, Users, FileText, Settings, BarChart3, Shield, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Relatorios = () => {
   const navigate = useNavigate();
   const { profile, user, signOut, isLoading } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('calendar');
 
-  const { data: students } = useQuery({
+  // Query para buscar dados dos estudantes com tratamento de erro
+  const { data: students, isLoading: studentsLoading, error: studentsError } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("students").select("*");
-      if (error) throw error;
-      return data;
-    }
+      try {
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching students:', error);
+          throw error;
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch students:', error);
+        throw error;
+      }
+    },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  // Query para buscar dados dos projetos
+  const { data: projects, isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*")
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        return [];
+      }
+    },
+    retry: 2,
+  });
+
+  // Query para buscar dados de frequência
+  const { data: attendance, isLoading: attendanceLoading } = useQuery({
+    queryKey: ["attendance"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("attendance")
+          .select(`
+            *,
+            students(name),
+            projects(name)
+          `)
+          .order('date', { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch attendance:', error);
+        return [];
+      }
+    },
+    retry: 2,
   });
 
   useEffect(() => {
     const checkAuth = async () => {
       if (!isLoading && !user) {
+        toast({
+          title: "Acesso negado",
+          description: "Você precisa estar logado para acessar esta página.",
+          variant: "destructive",
+        });
         navigate("/login");
         return;
       }
@@ -51,26 +118,54 @@ const Relatorios = () => {
   }, [user, profile, isLoading, navigate, toast]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
+    try {
+      await signOut();
+      navigate("/login");
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-gray-600">Carregando sistema...</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  // Auth check
   if (!user || !profile || profile.status !== 'approved') {
     return null;
   }
 
   const isAdmin = profile?.is_admin || false;
+
+  // Error state for critical data
+  if (studentsError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-xl font-bold text-red-700 mb-2">Erro no Sistema</h2>
+            <p className="text-gray-600 text-center mb-4">
+              Não foi possível carregar os dados do sistema. Verifique sua conexão e tente novamente.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Tentar Novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -78,7 +173,7 @@ const Relatorios = () => {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white shadow-sm border-b border-gray-200"
+        className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50"
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -101,14 +196,23 @@ const Relatorios = () => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              className="text-gray-600 hover:text-gray-800"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => navigate('/dashboard')}
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Dashboard
+              </Button>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </motion.header>
@@ -120,7 +224,62 @@ const Relatorios = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Tabs defaultValue="calendar" className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Total de Alunos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {studentsLoading ? '...' : students?.length || 0}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Projetos Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {projectsLoading ? '...' : projects?.length || 0}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Frequências Hoje</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {attendanceLoading ? '...' : 
+                    attendance?.filter(a => 
+                      new Date(a.date).toDateString() === new Date().toDateString()
+                    ).length || 0
+                  }
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Taxa de Presença</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {attendanceLoading ? '...' : 
+                    attendance?.length > 0 ? 
+                      Math.round((attendance.filter(a => a.status === 'presente').length / attendance.length) * 100) + '%' : 
+                      '0%'
+                  }
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className={`grid w-full ${
               isAdmin 
                 ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5 max-w-4xl' 
@@ -181,13 +340,13 @@ const Relatorios = () => {
               </TabsContent>
 
               <TabsContent value="reports" className="mt-6">
-                <ExportSection students={students} />
+                <ExportSection students={students || []} />
               </TabsContent>
 
               {isAdmin && (
                 <>
                   <TabsContent value="admin" className="mt-6">
-                    <AdminDashboard />
+                    <AdminDashboardImproved />
                   </TabsContent>
 
                   <TabsContent value="logs" className="mt-6">

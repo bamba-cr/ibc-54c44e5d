@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserManagementImproved } from './UserManagementImproved';
+import { UserManagementTable } from './UserManagementTable';
 import { SystemSettings } from './SystemSettings';
 import { LogoSettings } from './LogoSettings';
 import { Users, Settings, Image, Shield, BarChart3, Database } from 'lucide-react';
@@ -106,7 +106,7 @@ export const AdminDashboardImproved = () => {
           </TabsList>
 
           <TabsContent value="users" className="space-y-0">
-            <UserManagementImproved />
+            <UserManagementTable />
           </TabsContent>
 
           <TabsContent value="logo" className="space-y-0">
