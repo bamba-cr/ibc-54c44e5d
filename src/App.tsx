@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import ImprovedLogin from "./pages/ImprovedLogin";
 import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import EditarAluno from "./pages/EditarAluno";
@@ -15,6 +16,7 @@ import ConsultaFrequencia from "./pages/ConsultaFrequencia";
 import Notas from "./pages/Notas";
 import Relatorios from "./pages/Relatorios";
 import RelatoriosImproved from "./pages/RelatoriosImproved";
+import ImprovedRelatorios from "./pages/ImprovedRelatorios";
 import Historico from "./pages/Historico";
 import Configuracoes from "./pages/Configuracoes";
 import StudentPerformance from "./pages/StudentPerformance";
@@ -47,7 +49,7 @@ const App = () => (
             <Route path="/frequencia" element={<Frequencia />} />
             <Route path="/consulta-frequencia" element={<ConsultaFrequencia />} />
             <Route path="/notas" element={<Notas />} />
-            <Route path="/relatorios" element={<RelatoriosImproved />} />
+            <Route path="/relatorios" element={<ImprovedRelatorios />} />
             <Route path="/relatorios-improved" element={<ImprovedRelatorios />} />
             <Route path="/relatorios-old" element={<Relatorios />} />
             <Route path="/historico" element={<Historico />} />
