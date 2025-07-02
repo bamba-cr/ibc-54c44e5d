@@ -19,13 +19,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Shield, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Shield, Search, Trash2, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { UserProfile } from '@/types/auth';
+
+// Interface específica para os dados do usuário vindos do banco
+interface DatabaseUserProfile {
+  id: string;
+  user_id: string;
+  email: string | null;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  is_admin: boolean | null;
+  status: 'pending' | 'approved' | 'rejected' | null;
+  rejection_reason: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 export const UserManagementTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<DatabaseUserProfile | null>(null);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -33,26 +48,50 @@ export const UserManagementTable = () => {
   const { approveUser, rejectUser, promoteToAdmin } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
+  // Query para usuários pendentes usando a função RPC
+  const { data: pendingUsers, isLoading: isPendingLoading } = useQuery({
+    queryKey: ['pending-users'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_pending_users');
       if (error) throw error;
-      return data as UserProfile[];
+      return data || [];
     },
   });
 
-  const { data: allUsers } = useQuery({
+  // Query para todos os usuários
+  const { data: allUsers, isLoading: isAllUsersLoading } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          user_id:id,
+          email,
+          username,
+          full_name,
+          avatar_url,
+          phone,
+          is_admin,
+          status,
+          rejection_reason,
+          created_at,
+          updated_at
+        `)
         .order('created_at', { ascending: false });
+      
       if (error) throw error;
-      return data as UserProfile[];
+      
+      return (data || []).map(user => ({
+        ...user,
+        user_id: user.user_id || user.id,
+        status: user.status || 'pending' as const,
+        is_admin: user.is_admin || false,
+      })) as DatabaseUserProfile[];
     },
   });
+
+  const isLoading = isPendingLoading || isAllUsersLoading;
 
   const approveMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -64,7 +103,7 @@ export const UserManagementTable = () => {
         title: "Usuário aprovado",
         description: "O usuário foi aprovado com sucesso!",
       });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
     },
     onError: (error: any) => {
@@ -86,7 +125,7 @@ export const UserManagementTable = () => {
         title: "Usuário rejeitado",
         description: "O usuário foi rejeitado com sucesso!",
       });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
       setIsRejectDialogOpen(false);
       setRejectionReason('');
@@ -110,7 +149,7 @@ export const UserManagementTable = () => {
         title: "Usuário promovido",
         description: "O usuário foi promovido a administrador com sucesso!",
       });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
     },
     onError: (error: any) => {
@@ -127,7 +166,7 @@ export const UserManagementTable = () => {
       const { error } = await supabase
         .from('profiles')
         .delete()
-        .eq('user_id', userId);
+        .eq('id', userId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -135,7 +174,7 @@ export const UserManagementTable = () => {
         title: "Usuário removido",
         description: "O usuário foi removido com sucesso!",
       });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
       setIsDeleteDialogOpen(false);
     },
@@ -148,17 +187,17 @@ export const UserManagementTable = () => {
     },
   });
 
-  const handleReject = (user: UserProfile) => {
+  const handleReject = (user: DatabaseUserProfile) => {
     setSelectedUser(user);
     setIsRejectDialogOpen(true);
   };
 
-  const handleDelete = (user: UserProfile) => {
+  const handleDelete = (user: DatabaseUserProfile) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'approved':
         return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>;
@@ -233,9 +272,9 @@ export const UserManagementTable = () => {
                     <TableCell className="font-medium">
                       {user.full_name || 'N/A'}
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{getStatusBadge(user.status || 'pending')}</TableCell>
+                    <TableCell>{user.email || 'N/A'}</TableCell>
+                    <TableCell>{user.username || 'N/A'}</TableCell>
+                    <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>
                       {user.is_admin ? (
                         <Badge className="bg-purple-100 text-purple-800">
@@ -369,7 +408,7 @@ export const UserManagementTable = () => {
               variant="destructive"
               onClick={() => {
                 if (selectedUser) {
-                  deleteMutation.mutate(selectedUser.user_id);
+                  deleteMutation.mutate(selectedUser.id);
                 }
               }}
               disabled={deleteMutation.isPending}
