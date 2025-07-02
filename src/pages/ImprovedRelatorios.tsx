@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,26 +39,33 @@ const ImprovedRelatorios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState<string>('all');
 
-  // Query otimizada para estudantes
-  const { data: students, isLoading: studentsLoading, refetch: refetchStudents } = useQuery({
+  // Query otimizada para estudantes com melhor tratamento de erros
+  const { data: students, isLoading: studentsLoading, refetch: refetchStudents, error: studentsError } = useQuery({
     queryKey: ["students-improved"],
     queryFn: async () => {
+      console.log('Fetching students...');
       const { data, error } = await supabase
         .from("students")
         .select(`
           *,
-          student_projects!inner(
+          student_projects(
             project_id,
             projects(name, code)
           )
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching students:', error);
+        throw error;
+      }
+      
+      console.log('Students fetched:', data?.length || 0);
       return data || [];
     },
     staleTime: 5 * 60 * 1000, // Cache por 5 minutos
     refetchOnWindowFocus: false,
+    retry: 3,
   });
 
   // Query para projetos
@@ -79,25 +87,35 @@ const ImprovedRelatorios = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [studentsResult, attendanceResult, gradesResult] = await Promise.all([
-        supabase.from("students").select("id", { count: 'exact' }),
-        supabase.from("attendance").select("id", { count: 'exact' }),
-        supabase.from("grades").select("grade").not("grade", "is", null)
-      ]);
+      try {
+        const [studentsResult, attendanceResult, gradesResult] = await Promise.all([
+          supabase.from("students").select("id", { count: 'exact' }),
+          supabase.from("attendance").select("id", { count: 'exact' }),
+          supabase.from("grades").select("grade").not("grade", "is", null)
+        ]);
 
-      const totalStudents = studentsResult.count || 0;
-      const totalAttendance = attendanceResult.count || 0;
-      const grades = gradesResult.data || [];
-      const averageGrade = grades.length > 0 
-        ? grades.reduce((sum, g) => sum + (g.grade || 0), 0) / grades.length 
-        : 0;
+        const totalStudents = studentsResult.count || 0;
+        const totalAttendance = attendanceResult.count || 0;
+        const grades = gradesResult.data || [];
+        const averageGrade = grades.length > 0 
+          ? grades.reduce((sum, g) => sum + (g.grade || 0), 0) / grades.length 
+          : 0;
 
-      return {
-        totalStudents,
-        totalAttendance,
-        averageGrade: Math.round(averageGrade * 100) / 100,
-        totalProjects: projects?.length || 0,
-      };
+        return {
+          totalStudents,
+          totalAttendance,
+          averageGrade: Math.round(averageGrade * 100) / 100,
+          totalProjects: projects?.length || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        return {
+          totalStudents: 0,
+          totalAttendance: 0,
+          averageGrade: 0,
+          totalProjects: 0,
+        };
+      }
     },
     enabled: !!projects,
     staleTime: 2 * 60 * 1000, // Cache por 2 minutos
@@ -145,6 +163,17 @@ const ImprovedRelatorios = () => {
     await signOut();
     navigate("/login");
   };
+
+  // Show error if students failed to load
+  useEffect(() => {
+    if (studentsError) {
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados dos estudantes. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  }, [studentsError, toast]);
 
   if (isLoading) {
     return (
@@ -379,14 +408,7 @@ const ImprovedRelatorios = () => {
                       </div>
                     </div>
 
-                    {studentsLoading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
-                        <span>Carregando alunos...</span>
-                      </div>
-                    ) : (
-                      <StudentsList students={filteredStudents} />
-                    )}
+                    <StudentsList students={filteredStudents} />
                   </CardContent>
                 </Card>
               </TabsContent>
