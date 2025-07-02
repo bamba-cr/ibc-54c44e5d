@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,7 @@ interface UserProfile {
   phone: string | null;
   is_admin: boolean;
   status: 'pending' | 'approved' | 'rejected';
+  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
 }
