@@ -76,7 +76,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (data && data.length > 0) {
-        setProfile(data[0]);
+        // Ensure rejection_reason is included, defaulting to null if not present
+        const profileData = {
+          ...data[0],
+          rejection_reason: data[0].rejection_reason || null
+        };
+        setProfile(profileData);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
