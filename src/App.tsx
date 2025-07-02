@@ -14,12 +14,21 @@ import Frequencia from "./pages/Frequencia";
 import ConsultaFrequencia from "./pages/ConsultaFrequencia";
 import Notas from "./pages/Notas";
 import Relatorios from "./pages/Relatorios";
+import RelatoriosImproved from "./pages/RelatoriosImproved";
 import Historico from "./pages/Historico";
 import Configuracoes from "./pages/Configuracoes";
 import StudentPerformance from "./pages/StudentPerformance";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,7 +46,8 @@ const App = () => (
             <Route path="/frequencia" element={<Frequencia />} />
             <Route path="/consulta-frequencia" element={<ConsultaFrequencia />} />
             <Route path="/notas" element={<Notas />} />
-            <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/relatorios" element={<RelatoriosImproved />} />
+            <Route path="/relatorios-old" element={<Relatorios />} />
             <Route path="/historico" element={<Historico />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/performance/:id" element={<StudentPerformance />} />
