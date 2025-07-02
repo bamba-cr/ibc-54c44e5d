@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Ensure rejection_reason is included, defaulting to null if not present
         const profileData = {
           ...data[0],
-          rejection_reason: data[0].rejection_reason || null
+          rejection_reason: (data[0] as any).rejection_reason || null
         };
         setProfile(profileData);
       }
