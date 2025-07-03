@@ -4,15 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 export const authService = {
   async fetchUserProfile(userId: string) {
     const { data, error } = await supabase
-      .rpc('get_user_profile', { user_uuid: userId })
-      .single();
+      .rpc('get_user_profile', { user_uuid: userId });
     
     if (error) {
       console.error('Error fetching user profile:', error);
       throw error;
     }
     
-    return data;
+    // Return the first item from the array since RPC functions return arrays
+    const profile = data?.[0];
+    
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+    
+    return profile;
   },
 
   async updateUserProfile(userId: string, updates: any) {
