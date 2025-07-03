@@ -18,7 +18,7 @@ export const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, profile, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -65,11 +65,30 @@ export const LoginForm = () => {
         });
       }
     } else {
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo ao sistema.",
-      });
-      navigate("/relatorios");
+      // Aguardar o perfil ser carregado antes de redirecionar
+      setTimeout(() => {
+        console.log('Login realizado, perfil:', profile);
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo ao sistema.",
+        });
+        // Redirecionar baseado no status do usuário
+        if (profile?.status === 'approved' || profile?.is_admin) {
+          navigate("/relatorios");
+        } else if (profile?.status === 'rejected') {
+          toast({
+            title: "Acesso negado",
+            description: "Sua conta foi rejeitada. Entre em contato com o administrador.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Conta pendente",
+            description: "Sua conta está aguardando aprovação do administrador.",
+            variant: "default",
+          });
+        }
+      }, 1000);
     }
   };
 

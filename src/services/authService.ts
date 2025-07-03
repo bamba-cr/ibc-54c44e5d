@@ -17,11 +17,9 @@ export const authService = {
       throw new Error('Profile not found');
     }
     
-    // Ensure rejection_reason is included in the returned profile
-    return {
-      ...profile,
-      rejection_reason: profile.rejection_reason || null
-    };
+    // Since the SQL function now returns rejection_reason, we can return it directly
+    console.log('Raw profile data from database:', profile);
+    return profile;
   },
 
   async updateUserProfile(userId: string, updates: any) {
