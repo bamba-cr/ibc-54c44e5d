@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,7 +30,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (user) {
       try {
         const profileData = await authService.fetchUserProfile(user.id);
-        setProfile(profileData);
+        // Ensure rejection_reason is properly handled
+        const completeProfile: UserProfile = {
+          ...profileData,
+          rejection_reason: profileData.rejection_reason || null
+        };
+        setProfile(completeProfile);
       } catch (error) {
         console.error('Error refreshing profile:', error);
       }
@@ -50,7 +54,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setTimeout(async () => {
             try {
               const profileData = await authService.fetchUserProfile(session.user.id);
-              setProfile(profileData);
+              // Ensure rejection_reason is properly handled
+              const completeProfile: UserProfile = {
+                ...profileData,
+                rejection_reason: profileData.rejection_reason || null
+              };
+              setProfile(completeProfile);
             } catch (error) {
               console.error('Error fetching profile:', error);
               setProfile(null);
@@ -71,7 +80,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (session?.user) {
         try {
           const profileData = await authService.fetchUserProfile(session.user.id);
-          setProfile(profileData);
+          // Ensure rejection_reason is properly handled
+          const completeProfile: UserProfile = {
+            ...profileData,
+            rejection_reason: profileData.rejection_reason || null
+          };
+          setProfile(completeProfile);
         } catch (error) {
           console.error('Error fetching profile:', error);
           setProfile(null);
