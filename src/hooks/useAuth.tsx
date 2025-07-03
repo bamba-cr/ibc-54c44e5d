@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchAndSetProfile = async (userId: string) => {
     try {
       const profileData = await authService.fetchUserProfile(userId);
+      console.log('Profile data received:', profileData);
       setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);

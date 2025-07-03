@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const authService = {
@@ -18,7 +17,11 @@ export const authService = {
       throw new Error('Profile not found');
     }
     
-    return profile;
+    // Ensure rejection_reason is included in the returned profile
+    return {
+      ...profile,
+      rejection_reason: profile.rejection_reason || null
+    };
   },
 
   async updateUserProfile(userId: string, updates: any) {

@@ -14,6 +14,7 @@ export const useUserProfile = () => {
     
     try {
       const profileData = await authService.fetchUserProfile(userId);
+      console.log('User profile data received:', profileData);
       setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
