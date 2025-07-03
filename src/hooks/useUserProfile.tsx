@@ -14,11 +14,7 @@ export const useUserProfile = () => {
     
     try {
       const profileData = await authService.fetchUserProfile(userId);
-      // Garantir que rejection_reason está incluída
-      setProfile({
-        ...profileData,
-        rejection_reason: profileData.rejection_reason || null
-      });
+      setProfile(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
       setError('Erro ao carregar perfil do usuário');
