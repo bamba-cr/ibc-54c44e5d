@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +29,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchAndSetProfile = async (userId: string) => {
     try {
       const profileData = await authService.fetchUserProfile(userId);
-      setProfile(profileData);
+      // Garantir que rejection_reason está incluída
+      setProfile({
+        ...profileData,
+        rejection_reason: profileData.rejection_reason || null
+      });
     } catch (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
