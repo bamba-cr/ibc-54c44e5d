@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,19 +27,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  const fetchAndSetProfile = async (userId: string) => {
+    try {
+      const profileData = await authService.fetchUserProfile(userId);
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
-      try {
-        const profileData = await authService.fetchUserProfile(user.id);
-        // Ensure all required UserProfile properties are present
-        const completeProfile: UserProfile = {
-          ...profileData,
-          rejection_reason: (profileData as any).rejection_reason || null
-        };
-        setProfile(completeProfile);
-      } catch (error) {
-        console.error('Error refreshing profile:', error);
-      }
+      await fetchAndSetProfile(user.id);
     }
   };
 
@@ -52,18 +53,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (session?.user) {
           setTimeout(async () => {
-            try {
-              const profileData = await authService.fetchUserProfile(session.user.id);
-              // Ensure all required UserProfile properties are present
-              const completeProfile: UserProfile = {
-                ...profileData,
-                rejection_reason: (profileData as any).rejection_reason || null
-              };
-              setProfile(completeProfile);
-            } catch (error) {
-              console.error('Error fetching profile:', error);
-              setProfile(null);
-            }
+            await fetchAndSetProfile(session.user.id);
           }, 0);
         } else {
           setProfile(null);
@@ -78,18 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        try {
-          const profileData = await authService.fetchUserProfile(session.user.id);
-          // Ensure all required UserProfile properties are present
-          const completeProfile: UserProfile = {
-            ...profileData,
-            rejection_reason: (profileData as any).rejection_reason || null
-          };
-          setProfile(completeProfile);
-        } catch (error) {
-          console.error('Error fetching profile:', error);
-          setProfile(null);
-        }
+        await fetchAndSetProfile(session.user.id);
       }
       
       setIsLoading(false);

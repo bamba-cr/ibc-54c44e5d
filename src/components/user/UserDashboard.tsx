@@ -2,48 +2,25 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, 
-  Mail, 
-  Phone, 
-  Calendar,
   Settings,
   BookOpen,
-  Users,
   BarChart3,
   Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserProfileCard } from './UserProfileCard';
+import { UserInfoSection } from './UserInfoSection';
 
 export const UserDashboard = () => {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-300';
-      default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'Aprovado';
-      case 'rejected':
-        return 'Rejeitado';
-      default:
-        return 'Pendente';
-    }
-  };
+  if (!profile || !user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -52,48 +29,8 @@ export const UserDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-xl p-8"
         >
-          <div className="flex items-center space-x-6">
-            <Avatar className="h-24 w-24 border-4 border-blue-200">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                {profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1">
-              <div className="flex items-center space-x-4 mb-2">
-                <h1 className="text-3xl font-bold text-gray-800">
-                  {profile?.full_name || profile?.username || 'Usuário'}
-                </h1>
-                <Badge className={`px-3 py-1 ${getStatusColor(profile?.status || 'pending')}`}>
-                  {getStatusText(profile?.status || 'pending')}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center space-x-6 text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4" />
-                  <span>{profile?.email || user?.email}</span>
-                </div>
-                
-                {profile?.phone && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4" />
-                    <span>{profile.phone}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    Membro desde {new Date(profile?.created_at || '').toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <UserProfileCard profile={profile} user={user} />
         </motion.div>
 
         {/* Dashboard Principal */}
@@ -134,96 +71,10 @@ export const UserDashboard = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-                  <CardHeader>
-                    <CardTitle>Informações Pessoais</CardTitle>
-                    <CardDescription>
-                      Suas informações de perfil no sistema
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Nome Completo</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {profile?.full_name || 'Não informado'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Nome de Usuário</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {profile?.username || 'Não informado'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Email</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {profile?.email || user?.email}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Telefone</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {profile?.phone || 'Não informado'}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-                  <CardHeader>
-                    <CardTitle>Status da Conta</CardTitle>
-                    <CardDescription>
-                      Informações sobre o status da sua conta
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Status Atual</label>
-                      <div className="mt-2">
-                        <Badge className={`px-4 py-2 text-base ${getStatusColor(profile?.status || 'pending')}`}>
-                          {getStatusText(profile?.status || 'pending')}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    {profile?.status === 'rejected' && profile?.rejection_reason && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Motivo da Rejeição</label>
-                        <p className="text-sm text-red-600 mt-1 p-3 bg-red-50 rounded-lg border border-red-200">
-                          {profile.rejection_reason}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Tipo de Conta</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {profile?.is_admin ? 'Administrador' : 'Usuário'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Membro desde</label>
-                      <p className="text-lg font-semibold text-gray-800">
-                        {new Date(profile?.created_at || '').toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <UserInfoSection profile={profile} user={user} />
             </TabsContent>
 
-            {/* Activity Tab */}
             <TabsContent value="activity" className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
                 <CardHeader>
@@ -245,7 +96,6 @@ export const UserDashboard = () => {
               </Card>
             </TabsContent>
 
-            {/* Courses Tab */}
             <TabsContent value="courses" className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
                 <CardHeader>
@@ -267,7 +117,6 @@ export const UserDashboard = () => {
               </Card>
             </TabsContent>
 
-            {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
                 <CardHeader>
