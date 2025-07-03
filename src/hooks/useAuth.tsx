@@ -29,8 +29,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const refreshProfile = async () => {
     if (user) {
-      const profileData = await authService.fetchUserProfile(user.id);
-      setProfile(profileData);
+      try {
+        const profileData = await authService.fetchUserProfile(user.id);
+        // Ensure all required fields are present
+        const completeProfile: UserProfile = {
+          ...profileData,
+          rejection_reason: profileData.rejection_reason || null
+        };
+        setProfile(completeProfile);
+      } catch (error) {
+        console.error('Error refreshing profile:', error);
+      }
     }
   };
 
@@ -44,8 +53,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (session?.user) {
           setTimeout(async () => {
-            const profileData = await authService.fetchUserProfile(session.user.id);
-            setProfile(profileData);
+            try {
+              const profileData = await authService.fetchUserProfile(session.user.id);
+              // Ensure all required fields are present
+              const completeProfile: UserProfile = {
+                ...profileData,
+                rejection_reason: profileData.rejection_reason || null
+              };
+              setProfile(completeProfile);
+            } catch (error) {
+              console.error('Error fetching profile:', error);
+              setProfile(null);
+            }
           }, 0);
         } else {
           setProfile(null);
@@ -60,8 +79,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const profileData = await authService.fetchUserProfile(session.user.id);
-        setProfile(profileData);
+        try {
+          const profileData = await authService.fetchUserProfile(session.user.id);
+          // Ensure all required fields are present
+          const completeProfile: UserProfile = {
+            ...profileData,
+            rejection_reason: profileData.rejection_reason || null
+          };
+          setProfile(completeProfile);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setProfile(null);
+        }
       }
       
       setIsLoading(false);
