@@ -30,10 +30,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (user) {
       try {
         const profileData = await authService.fetchUserProfile(user.id);
-        // Ensure rejection_reason is properly handled
+        // Ensure all required UserProfile properties are present
         const completeProfile: UserProfile = {
           ...profileData,
-          rejection_reason: profileData.rejection_reason || null
+          rejection_reason: (profileData as any).rejection_reason || null
         };
         setProfile(completeProfile);
       } catch (error) {
@@ -54,10 +54,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setTimeout(async () => {
             try {
               const profileData = await authService.fetchUserProfile(session.user.id);
-              // Ensure rejection_reason is properly handled
+              // Ensure all required UserProfile properties are present
               const completeProfile: UserProfile = {
                 ...profileData,
-                rejection_reason: profileData.rejection_reason || null
+                rejection_reason: (profileData as any).rejection_reason || null
               };
               setProfile(completeProfile);
             } catch (error) {
@@ -80,10 +80,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (session?.user) {
         try {
           const profileData = await authService.fetchUserProfile(session.user.id);
-          // Ensure rejection_reason is properly handled
+          // Ensure all required UserProfile properties are present
           const completeProfile: UserProfile = {
             ...profileData,
-            rejection_reason: profileData.rejection_reason || null
+            rejection_reason: (profileData as any).rejection_reason || null
           };
           setProfile(completeProfile);
         } catch (error) {
