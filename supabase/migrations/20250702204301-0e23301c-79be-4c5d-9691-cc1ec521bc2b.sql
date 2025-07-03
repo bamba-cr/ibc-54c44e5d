@@ -6,7 +6,7 @@ ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCAD
 -- Copiar dados da coluna id para user_id se necessário
 UPDATE public.profiles SET user_id = id WHERE user_id IS NULL;
 
--- Atualizar a função get_user_profile para usar a estrutura correta
+-- Atualizar a função get_user_profile para usar a estrutura correta e incluir rejection_reason
 CREATE OR REPLACE FUNCTION public.get_user_profile(user_uuid uuid DEFAULT auth.uid())
 RETURNS TABLE(
   id uuid, 
@@ -18,6 +18,7 @@ RETURNS TABLE(
   phone text, 
   is_admin boolean, 
   status user_status, 
+  rejection_reason text,
   created_at timestamp with time zone, 
   updated_at timestamp with time zone
 )
@@ -36,6 +37,7 @@ BEGIN
     p.phone,
     COALESCE(p.is_admin, false) as is_admin,
     COALESCE(p.status, 'pending'::user_status) as status,
+    p.rejection_reason,
     p.created_at,
     p.updated_at
   FROM public.profiles p
