@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +33,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Ensure the profile data includes all required fields
       const completeProfile: UserProfile = {
         ...profileData,
-        rejection_reason: profileData.rejection_reason || null
+        rejection_reason: (profileData as any).rejection_reason || null
       };
       setProfile(completeProfile);
     } catch (error) {
