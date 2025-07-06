@@ -8,18 +8,18 @@ export const authService = {
     
     if (!authUser) return null;
 
-    // Query the users table directly instead of using RPC for better data access
+    // Query the profiles table using the correct column names
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
-      .eq('auth_user_id', authUser.id)
+      .eq('user_id', authUser.id)
       .single();
 
     if (error || !data) return null;
 
     return {
       id: data.id,
-      auth_user_id: data.auth_user_id || authUser.id,
+      auth_user_id: data.user_id || authUser.id,
       email: data.email || authUser.email || '',
       full_name: data.full_name || '',
       phone: data.phone || '',

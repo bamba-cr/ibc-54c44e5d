@@ -28,12 +28,12 @@ export const ComprehensiveAdminDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Query para estatísticas dos usuários
+  // Query para estatísticas dos usuários usando a tabela profiles
   const { data: userStats } = useQuery({
     queryKey: ['user-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('users')
+        .from('profiles')
         .select('status, is_admin');
       
       if (error) throw error;
