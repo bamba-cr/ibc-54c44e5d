@@ -11,16 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Users, Check, X, Clock, UserPlus, Shield, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-interface PendingUser {
-  id: string;
-  user_id: string;
-  email: string;
-  username: string;
-  full_name: string;
-  created_at: string;
-  status: 'pending' | 'approved' | 'rejected';
-}
+import { PendingUser } from '@/types/auth';
 
 export const UserManagement = () => {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
@@ -243,7 +234,7 @@ export const UserManagement = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="font-semibold text-gray-900 text-lg">
-                          {user.full_name || user.username}
+                          {user.full_name}
                         </h3>
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                           <Clock className="h-3 w-3 mr-1" />
@@ -264,7 +255,7 @@ export const UserManagement = () => {
                     <div className="flex space-x-3">
                       <Button
                         size="sm"
-                        onClick={() => handleApprove(user.user_id)}
+                        onClick={() => handleApprove(user.id)}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <Check className="h-4 w-4 mr-2" />
@@ -275,7 +266,7 @@ export const UserManagement = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => setSelectedUser(user.user_id)}
+                            onClick={() => setSelectedUser(user.id)}
                             className="bg-red-600 hover:bg-red-700"
                           >
                             <X className="h-4 w-4 mr-2" />
@@ -287,7 +278,7 @@ export const UserManagement = () => {
                             <DialogTitle className="text-red-900">Rejeitar Usuário</DialogTitle>
                             <DialogDescription className="text-gray-600">
                               Você está prestes a rejeitar o acesso de{' '}
-                              <strong>{user.full_name || user.username}</strong>.
+                              <strong>{user.full_name}</strong>.
                               Opcionalmente, você pode fornecer um motivo.
                             </DialogDescription>
                           </DialogHeader>
@@ -305,7 +296,7 @@ export const UserManagement = () => {
                             </Button>
                             <Button
                               variant="destructive"
-                              onClick={() => handleReject(user.user_id)}
+                              onClick={() => handleReject(user.id)}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Confirmar Rejeição
