@@ -1,130 +1,99 @@
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
-import { LogIn, UserPlus, Shield } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { GraduationCap, Users, BarChart3, Calendar, LogIn } from 'lucide-react';
 
 const Index = () => {
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate("/dashboard");
+    if (!isLoading && user) {
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-dark via-primary to-blue-600">
       <div className="container mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Sistema de Gestão
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Plataforma moderna e segura para gerenciamento de usuários e recursos
+        <div className="text-center mb-16">
+          <div className="flex justify-center items-center mb-6">
+            <GraduationCap className="h-16 w-16 text-white mr-4" />
+            <h1 className="text-5xl font-bold text-white">IBC CONNECT</h1>
+          </div>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            Sistema completo de gestão acadêmica para instituições de ensino
           </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <Card className="h-full">
-              <CardHeader>
-                <Shield className="h-12 w-12 text-blue-600 mb-4" />
-                <CardTitle>Segurança Avançada</CardTitle>
-                <CardDescription>
-                  Sistema de autenticação robusto com controle de acesso baseado em permissões
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <Card className="h-full">
-              <CardHeader>
-                <UserPlus className="h-12 w-12 text-green-600 mb-4" />
-                <CardTitle>Gestão de Usuários</CardTitle>
-                <CardDescription>
-                  Controle completo sobre cadastros, aprovações e permissões de usuários
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-          >
-            <Card className="h-full">
-              <CardHeader>
-                <LogIn className="h-12 w-12 text-purple-600 mb-4" />
-                <CardTitle>Interface Moderna</CardTitle>
-                <CardDescription>
-                  Design responsivo e intuitivo para uma experiência de usuário excepcional
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="text-center"
-        >
-          <Card className="max-w-md mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {[
+            {
+              icon: Users,
+              title: "Gestão de Alunos",
+              description: "Cadastre e gerencie informações completas dos estudantes"
+            },
+            {
+              icon: Calendar,
+              title: "Controle de Frequência",
+              description: "Registre e acompanhe a presença dos alunos"
+            },
+            {
+              icon: BarChart3,
+              title: "Notas e Avaliações",
+              description: "Sistema completo de lançamento e controle de notas"
+            },
+            {
+              icon: GraduationCap,
+              title: "Relatórios Completos",
+              description: "Gere relatórios detalhados e análises de performance"
+            }
+          ].map((feature, index) => (
+            <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 text-white">
+              <CardHeader className="text-center">
+                <feature.icon className="h-12 w-12 mx-auto mb-4 text-white" />
+                <CardTitle className="text-white">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-white/80 text-center">
+                  {feature.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Acesse o Sistema</CardTitle>
               <CardDescription>
-                Faça login ou crie sua conta para começar
+                Faça login para começar a usar todas as funcionalidades
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                onClick={() => navigate("/login")}
-                className="w-full"
+            <CardContent>
+              <Button 
+                onClick={() => navigate('/auth')} 
+                className="w-full bg-primary hover:bg-primary-dark"
                 size="lg"
               >
-                <LogIn className="h-5 w-5 mr-2" />
-                Entrar no Sistema
+                <LogIn className="mr-2 h-5 w-5" />
+                Fazer Login / Cadastrar
               </Button>
-              
-              <div className="text-sm text-gray-600">
-                <p>Credenciais do administrador:</p>
-                <p className="font-mono text-xs bg-gray-100 p-2 rounded mt-2">
-                  Email: admin@sistema.com<br />
-                  Senha: admin123
-                </p>
-              </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

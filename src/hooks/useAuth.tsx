@@ -1,9 +1,31 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { User, PendingUser, AuthContextType } from '@/types/auth';
-import { authService } from '@/services/authService';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+  phone: string | null;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  profile: UserProfile | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userData?: { username?: string; full_name?: string }) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,41 +43,66 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchCurrentUser = async () => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      const userData = await authService.getCurrentUser();
-      setUser(userData);
+      const { data, error } = await supabase
+        .rpc('get_user_profile', { user_id: userId });
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setProfile(data[0]);
+      }
     } catch (error) {
-      console.error('Error fetching user:', error);
-      setUser(null);
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id);
     }
   };
 
   useEffect(() => {
+    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, session?.user?.email);
         
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Buscar perfil do usuário se estiver logado
         if (session?.user) {
-          setTimeout(async () => {
-            await fetchCurrentUser();
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
           }, 0);
         } else {
-          setUser(null);
+          setProfile(null);
         }
         
         setIsLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Verificar sessão existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
       if (session?.user) {
-        await fetchCurrentUser();
+        fetchUserProfile(session.user.id);
       }
+      
       setIsLoading(false);
     });
 
@@ -63,24 +110,67 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    const result = await authService.signIn(email, password);
-    setIsLoading(false);
-    return result;
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('Unexpected login error:', error);
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    setIsLoading(true);
-    const result = await authService.signUp(email, password, fullName, phone);
-    setIsLoading(false);
-    return result;
+  const signUp = async (
+    email: string, 
+    password: string, 
+    userData?: { username?: string; full_name?: string }
+  ) => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: {
+            username: userData?.username || '',
+            full_name: userData?.full_name || '',
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('Unexpected signup error:', error);
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signOut = async () => {
     try {
       setIsLoading(true);
-      await authService.signOut();
+      await supabase.auth.signOut();
       setUser(null);
+      setSession(null);
+      setProfile(null);
       
       toast({
         title: "Logout realizado",
@@ -98,28 +188,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const resetPassword = async (email: string) => {
-    return await authService.resetPassword(email);
-  };
-
-  const refreshUser = async () => {
-    await fetchCurrentUser();
-  };
-
   const value = {
     user,
+    session,
+    profile,
     isLoading,
-    isAuthenticated: !!user && user.status === 'approved',
-    isAdmin: !!user && user.is_admin && user.status === 'approved',
     signIn,
     signUp,
     signOut,
-    resetPassword,
-    refreshUser,
-    getPendingUsers: authService.getPendingUsers,
-    approveUser: authService.approveUser,
-    rejectUser: authService.rejectUser,
-    promoteToAdmin: authService.promoteToAdmin,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

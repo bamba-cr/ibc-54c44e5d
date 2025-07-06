@@ -187,51 +187,33 @@ export type Database = {
       }
       profiles: {
         Row: {
-          approved_at: string | null
-          approved_by: string | null
           avatar_url: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
           id: string
-          is_admin: boolean | null
           phone: string | null
-          rejection_reason: string | null
-          status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
-          user_id: string | null
           username: string | null
         }
         Insert: {
-          approved_at?: string | null
-          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
-          is_admin?: boolean | null
           phone?: string | null
-          rejection_reason?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
-          user_id?: string | null
           username?: string | null
         }
         Update: {
-          approved_at?: string | null
-          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
-          is_admin?: boolean | null
           phone?: string | null
-          rejection_reason?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
-          user_id?: string | null
           username?: string | null
         }
         Relationships: []
@@ -401,10 +383,6 @@ export type Database = {
       }
     }
     Functions: {
-      approve_user: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
       create_initial_admin: {
         Args: { admin_email: string }
         Returns: boolean
@@ -443,18 +421,6 @@ export type Database = {
           resolution_notes: string
         }[]
       }
-      get_pending_users: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          user_id: string
-          email: string
-          username: string
-          full_name: string
-          created_at: string
-          status: Database["public"]["Enums"]["user_status"]
-        }[]
-      }
       get_project_rankings: {
         Args: { project_id_param: string }
         Returns: {
@@ -478,17 +444,15 @@ export type Database = {
         }[]
       }
       get_user_profile: {
-        Args: { user_uuid?: string }
+        Args: { user_id?: string }
         Returns: {
           id: string
-          user_id: string
           email: string
           username: string
           full_name: string
           avatar_url: string
           phone: string
           is_admin: boolean
-          status: Database["public"]["Enums"]["user_status"]
           created_at: string
           updated_at: string
         }[]
@@ -501,26 +465,13 @@ export type Database = {
         Returns: boolean
       }
       is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      is_user_approved: {
         Args: { user_id?: string }
-        Returns: boolean
-      }
-      promote_to_admin: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      reject_user: {
-        Args: { target_user_id: string; reason?: string }
         Returns: boolean
       }
     }
     Enums: {
       app_role: "admin" | "user"
       error_type: "api" | "frontend" | "backend" | "database" | "auth" | "other"
-      user_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -638,7 +589,6 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       error_type: ["api", "frontend", "backend", "database", "auth", "other"],
-      user_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
