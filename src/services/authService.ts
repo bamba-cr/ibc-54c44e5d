@@ -1,57 +1,22 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { User, PendingUser } from '@/types/auth';
 
 export const authService = {
-  async fetchUserProfile(userId: string) {
-    const { data, error } = await supabase
-      .rpc('get_user_profile', { user_uuid: userId });
+  async getCurrentUser(): Promise<User | null> {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
     
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
-    }
-    
-    // Return the first item from the array since RPC functions return arrays
-    const profile = data?.[0];
-    
-    if (!profile) {
-      throw new Error('Profile not found');
-    }
-    
-    // Since the SQL function now returns rejection_reason, we can return it directly
-    console.log('Raw profile data from database:', profile);
-    return profile;
-  },
+    if (!authUser) return null;
 
-  async updateUserProfile(userId: string, updates: any) {
     const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('user_id', userId)
-      .select()
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', authUser.id)
       .single();
-    
-    if (error) {
-      console.error('Error updating user profile:', error);
-      throw error;
-    }
-    
-    return data;
-  },
 
-  async createUserProfile(profile: any) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert(profile)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating user profile:', error);
-      throw error;
-    }
-    
-    return data;
+    if (error || !data) return null;
+
+    return data as User;
   },
 
   async signIn(email: string, password: string) {
@@ -63,12 +28,15 @@ export const authService = {
     return { error };
   },
 
-  async signUp(email: string, password: string, userData?: { username?: string; full_name?: string }) {
+  async signUp(email: string, password: string, fullName: string, phone?: string) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: userData,
+        data: {
+          full_name: fullName,
+          phone: phone || '',
+        },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
@@ -81,7 +49,15 @@ export const authService = {
     if (error) throw error;
   },
 
-  async getPendingUsers() {
+  async resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    return { error };
+  },
+
+  async getPendingUsers(): Promise<PendingUser[]> {
     const { data, error } = await supabase.rpc('get_pending_users');
     
     if (error) {
@@ -93,20 +69,27 @@ export const authService = {
   },
 
   async approveUser(userId: string) {
-    const { error } = await supabase.rpc('approve_user', { target_user_id: userId });
-    return { error };
+    const { data, error } = await supabase.rpc('approve_user', { 
+      target_user_id: userId 
+    });
+    
+    return { error, success: data };
   },
 
   async rejectUser(userId: string, reason?: string) {
-    const { error } = await supabase.rpc('reject_user', { 
-      target_user_id: userId, 
-      reason: reason || null 
+    const { data, error } = await supabase.rpc('reject_user', { 
+      target_user_id: userId,
+      reason: reason || null
     });
-    return { error };
+    
+    return { error, success: data };
   },
 
   async promoteToAdmin(userId: string) {
-    const { error } = await supabase.rpc('promote_to_admin', { target_user_id: userId });
-    return { error };
+    const { data, error } = await supabase.rpc('promote_to_admin', { 
+      target_user_id: userId 
+    });
+    
+    return { error, success: data };
   }
 };

@@ -1,8 +1,8 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { UserProfile, PendingUser, AuthContextType } from '@/types/auth';
+import { User, PendingUser, AuthContextType } from '@/types/auth';
 import { authService } from '@/services/authService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,61 +21,41 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchAndSetProfile = async (userId: string) => {
+  const fetchCurrentUser = async () => {
     try {
-      const profileData = await authService.fetchUserProfile(userId);
-      console.log('Profile data received:', profileData);
-      // Ensure the profile data includes all required fields
-      const completeProfile: UserProfile = {
-        ...profileData,
-        rejection_reason: (profileData as any).rejection_reason || null
-      };
-      setProfile(completeProfile);
+      const userData = await authService.getCurrentUser();
+      setUser(userData);
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setProfile(null);
-    }
-  };
-
-  const refreshProfile = async () => {
-    if (user) {
-      await fetchAndSetProfile(user.id);
+      console.error('Error fetching user:', error);
+      setUser(null);
     }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log('Auth state changed:', event);
         
         if (session?.user) {
           setTimeout(async () => {
-            await fetchAndSetProfile(session.user.id);
+            await fetchCurrentUser();
           }, 0);
         } else {
-          setProfile(null);
+          setUser(null);
         }
         
         setIsLoading(false);
       }
     );
 
+    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
       if (session?.user) {
-        await fetchAndSetProfile(session.user.id);
+        await fetchCurrentUser();
       }
-      
       setIsLoading(false);
     });
 
@@ -89,13 +69,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return result;
   };
 
-  const signUp = async (
-    email: string, 
-    password: string, 
-    userData?: { username?: string; full_name?: string }
-  ) => {
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     setIsLoading(true);
-    const result = await authService.signUp(email, password, userData);
+    const result = await authService.signUp(email, password, fullName, phone);
     setIsLoading(false);
     return result;
   };
@@ -105,8 +81,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(true);
       await authService.signOut();
       setUser(null);
-      setSession(null);
-      setProfile(null);
       
       toast({
         title: "Logout realizado",
@@ -124,15 +98,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    return await authService.resetPassword(email);
+  };
+
+  const refreshUser = async () => {
+    await fetchCurrentUser();
+  };
+
   const value = {
     user,
-    session,
-    profile,
     isLoading,
+    isAuthenticated: !!user && user.status === 'approved',
+    isAdmin: !!user && user.is_admin && user.status === 'approved',
     signIn,
     signUp,
     signOut,
-    refreshProfile,
+    resetPassword,
+    refreshUser,
     getPendingUsers: authService.getPendingUsers,
     approveUser: authService.approveUser,
     rejectUser: authService.rejectUser,

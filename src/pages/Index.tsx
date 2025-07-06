@@ -1,77 +1,130 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Calendar, Users, FileText, BookOpen, Settings, Shield } from "lucide-react";
-import { LogoDisplay } from "@/components/layout/LogoDisplay";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
+import { LogIn, UserPlus, Shield } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-dark to-primary">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <LogoDisplay className="text-white text-4xl md:text-6xl" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            Sistema de Gestão Acadêmica
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="container mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Sistema de Gestão
           </h1>
-          <p className="text-xl text-white/80 mb-8">
-            Gerencie alunos, frequência, notas e relatórios de forma eficiente
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Plataforma moderna e segura para gerenciamento de usuários e recursos
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100">
-              <Link to="/login">
-                Fazer Login
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
-              <Link to="/auth">
-                Criar Conta
-              </Link>
-            </Button>
-          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <Card className="h-full">
+              <CardHeader>
+                <Shield className="h-12 w-12 text-blue-600 mb-4" />
+                <CardTitle>Segurança Avançada</CardTitle>
+                <CardDescription>
+                  Sistema de autenticação robusto com controle de acesso baseado em permissões
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            <Card className="h-full">
+              <CardHeader>
+                <UserPlus className="h-12 w-12 text-green-600 mb-4" />
+                <CardTitle>Gestão de Usuários</CardTitle>
+                <CardDescription>
+                  Controle completo sobre cadastros, aprovações e permissões de usuários
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            <Card className="h-full">
+              <CardHeader>
+                <LogIn className="h-12 w-12 text-purple-600 mb-4" />
+                <CardTitle>Interface Moderna</CardTitle>
+                <CardDescription>
+                  Design responsivo e intuitivo para uma experiência de usuário excepcional
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </motion.div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center text-white">
-            <Users className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Gestão de Alunos</h3>
-            <p className="text-sm text-white/80">Cadastre e gerencie informações dos alunos</p>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center text-white">
-            <Calendar className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Controle de Frequência</h3>
-            <p className="text-sm text-white/80">Registre presenças e ausências</p>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center text-white">
-            <BookOpen className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Notas e Avaliações</h3>
-            <p className="text-sm text-white/80">Gerencie notas e acompanhe desempenho</p>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-center text-white">
-            <FileText className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
-            <p className="text-sm text-white/80">Gere relatórios detalhados</p>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 max-w-md mx-auto">
-            <Shield className="h-8 w-8 mx-auto mb-3 text-white" />
-            <h3 className="text-lg font-semibold mb-2 text-white">Configuração do Sistema</h3>
-            <p className="text-sm text-white/80 mb-4">Configure o administrador local do sistema</p>
-            <Button asChild variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
-              <Link to="/setup-admin">
-                Configurar Admin
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="text-center"
+        >
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>Acesse o Sistema</CardTitle>
+              <CardDescription>
+                Faça login ou crie sua conta para começar
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                onClick={() => navigate("/login")}
+                className="w-full"
+                size="lg"
+              >
+                <LogIn className="h-5 w-5 mr-2" />
+                Entrar no Sistema
+              </Button>
+              
+              <div className="text-sm text-gray-600">
+                <p>Credenciais do administrador:</p>
+                <p className="font-mono text-xs bg-gray-100 p-2 rounded mt-2">
+                  Email: admin@sistema.com<br />
+                  Senha: admin123
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

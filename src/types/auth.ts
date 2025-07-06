@@ -1,38 +1,35 @@
 
-export interface UserProfile {
+export interface User {
   id: string;
-  user_id: string;
+  auth_user_id: string;
   email: string;
-  username: string;
   full_name: string;
-  avatar_url: string | null;
-  phone: string | null;
+  phone?: string;
   is_admin: boolean;
   status: 'pending' | 'approved' | 'rejected';
-  rejection_reason: string | null;
+  rejection_reason?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface PendingUser {
   id: string;
-  user_id: string;
   email: string;
-  username: string;
   full_name: string;
+  phone?: string;
   created_at: string;
-  status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface AuthContextType {
-  user: any | null;
-  session: any | null;
-  profile: UserProfile | null;
+  user: User | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData?: { username?: string; full_name?: string }) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
+  refreshUser: () => Promise<void>;
   getPendingUsers: () => Promise<PendingUser[]>;
   approveUser: (userId: string) => Promise<{ error: any }>;
   rejectUser: (userId: string, reason?: string) => Promise<{ error: any }>;

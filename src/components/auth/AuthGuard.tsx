@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, Clock, XCircle } from 'lucide-react';
+import { Loader2, Clock, XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -17,9 +17,9 @@ export const AuthGuard = ({
   children, 
   requireAuth = true, 
   requireAdmin = false,
-  redirectTo = '/auth' 
+  redirectTo = '/login' 
 }: AuthGuardProps) => {
-  const { user, profile, isLoading, signOut } = useAuth();
+  const { user, isLoading, isAuthenticated, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,18 +36,18 @@ export const AuthGuard = ({
     }
 
     // Se requer admin mas não é admin
-    if (requireAdmin && (!profile || !profile.is_admin)) {
+    if (requireAdmin && !isAdmin) {
       navigate('/dashboard', { replace: true });
       return;
     }
 
     // Se não requer autenticação mas está logado (para páginas como login)
-    if (!requireAuth && user) {
+    if (!requireAuth && isAuthenticated) {
       const from = location.state?.from || '/dashboard';
       navigate(from, { replace: true });
       return;
     }
-  }, [user, profile, isLoading, requireAuth, requireAdmin, navigate, location, redirectTo]);
+  }, [user, isLoading, isAuthenticated, isAdmin, requireAuth, requireAdmin, navigate, location, redirectTo]);
 
   if (isLoading) {
     return (
@@ -66,7 +66,7 @@ export const AuthGuard = ({
   }
 
   // Se está logado mas não aprovado
-  if (requireAuth && user && profile && profile.status === 'pending') {
+  if (requireAuth && user && user.status === 'pending') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="max-w-md w-full">
@@ -91,7 +91,7 @@ export const AuthGuard = ({
   }
 
   // Se está logado mas foi rejeitado
-  if (requireAuth && user && profile && profile.status === 'rejected') {
+  if (requireAuth && user && user.status === 'rejected') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="max-w-md w-full">
@@ -103,6 +103,13 @@ export const AuthGuard = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
+            {user.rejection_reason && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-red-700">
+                  <strong>Motivo:</strong> {user.rejection_reason}
+                </p>
+              </div>
+            )}
             <p className="text-sm text-gray-600 mb-4">
               Entre em contato com o administrador do sistema para mais informações.
             </p>
@@ -116,10 +123,27 @@ export const AuthGuard = ({
   }
 
   // Para páginas que requerem auth, só renderizar se logado e aprovado
-  if (requireAuth && user && profile && profile.status === 'approved') {
+  if (requireAuth && isAuthenticated) {
     // Se requer admin, verificar se é admin
-    if (requireAdmin && !profile.is_admin) {
-      return null; // Será redirecionado pelo useEffect
+    if (requireAdmin && !isAdmin) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <AlertTriangle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+              <CardTitle>Acesso Restrito</CardTitle>
+              <CardDescription>
+                Esta área é restrita apenas para administradores.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button onClick={() => navigate('/dashboard')} className="w-full">
+                Voltar ao Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
     }
     return <>{children}</>;
   }

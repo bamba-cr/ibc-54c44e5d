@@ -5,116 +5,209 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, UserPlus, Key } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogoDisplay } from "@/components/layout/LogoDisplay";
-import { UserRegistrationForm } from "./UserRegistrationForm";
-import { useNavigate } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 
 export const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [signupData, setSignupData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    phone: "",
+  });
+  const [resetEmail, setResetEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [errors, setErrors] = useState({ email: "", password: "" });
-  const { signIn, isLoading, profile, user } = useAuth();
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+  const [showReset, setShowReset] = useState(false);
+  
+  const { signIn, signUp, resetPassword, isLoading } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const validateForm = () => {
-    const newErrors = { email: "", password: "" };
-    let isValid = true;
-
-    if (!email.trim()) {
-      newErrors.email = "Email é obrigatório";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email inválido";
-      isValid = false;
-    }
-
-    if (!password) {
-      newErrors.password = "Senha é obrigatória";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!loginData.email || !loginData.password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha email e senha.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(loginData.email, loginData.password);
 
     if (error) {
-      if (error.message === "Invalid login credentials") {
-        toast({
-          title: "Credenciais inválidas",
-          description: "Email ou senha incorretos.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Erro no login",
-          description: error.message || "Ocorreu um erro ao tentar fazer login.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Erro no login",
+        description: error.message === "Invalid login credentials" 
+          ? "Email ou senha incorretos." 
+          : "Ocorreu um erro ao fazer login.",
+        variant: "destructive",
+      });
     } else {
-      // Aguardar o perfil ser carregado antes de redirecionar
-      setTimeout(() => {
-        console.log('Login realizado, perfil:', profile);
-        toast({
-          title: "Login realizado!",
-          description: "Bem-vindo ao sistema.",
-        });
-        // Redirecionar baseado no status do usuário
-        if (profile?.status === 'approved' || profile?.is_admin) {
-          navigate("/relatorios");
-        } else if (profile?.status === 'rejected') {
-          toast({
-            title: "Acesso negado",
-            description: "Sua conta foi rejeitada. Entre em contato com o administrador.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Conta pendente",
-            description: "Sua conta está aguardando aprovação do administrador.",
-            variant: "default",
-          });
-        }
-      }, 1000);
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo ao sistema.",
+      });
     }
   };
 
-  const handleRegistrationSuccess = () => {
-    setIsSignUp(false);
-    toast({
-      title: "Cadastro realizado!",
-      description: "Agora você pode fazer login com suas credenciais.",
-    });
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!signupData.email || !signupData.password || !signupData.fullName) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (signupData.password !== signupData.confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "As senhas digitadas não são iguais.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await signUp(
+      signupData.email, 
+      signupData.password, 
+      signupData.fullName, 
+      signupData.phone
+    );
+
+    if (error) {
+      toast({
+        title: "Erro no cadastro",
+        description: error.message?.includes("already registered") 
+          ? "Este email já está cadastrado." 
+          : "Ocorreu um erro ao criar a conta.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Cadastro realizado!",
+        description: "Sua conta foi criada e está aguardando aprovação do administrador.",
+      });
+      setSignupData({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        fullName: "",
+        phone: "",
+      });
+      setActiveTab("login");
+    }
   };
 
-  if (isSignUp) {
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail) {
+      toast({
+        title: "Email obrigatório",
+        description: "Digite seu email para recuperar a senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await resetPassword(resetEmail);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao enviar o email de recuperação.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setShowReset(false);
+      setResetEmail("");
+    }
+  };
+
+  if (showReset) {
     return (
-      <div className="w-full max-w-md space-y-4">
-        <UserRegistrationForm onSuccess={handleRegistrationSuccess} />
-        <div className="text-center">
-          <Button
-            type="button"
-            variant="link"
-            onClick={() => setIsSignUp(false)}
-            className="text-primary hover:text-primary-dark font-medium"
-          >
-            Já tem uma conta? Faça login
-          </Button>
-        </div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md mx-auto"
+      >
+        <Card className="shadow-xl">
+          <CardHeader className="text-center">
+            <Key className="h-12 w-12 text-primary mx-auto mb-4" />
+            <CardTitle className="text-2xl font-bold">Recuperar Senha</CardTitle>
+            <CardDescription>
+              Digite seu email para receber as instruções de recuperação
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar Email"
+                  )}
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setShowReset(false)}
+                  disabled={isLoading}
+                >
+                  Voltar ao Login
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -122,158 +215,203 @@ export const LoginForm = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-md"
+      className="w-full max-w-md mx-auto"
     >
-      <Card className="backdrop-blur-sm bg-white/95 shadow-2xl border-0">
-        <CardHeader className="text-center space-y-4 pb-6">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <LogoDisplay className="mx-auto mb-4" />
-          </motion.div>
-          <div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-              Bem-vindo
-            </CardTitle>
-            <CardDescription className="text-gray-600 mt-2">
-              Acesse sua conta no sistema
-            </CardDescription>
-          </div>
+      <Card className="shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-primary">
+            Sistema de Gestão
+          </CardTitle>
+          <CardDescription>
+            Faça login ou crie sua conta para acessar
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-2"
-            >
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errors.email) setErrors({ ...errors, email: "" });
-                }}
-                className={`transition-colors ${
-                  errors.email 
-                    ? "border-red-500 focus:border-red-500" 
-                    : "border-gray-300 focus:border-primary"
-                }`}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-sm text-red-500"
-                >
-                  {errors.email}
-                </motion.p>
-              )}
-            </motion.div>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Cadastro</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="loginEmail">Email</Label>
+                  <Input
+                    id="loginEmail"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-2"
-            >
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Senha
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password) setErrors({ ...errors, password: "" });
-                  }}
-                  className={`pr-10 transition-colors ${
-                    errors.password 
-                      ? "border-red-500 focus:border-red-500" 
-                      : "border-gray-300 focus:border-primary"
-                  }`}
-                  disabled={isLoading}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="loginPassword">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="loginPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      className="pr-10"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Entrar
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-sm"
+                    onClick={() => setShowReset(true)}
+                    disabled={isLoading}
+                  >
+                    Esqueceu sua senha?
+                  </Button>
+                </div>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo *</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={signupData.fullName}
+                    onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signupEmail">Email *</Label>
+                  <Input
+                    id="signupEmail"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={signupData.email}
+                    onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    value={signupData.phone}
+                    onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signupPassword">Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      id="signupPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signupData.password}
+                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                      className="pr-10"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signupData.confirmPassword}
+                      onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                      className="pr-10"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Criando conta...
+                    </>
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-500" />
+                    <>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Criar Conta
+                    </>
                   )}
                 </Button>
-              </div>
-              {errors.password && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-sm text-red-500"
-                >
-                  {errors.password}
-                </motion.p>
-              )}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white py-3 text-lg font-medium transition-all duration-200 transform hover:scale-105"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-5 w-5 mr-2" />
-                    Entrar
-                  </>
-                )}
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-center pt-4"
-            >
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => setIsSignUp(true)}
-                disabled={isLoading}
-                className="text-primary hover:text-primary-dark font-medium"
-              >
-                Não tem uma conta? Cadastre-se
-              </Button>
-            </motion.div>
-          </form>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </motion.div>

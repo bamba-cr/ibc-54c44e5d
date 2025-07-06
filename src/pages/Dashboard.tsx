@@ -1,12 +1,16 @@
 
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { MainDashboard } from '@/components/dashboard/MainDashboard';
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useAuth } from "@/hooks/useAuth";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { UserDashboard } from "@/components/user/UserDashboard";
 
 const Dashboard = () => {
+  const { isAdmin } = useAuth();
+
   return (
-    <ProtectedRoute>
-      <MainDashboard />
-    </ProtectedRoute>
+    <AuthGuard requireAuth={true}>
+      {isAdmin ? <AdminDashboard /> : <UserDashboard />}
+    </AuthGuard>
   );
 };
 
