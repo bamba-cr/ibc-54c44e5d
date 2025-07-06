@@ -25,7 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export const ComprehensiveAdminDashboard = () => {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Query para estatísticas dos usuários
@@ -33,7 +33,7 @@ export const ComprehensiveAdminDashboard = () => {
     queryKey: ['user-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('status, is_admin');
       
       if (error) throw error;
@@ -75,7 +75,7 @@ export const ComprehensiveAdminDashboard = () => {
           <div className="flex items-center justify-center space-x-2 mt-4">
             <Badge className="bg-white/20 text-white border-white/30 px-4 py-2">
               <Crown className="h-4 w-4 mr-2" />
-              Administrador: {profile?.full_name || profile?.username}
+              Administrador: {user?.full_name}
             </Badge>
           </div>
         </motion.div>

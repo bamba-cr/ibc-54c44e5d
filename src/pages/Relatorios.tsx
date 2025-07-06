@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Relatorios = () => {
   const navigate = useNavigate();
-  const { profile, user, signOut, isLoading } = useAuth();
+  const { user, signOut, isLoading } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('calendar');
 
@@ -103,7 +103,7 @@ const Relatorios = () => {
         return;
       }
 
-      if (profile && profile.status !== 'approved') {
+      if (user && user.status !== 'approved') {
         toast({
           title: "Acesso Pendente",
           description: "Sua conta está aguardando aprovação do administrador.",
@@ -115,7 +115,7 @@ const Relatorios = () => {
     };
 
     checkAuth();
-  }, [user, profile, isLoading, navigate, toast]);
+  }, [user, isLoading, navigate, toast]);
 
   const handleSignOut = async () => {
     try {
@@ -141,11 +141,11 @@ const Relatorios = () => {
   }
 
   // Auth check
-  if (!user || !profile || profile.status !== 'approved') {
+  if (!user || user.status !== 'approved') {
     return null;
   }
 
-  const isAdmin = profile?.is_admin || false;
+  const isAdmin = user?.is_admin || false;
 
   // Error state for critical data
   if (studentsError) {
@@ -186,7 +186,7 @@ const Relatorios = () => {
                   Sistema de Gestão Acadêmica
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Bem-vindo, {profile.full_name || profile.username}
+                  Bem-vindo, {user.full_name}
                   {isAdmin && (
                     <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       <Shield className="h-3 w-3 mr-1" />

@@ -12,14 +12,14 @@ import { Shield, GraduationCap, Users, BarChart3 } from "lucide-react";
 
 const ImprovedLogin = () => {
   const navigate = useNavigate();
-  const { user, profile, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("login");
 
   useEffect(() => {
-    if (!isLoading && user && profile?.status === 'approved') {
-      navigate("/relatorios");
+    if (!isLoading && user && user.status === 'approved') {
+      navigate("/dashboard");
     }
-  }, [user, profile, isLoading, navigate]);
+  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return (

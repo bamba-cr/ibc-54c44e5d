@@ -8,23 +8,26 @@ export const authService = {
     
     if (!authUser) return null;
 
-    // Use RPC function to get user data since direct table access might not be available
-    const { data, error } = await supabase.rpc('get_user_profile', { user_uuid: authUser.id });
+    // Query the users table directly instead of using RPC for better data access
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', authUser.id)
+      .single();
 
-    if (error || !data || data.length === 0) return null;
+    if (error || !data) return null;
 
-    const userData = data[0];
     return {
-      id: userData.id,
-      auth_user_id: userData.user_id || authUser.id,
-      email: userData.email || authUser.email || '',
-      full_name: userData.full_name || '',
-      phone: userData.phone || '',
-      is_admin: userData.is_admin || false,
-      status: userData.status || 'pending',
-      rejection_reason: userData.rejection_reason || '',
-      created_at: userData.created_at || '',
-      updated_at: userData.updated_at || ''
+      id: data.id,
+      auth_user_id: data.auth_user_id || authUser.id,
+      email: data.email || authUser.email || '',
+      full_name: data.full_name || '',
+      phone: data.phone || '',
+      is_admin: data.is_admin || false,
+      status: data.status || 'pending',
+      rejection_reason: data.rejection_reason || '',
+      created_at: data.created_at || '',
+      updated_at: data.updated_at || ''
     } as User;
   },
 

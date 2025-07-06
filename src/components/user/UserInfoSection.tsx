@@ -1,23 +1,24 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserProfile } from '@/types/auth';
-import { User } from '@supabase/supabase-js';
+import { User } from '@/types/auth';
+import { Mail, Phone, User as UserIcon, Calendar } from 'lucide-react';
 
 interface UserInfoSectionProps {
-  profile: UserProfile;
   user: User;
 }
 
-export const UserInfoSection = ({ profile, user }: UserInfoSectionProps) => {
+export const UserInfoSection = ({ user }: UserInfoSectionProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
       case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -25,98 +26,68 @@ export const UserInfoSection = ({ profile, user }: UserInfoSectionProps) => {
     switch (status) {
       case 'approved':
         return 'Aprovado';
+      case 'pending':
+        return 'Pendente';
       case 'rejected':
         return 'Rejeitado';
       default:
-        return 'Pendente';
+        return 'Desconhecido';
     }
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-          <CardDescription>
-            Suas informações de perfil no sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-600">Nome Completo</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {profile?.full_name || 'Não informado'}
-            </p>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-600">Nome de Usuário</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {profile?.username || 'Não informado'}
-            </p>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-600">Email</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {profile?.email || user?.email}
-            </p>
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-600">Telefone</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {profile?.phone || 'Não informado'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <UserIcon className="h-5 w-5" />
+          <span>Informações do Usuário</span>
+        </CardTitle>
+        <CardDescription>
+          Seus dados pessoais e status da conta
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Status da Conta:</span>
+          <Badge className={getStatusColor(user.status)}>
+            {getStatusText(user.status)}
+          </Badge>
+        </div>
 
-      <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-        <CardHeader>
-          <CardTitle>Status da Conta</CardTitle>
-          <CardDescription>
-            Informações sobre o status da sua conta
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-600">Status Atual</label>
-            <div className="mt-2">
-              <Badge className={`px-4 py-2 text-base ${getStatusColor(profile?.status || 'pending')}`}>
-                {getStatusText(profile?.status || 'pending')}
-              </Badge>
-            </div>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <UserIcon className="h-4 w-4 text-gray-500" />
+            <span className="text-sm">{user.full_name}</span>
           </div>
-          
-          {profile?.status === 'rejected' && profile?.rejection_reason && (
-            <div>
-              <label className="text-sm font-medium text-gray-600">Motivo da Rejeição</label>
-              <p className="text-sm text-red-600 mt-1 p-3 bg-red-50 rounded-lg border border-red-200">
-                {profile.rejection_reason}
-              </p>
+
+          <div className="flex items-center space-x-3">
+            <Mail className="h-4 w-4 text-gray-500" />
+            <span className="text-sm">{user.email}</span>
+          </div>
+
+          {user.phone && (
+            <div className="flex items-center space-x-3">
+              <Phone className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">{user.phone}</span>
             </div>
           )}
-          
-          <div>
-            <label className="text-sm font-medium text-gray-600">Tipo de Conta</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {profile?.is_admin ? 'Administrador' : 'Usuário'}
-            </p>
+
+          <div className="flex items-center space-x-3">
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <span className="text-sm">
+              Membro desde {new Date(user.created_at).toLocaleDateString('pt-BR')}
+            </span>
           </div>
-          
-          <div>
-            <label className="text-sm font-medium text-gray-600">Membro desde</label>
-            <p className="text-lg font-semibold text-gray-800">
-              {new Date(profile?.created_at || '').toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-              })}
-            </p>
+        </div>
+
+        {user.is_admin && (
+          <div className="pt-4 border-t">
+            <Badge className="bg-blue-100 text-blue-800">
+              Administrador
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

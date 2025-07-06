@@ -1,264 +1,185 @@
 
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
-import { motion } from "framer-motion";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
-interface UserRegistrationFormProps {
-  onSuccess?: () => void;
-}
-
-export const UserRegistrationForm = ({ onSuccess }: UserRegistrationFormProps) => {
+export const UserRegistrationForm = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    username: "",
-    fullName: "",
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const { signUp, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { signUp } = useAuth();
   const { toast } = useToast();
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = "Email é obrigatório";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Email inválido";
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Senha é obrigatória";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Senha deve ter pelo menos 8 caracteres";
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "Senha deve conter pelo menos uma letra minúscula, maiúscula e um número";
-    }
-
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Senhas não coincidem";
-    }
-
-    // Username validation
-    if (!formData.username.trim()) {
-      newErrors.username = "Nome de usuário é obrigatório";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Nome de usuário deve ter pelo menos 3 caracteres";
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = "Nome de usuário deve conter apenas letras, números e underscore";
-    }
-
-    // Full name validation
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Nome completo é obrigatório";
-    } else if (formData.fullName.length < 2) {
-      newErrors.fullName = "Nome completo deve ter pelo menos 2 caracteres";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const { error } = await signUp(formData.email, formData.password, {
-      username: formData.username,
-      full_name: formData.fullName,
-    });
+    if (formData.password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    if (error) {
-      if (error.message?.includes("already registered")) {
+    setIsLoading(true);
+
+    try {
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.phone
+      );
+
+      if (error) {
         toast({
-          title: "Email já cadastrado",
-          description: "Este email já está registrado no sistema.",
+          title: "Erro no cadastro",
+          description: error.message,
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Erro no cadastro",
-          description: error.message || "Ocorreu um erro ao criar a conta.",
-          variant: "destructive",
+          title: "Cadastro realizado!",
+          description: "Sua conta foi criada e está aguardando aprovação.",
+        });
+        
+        // Reset form
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: ''
         });
       }
-    } else {
+    } catch (error) {
+      console.error('Registration error:', error);
       toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Sua conta foi criada e está aguardando aprovação do administrador.",
+        title: "Erro inesperado",
+        description: "Occurreu um erro. Tente novamente.",
+        variant: "destructive",
       });
-      setFormData({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        username: "",
-        fullName: "",
-      });
-      onSuccess?.();
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="w-full max-w-md mx-auto shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">
-            Criar Conta
-          </CardTitle>
-          <CardDescription>
-            Preencha os dados para criar sua conta
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nome Completo</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Seu nome completo"
-                value={formData.fullName}
-                onChange={(e) => handleInputChange("fullName", e.target.value)}
-                className={errors.fullName ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.fullName && (
-                <p className="text-sm text-red-500">{errors.fullName}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Nome de Usuário</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="nomedeusuario"
-                value={formData.username}
-                onChange={(e) => handleInputChange("username", e.target.value)}
-                className={errors.username ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.username && (
-                <p className="text-sm text-red-500">{errors.username}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
-                  className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-red-500">{errors.password}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                  className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isLoading}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-500">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Cadastro de Usuário</CardTitle>
+        <CardDescription>
+          Preencha os dados para solicitar acesso ao sistema
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="fullName">Nome Completo</Label>
+            <Input
+              id="fullName"
+              name="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={handleInputChange}
+              placeholder="Seu nome completo"
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Criando conta...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Criar Conta
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </motion.div>
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="seu@email.com"
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="(11) 99999-9999"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Senha</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Mínimo 6 caracteres"
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="Confirme sua senha"
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+          </Button>
+        </form>
+        
+        <p className="text-sm text-gray-500 text-center mt-4">
+          Sua conta precisará ser aprovada por um administrador.
+        </p>
+      </CardContent>
+    </Card>
   );
 };

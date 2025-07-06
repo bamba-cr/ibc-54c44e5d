@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const RelatoriosImproved = () => {
   const navigate = useNavigate();
-  const { profile, user, signOut, isLoading } = useAuth();
+  const { user, signOut, isLoading } = useAuth();
   const { toast } = useToast();
 
   const { data: students } = useQuery({
@@ -36,7 +36,7 @@ const RelatoriosImproved = () => {
         return;
       }
 
-      if (profile && profile.status !== 'approved') {
+      if (user && user.status !== 'approved') {
         toast({
           title: "Acesso Pendente",
           description: "Sua conta está aguardando aprovação do administrador.",
@@ -48,7 +48,7 @@ const RelatoriosImproved = () => {
     };
 
     checkAuth();
-  }, [user, profile, isLoading, navigate, toast]);
+  }, [user, isLoading, navigate, toast]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,11 +71,11 @@ const RelatoriosImproved = () => {
     );
   }
 
-  if (!user || !profile || profile.status !== 'approved') {
+  if (!user || user.status !== 'approved') {
     return null;
   }
 
-  const isAdmin = profile?.is_admin || false;
+  const isAdmin = user?.is_admin || false;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -97,7 +97,7 @@ const RelatoriosImproved = () => {
                 </h1>
                 <div className="flex items-center space-x-2">
                   <p className="text-sm text-gray-600">
-                    Olá, <span className="font-semibold">{profile.full_name || profile.username}</span>
+                    Olá, <span className="font-semibold">{user.full_name}</span>
                   </p>
                   {isAdmin && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border border-blue-200">

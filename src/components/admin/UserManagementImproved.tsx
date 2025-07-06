@@ -50,8 +50,7 @@ export const UserManagementImproved = () => {
   useEffect(() => {
     const filtered = pendingUsers.filter(user =>
       user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredUsers(filtered);
   }, [searchTerm, pendingUsers]);
@@ -230,7 +229,7 @@ export const UserManagementImproved = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Buscar por nome, email ou usuário..."
+                    placeholder="Buscar por nome ou email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 border-orange-200 focus:border-orange-400"
@@ -267,7 +266,7 @@ export const UserManagementImproved = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="font-semibold text-gray-900 text-lg">
-                          {user.full_name || user.username}
+                          {user.full_name}
                         </h3>
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                           <Clock className="h-3 w-3 mr-1" />
@@ -288,7 +287,7 @@ export const UserManagementImproved = () => {
                     <div className="flex space-x-3">
                       <Button
                         size="sm"
-                        onClick={() => handleApprove(user.user_id)}
+                        onClick={() => handleApprove(user.id)}
                         className="bg-green-600 hover:bg-green-700 text-white transition-colors"
                       >
                         <Check className="h-4 w-4 mr-2" />
@@ -299,7 +298,7 @@ export const UserManagementImproved = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => setSelectedUser(user.user_id)}
+                            onClick={() => setSelectedUser(user.id)}
                             className="bg-red-600 hover:bg-red-700 transition-colors"
                           >
                             <X className="h-4 w-4 mr-2" />
@@ -311,7 +310,7 @@ export const UserManagementImproved = () => {
                             <DialogTitle className="text-red-900">Rejeitar Usuário</DialogTitle>
                             <DialogDescription className="text-gray-600">
                               Você está prestes a rejeitar o acesso de{' '}
-                              <strong>{user.full_name || user.username}</strong>.
+                              <strong>{user.full_name}</strong>.
                               Opcionalmente, você pode fornecer um motivo.
                             </DialogDescription>
                           </DialogHeader>
@@ -329,7 +328,7 @@ export const UserManagementImproved = () => {
                             </Button>
                             <Button
                               variant="destructive"
-                              onClick={() => handleReject(user.user_id)}
+                              onClick={() => handleReject(user.id)}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Confirmar Rejeição
