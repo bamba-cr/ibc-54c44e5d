@@ -22,10 +22,16 @@ export const AuthGuard = ({
   const location = useLocation();
 
   useEffect(() => {
-    if (isLoading) return;
+    console.log('AuthGuard - user:', user, 'profile:', profile, 'isLoading:', isLoading, 'requireAdmin:', requireAdmin);
+    
+    if (isLoading) {
+      console.log('AuthGuard - still loading, waiting...');
+      return;
+    }
 
     // Se requer autenticação mas não está logado
     if (requireAuth && !user) {
+      console.log('AuthGuard - auth required but no user, redirecting to:', redirectTo);
       navigate(redirectTo, { 
         state: { from: location.pathname },
         replace: true 
@@ -35,6 +41,7 @@ export const AuthGuard = ({
 
     // Se requer admin mas não é admin
     if (requireAdmin && (!profile || !profile.is_admin)) {
+      console.log('AuthGuard - admin required but user is not admin, redirecting to dashboard');
       navigate('/dashboard', { replace: true });
       return;
     }
@@ -42,12 +49,14 @@ export const AuthGuard = ({
     // Se não requer autenticação mas está logado (para páginas como login)
     if (!requireAuth && user) {
       const from = location.state?.from || '/dashboard';
+      console.log('AuthGuard - no auth required but user logged in, redirecting to:', from);
       navigate(from, { replace: true });
       return;
     }
   }, [user, profile, isLoading, requireAuth, requireAdmin, navigate, location, redirectTo]);
 
   if (isLoading) {
+    console.log('AuthGuard - rendering loading state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -60,6 +69,7 @@ export const AuthGuard = ({
 
   // Para páginas que não requerem auth, sempre renderizar
   if (!requireAuth) {
+    console.log('AuthGuard - no auth required, rendering children');
     return <>{children}</>;
   }
 
@@ -67,10 +77,13 @@ export const AuthGuard = ({
   if (requireAuth && user) {
     // Se requer admin, verificar se é admin
     if (requireAdmin && (!profile || !profile.is_admin)) {
+      console.log('AuthGuard - admin required but user is not admin, returning null');
       return null; // Será redirecionado pelo useEffect
     }
+    console.log('AuthGuard - auth requirements met, rendering children');
     return <>{children}</>;
   }
 
+  console.log('AuthGuard - conditions not met, returning null');
   return null;
 };

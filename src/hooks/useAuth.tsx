@@ -52,6 +52,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .rpc('get_user_profile', { user_uuid: userId });
       
@@ -60,11 +61,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
       
+      console.log('Profile data received:', data);
       if (data && data.length > 0) {
         setProfile(data[0]);
+      } else {
+        console.log('No profile data found');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      setProfile(null);
     }
   };
 
@@ -75,6 +81,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
+    console.log('Setting up auth state listener...');
+    
     // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -87,7 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           setTimeout(() => {
             fetchUserProfile(session.user.id);
-          }, 0);
+          }, 100);
         } else {
           setProfile(null);
         }
@@ -98,6 +106,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -108,12 +117,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log('Attempting sign in for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -124,6 +138,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error };
       }
 
+      console.log('Sign in successful');
       return { error: null };
     } catch (error) {
       console.error('Unexpected login error:', error);
@@ -140,6 +155,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ) => {
     try {
       setIsLoading(true);
+      console.log('Attempting sign up for:', email);
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -157,6 +173,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error };
       }
 
+      console.log('Sign up successful');
       return { error: null };
     } catch (error) {
       console.error('Unexpected signup error:', error);
@@ -169,6 +186,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       setIsLoading(true);
+      console.log('Signing out...');
+      
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -178,6 +197,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
       });
+      console.log('Sign out successful');
     } catch (error) {
       console.error('Logout error:', error);
       toast({

@@ -18,28 +18,39 @@ const Relatorios = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
 
-  const { data: students } = useQuery({
+  const { data: students, isLoading: studentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
+      console.log('Fetching students data...');
       const { data, error } = await supabase.from("students").select("*");
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching students:', error);
+        throw error;
+      }
+      console.log('Students data fetched:', data);
       return data;
-    }
+    },
+    enabled: !!user && !!profile?.is_admin
   });
 
   useEffect(() => {
+    console.log('Relatorios useEffect - user:', user, 'profile:', profile, 'isLoading:', isLoading);
+    
     if (!isLoading && (!user || !profile)) {
+      console.log('Redirecting to auth - no user or profile');
       navigate("/auth");
       return;
     }
 
     if (!isLoading && profile && !profile.is_admin) {
+      console.log('Redirecting to dashboard - not admin');
       navigate("/dashboard");
       return;
     }
   }, [user, profile, isLoading, navigate]);
 
   if (isLoading) {
+    console.log('Auth loading...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -48,10 +59,12 @@ const Relatorios = () => {
   }
 
   if (!user || !profile) {
+    console.log('No user or profile, returning null');
     return null;
   }
 
   if (!profile.is_admin) {
+    console.log('User is not admin');
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Alert className="max-w-md">
@@ -63,6 +76,8 @@ const Relatorios = () => {
       </div>
     );
   }
+
+  console.log('Rendering Relatorios page');
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50">
@@ -92,7 +107,13 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="reports">
-          <ExportSection students={students} />
+          {studentsLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <ExportSection students={students || []} />
+          )}
         </TabsContent>
 
         <TabsContent value="admin">
