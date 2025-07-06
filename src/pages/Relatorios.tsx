@@ -10,9 +10,13 @@ import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
+import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 const Relatorios = () => {
   const navigate = useNavigate();
+  const { user, profile, isLoading } = useAuth();
 
   const { data: students } = useQuery({
     queryKey: ["students"],
@@ -24,14 +28,41 @@ const Relatorios = () => {
   });
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-      }
-    };
-    checkSession();
-  }, [navigate]);
+    if (!isLoading && (!user || !profile)) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!isLoading && profile && !profile.is_admin) {
+      navigate("/dashboard");
+      return;
+    }
+  }, [user, profile, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
+  }
+
+  if (!profile.is_admin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Alert className="max-w-md">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertDescription>
+            Acesso negado. Esta página é restrita a administradores.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50">

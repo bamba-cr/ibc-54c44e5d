@@ -6,12 +6,14 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile {
   id: string;
+  user_id: string;
   email: string;
   username: string;
   full_name: string;
   avatar_url: string | null;
   phone: string | null;
   is_admin: boolean;
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .rpc('get_user_profile', { user_id: userId });
+        .rpc('get_user_profile', { user_uuid: userId });
       
       if (error) {
         console.error('Error fetching user profile:', error);

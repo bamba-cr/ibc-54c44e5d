@@ -15,7 +15,7 @@ export const AuthGuard = ({
   children, 
   requireAuth = true, 
   requireAdmin = false,
-  redirectTo = '/login' 
+  redirectTo = '/auth' 
 }: AuthGuardProps) => {
   const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();

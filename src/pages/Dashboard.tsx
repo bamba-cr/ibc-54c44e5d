@@ -1,3 +1,4 @@
+
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import {
@@ -18,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const OverviewChart = lazy(() =>
   import("@/components/dashboard/OverviewChart").then((module) => ({
@@ -52,6 +54,7 @@ const StatCard = ({ title, value, description, icon, color, trend }) => (
 
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
+  const { profile } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -106,7 +109,9 @@ const Dashboard = () => {
       <Navbar />
 
       <header className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold">Bem-vindo ao IBC Connect</h1>
+        <h1 className="text-3xl font-bold">
+          Bem-vindo ao IBC Connect{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
+        </h1>
         <p className="text-muted-foreground mt-2">
           Acompanhe o progresso educacional e cultural dos jovens de nossa
           comunidade em tempo real.
