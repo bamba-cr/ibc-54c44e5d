@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +63,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Profile data received:', data);
       if (data && data.length > 0) {
         setProfile(data[0]);
+        console.log('Profile set - is_admin:', data[0].is_admin, 'status:', data[0].status);
       } else {
         console.log('No profile data found');
         setProfile(null);
@@ -76,6 +76,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const refreshProfile = async () => {
     if (user) {
+      console.log('Refreshing profile...');
       await fetchUserProfile(user.id);
     }
   };
@@ -93,9 +94,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         // Buscar perfil do usuário se estiver logado
         if (session?.user) {
+          // Pequeno delay para garantir que as mudanças no banco foram processadas
           setTimeout(() => {
             fetchUserProfile(session.user.id);
-          }, 100);
+          }, 200);
         } else {
           setProfile(null);
         }

@@ -3,11 +3,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, Shield } from "lucide-react";
+import { LogOut, User, Settings, Shield, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const Header = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   if (!user || !profile) return null;
@@ -23,6 +23,10 @@ export const Header = () => {
 
   const displayName = profile.full_name || profile.username || profile.email;
   const initials = getInitials(displayName);
+
+  const handleRefreshProfile = async () => {
+    await refreshProfile();
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3">
@@ -65,6 +69,10 @@ export const Header = () => {
             <DropdownMenuItem onClick={() => navigate('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleRefreshProfile}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              <span>Atualizar Perfil</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>
