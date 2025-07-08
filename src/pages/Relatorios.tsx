@@ -10,6 +10,7 @@ import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
+import { BirthdayStudents } from '@/components/reports/BirthdayStudents';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShieldAlert } from 'lucide-react';
@@ -103,7 +104,10 @@ const Relatorios = () => {
         </TabsContent>
 
         <TabsContent value="students">
-          <StudentsList />
+          <div className="space-y-6">
+            <BirthdayStudents />
+            <StudentsList />
+          </div>
         </TabsContent>
 
         <TabsContent value="reports">
