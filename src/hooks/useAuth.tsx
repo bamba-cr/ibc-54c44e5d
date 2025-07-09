@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +13,7 @@ interface UserProfile {
   phone: string | null;
   is_admin: boolean;
   status: 'pending' | 'approved' | 'rejected';
-  rejection_reason: string | null;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,7 +63,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       console.log('Profile data received:', data);
       if (data && data.length > 0) {
-        const userProfile = data[0];
+        const userProfile: UserProfile = {
+          ...data[0],
+          rejection_reason: data[0].rejection_reason || null
+        };
         setProfile(userProfile);
         console.log('Profile set - is_admin:', userProfile.is_admin, 'status:', userProfile.status);
         
