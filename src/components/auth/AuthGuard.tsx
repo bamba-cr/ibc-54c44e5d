@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -47,9 +48,9 @@ export const AuthGuard = ({
     }
 
     // Se não requer autenticação mas está logado (para páginas como login)
-    if (!requireAuth && user) {
+    if (!requireAuth && user && profile?.status === 'approved') {
       const from = location.state?.from || '/dashboard';
-      console.log('AuthGuard - no auth required but user logged in, redirecting to:', from);
+      console.log('AuthGuard - no auth required but user logged in and approved, redirecting to:', from);
       navigate(from, { replace: true });
       return;
     }
@@ -73,13 +74,43 @@ export const AuthGuard = ({
     return <>{children}</>;
   }
 
-  // Para páginas que requerem auth, só renderizar se logado
-  if (requireAuth && user) {
+  // Para páginas que requerem auth, só renderizar se logado e aprovado
+  if (requireAuth && user && profile) {
+    // Verificar se o usuário está aprovado
+    if (profile.status === 'pending') {
+      console.log('AuthGuard - user pending approval');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Alert className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sua conta está aguardando aprovação de um administrador. Você será notificado quando sua conta for aprovada.
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
+    if (profile.status === 'rejected') {
+      console.log('AuthGuard - user account rejected');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Alert className="max-w-md" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sua conta foi rejeitada. {profile.rejection_reason || 'Entre em contato com o administrador para mais informações.'}
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
     // Se requer admin, verificar se é admin
-    if (requireAdmin && (!profile || !profile.is_admin)) {
+    if (requireAdmin && !profile.is_admin) {
       console.log('AuthGuard - admin required but user is not admin, returning null');
       return null; // Será redirecionado pelo useEffect
     }
+
     console.log('AuthGuard - auth requirements met, rendering children');
     return <>{children}</>;
   }

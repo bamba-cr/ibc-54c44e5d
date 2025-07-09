@@ -62,8 +62,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       console.log('Profile data received:', data);
       if (data && data.length > 0) {
-        setProfile(data[0]);
-        console.log('Profile set - is_admin:', data[0].is_admin, 'status:', data[0].status);
+        const userProfile = data[0];
+        setProfile(userProfile);
+        console.log('Profile set - is_admin:', userProfile.is_admin, 'status:', userProfile.status);
+        
+        // Verificar se o usuário está pendente ou rejeitado
+        if (userProfile.status === 'pending') {
+          toast({
+            title: "Conta pendente de aprovação",
+            description: "Sua conta está aguardando aprovação de um administrador.",
+            variant: "default",
+          });
+        } else if (userProfile.status === 'rejected') {
+          toast({
+            title: "Conta rejeitada",
+            description: userProfile.rejection_reason || "Sua conta foi rejeitada por um administrador.",
+            variant: "destructive",
+          });
+          // Deslogar o usuário se a conta foi rejeitada
+          await supabase.auth.signOut();
+          return;
+        }
       } else {
         console.log('No profile data found');
         setProfile(null);
