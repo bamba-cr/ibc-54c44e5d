@@ -63,9 +63,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       console.log('Profile data received:', data);
       if (data && data.length > 0) {
+        // Cast para incluir rejection_reason que pode não estar nos tipos gerados ainda
+        const profileData = data[0] as any;
         const userProfile: UserProfile = {
-          ...data[0],
-          rejection_reason: data[0].rejection_reason || null
+          id: profileData.id,
+          user_id: profileData.user_id,
+          email: profileData.email,
+          username: profileData.username,
+          full_name: profileData.full_name,
+          avatar_url: profileData.avatar_url,
+          phone: profileData.phone,
+          is_admin: profileData.is_admin,
+          status: profileData.status,
+          rejection_reason: profileData.rejection_reason || null,
+          created_at: profileData.created_at,
+          updated_at: profileData.updated_at
         };
         setProfile(userProfile);
         console.log('Profile set - is_admin:', userProfile.is_admin, 'status:', userProfile.status);
