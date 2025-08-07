@@ -1,4 +1,3 @@
-
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import {
@@ -17,26 +16,49 @@ import { useAuth } from "@/hooks/useAuth";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 
-const OverviewChart = lazy(() =>
-  import("@/components/dashboard/OverviewChart").then((module) => ({
-    default: module.OverviewChart,
-  }))
+// Handle potential import errors
+const OverviewChart = lazy(() => 
+  import("@/components/dashboard/OverviewChart")
+    .catch(() => ({ default: () => <div>Chart failed to load</div> }))
 );
 
-const ProjectsTable = lazy(() =>
-  import("@/components/dashboard/ProjectsTable").then((module) => ({
-    default: module.ProjectsTable,
-  }))
+const ProjectsTable = lazy(() => 
+  import("@/components/dashboard/ProjectsTable")
+    .catch(() => ({ default: () => <div>Projects table failed to load</div> }))
 );
-
 
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
-  const { profile } = useAuth();
+  const { profile, loading, error } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Skeleton className="h-12 w-48" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <Alert variant="destructive">
+            <AlertDescription>
+              Erro ao carregar dados: {error.message}
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,40 +96,40 @@ const Dashboard = () => {
       <section className="container mx-auto px-4 mt-8">
         <h2 className="text-xl font-bold mb-4">Ações Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "Registrar Presença",
-                description:
-                  "Faça o controle de presença dos alunos nos projetos e atividades.",
-                icon: <Calendar size={24} />,
-                link: "/frequencia",
-                color: "from-primary/10 to-primary/5",
-              },
-              {
-                title: "Lançar Notas",
-                description:
-                  "Atualize o desempenho acadêmico dos alunos no sistema.",
-                icon: <Award size={24} />,
-                link: "/notas",
-                color: "from-secondary/10 to-secondary/5",
-              },
-              {
-                title: "Performance",
-                description:
-                  "Acompanhe o desempenho e conquistas dos alunos.",
-                icon: <TrendingUp size={24} />,
-                link: "/student-performance",
-                color: "from-blue-500/10 to-blue-500/5",
-              },
-              {
-                title: "Histórico",
-                description:
-                  "Consulte o histórico acadêmico dos alunos.",
-                icon: <GraduationCap size={24} />,
-                link: "/historico",
-                color: "from-purple-500/10 to-purple-500/5",
-              },
-            ].map((action, index) => (
+          {[
+            {
+              title: "Registrar Presença",
+              description:
+                "Faça o controle de presença dos alunos nos projetos e atividades.",
+              icon: <Calendar size={24} />,
+              link: "/frequencia",
+              color: "from-primary/10 to-primary/5",
+            },
+            {
+              title: "Lançar Notas",
+              description:
+                "Atualize o desempenho acadêmico dos alunos no sistema.",
+              icon: <Award size={24} />,
+              link: "/notas",
+              color: "from-secondary/10 to-secondary/5",
+            },
+            {
+              title: "Performance",
+              description:
+                "Acompanhe o desempenho e conquistas dos alunos.",
+              icon: <TrendingUp size={24} />,
+              link: "/student-performance",
+              color: "from-blue-500/10 to-blue-500/5",
+            },
+            {
+              title: "Histórico",
+              description:
+                "Consulte o histórico acadêmico dos alunos.",
+              icon: <GraduationCap size={24} />,
+              link: "/historico",
+              color: "from-purple-500/10 to-purple-500/5",
+            },
+          ].map((action, index) => (
             <Card
               key={index}
               className={`border-none shadow-md bg-gradient-to-br ${action.color}`}
@@ -139,7 +161,6 @@ const Dashboard = () => {
           {isClient && <ProjectsTable />}
         </Suspense>
       </section>
-
     </div>
   );
 };
