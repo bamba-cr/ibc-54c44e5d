@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { PendingUsers } from "./PendingUsers";
+import { AdminList } from "./AdminList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, UserCheck, Shield } from "lucide-react";
 
@@ -29,10 +30,7 @@ export const UserManagement = () => {
         </TabsContent>
 
         <TabsContent value="admins">
-          {/* Aqui podemos adicionar a lista de administradores existente */}
-          <div className="text-center py-8 text-muted-foreground">
-            Lista de administradores será implementada aqui
-          </div>
+          <AdminList refreshTrigger={0} />
         </TabsContent>
       </Tabs>
     </div>

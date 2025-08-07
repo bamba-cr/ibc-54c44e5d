@@ -1,8 +1,9 @@
 
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -34,9 +35,7 @@ export const DashboardHeader = ({
             className="pl-10 w-[200px] bg-white/80 backdrop-blur border-gray-200 focus:border-primary" 
           />
         </div>
-        <Button variant="outline" size="icon" className="bg-white/80 backdrop-blur">
-          <Bell className="h-5 w-5" />
-        </Button>
+        <NotificationCenter />
       </div>
     </motion.div>
   );
