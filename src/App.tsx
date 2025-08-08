@@ -7,6 +7,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
+import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Alunos from '@/pages/Alunos';
 import EditarAluno from '@/pages/EditarAluno';
@@ -16,6 +17,8 @@ import Notas from '@/pages/Notas';
 import Relatorios from '@/pages/Relatorios';
 import StudentPerformance from '@/pages/StudentPerformance';
 import NotFound from '@/pages/NotFound';
+import RecuperarSenha from '@/pages/RecuperarSenha';
+import ResetarSenha from '@/pages/ResetarSenha';
 
 function App() {
   return (
@@ -23,9 +26,10 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Navigate to="/auth" replace />} />
-          
+          <Route path="/auth" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+          <Route path="/resetar-senha" element={<ResetarSenha />} />
           {/* Rotas protegidas */}
           <Route path="/dashboard" element={
             <AuthGuard>

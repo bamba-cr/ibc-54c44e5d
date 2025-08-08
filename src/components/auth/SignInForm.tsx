@@ -6,15 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
 
-interface SignInFormProps {
-  onSwitchToSignUp: () => void;
-}
 
-export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
+export const SignInForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const { signIn, isLoading } = useAuth();
   const { toast } = useToast();
@@ -47,6 +47,12 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
     e.preventDefault();
     
     if (!validateForm()) return;
+
+    if (rememberMe) {
+      localStorage.setItem("remember_me", "1");
+    } else {
+      localStorage.removeItem("remember_me");
+    }
 
     const { error } = await signIn(email, password);
 
@@ -128,6 +134,21 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
         )}
       </div>
 
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="remember"
+            checked={rememberMe}
+            onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+            disabled={isLoading}
+          />
+          <Label htmlFor="remember">Lembrar-me</Label>
+        </div>
+        <Link to="/recuperar-senha" className="text-sm text-primary hover:underline">
+          Esqueci minha senha
+        </Link>
+      </div>
+
       <Button
         type="submit"
         className="w-full"
@@ -146,17 +167,6 @@ export const SignInForm = ({ onSwitchToSignUp }: SignInFormProps) => {
         )}
       </Button>
 
-      <div className="text-center">
-        <Button
-          type="button"
-          variant="link"
-          onClick={onSwitchToSignUp}
-          disabled={isLoading}
-          className="text-sm"
-        >
-          Não tem uma conta? Cadastre-se
-        </Button>
-      </div>
     </form>
   );
 };

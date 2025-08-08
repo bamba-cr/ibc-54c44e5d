@@ -14,7 +14,7 @@ export const LoginForm = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <SignInForm onSwitchToSignUp={() => {}} />
+        <SignInForm />
       </CardContent>
     </Card>
   );

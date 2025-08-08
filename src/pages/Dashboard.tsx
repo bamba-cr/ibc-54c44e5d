@@ -17,26 +17,28 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 
 // Handle potential import errors
-const OverviewChart = lazy(() => 
+const OverviewChart = lazy(() =>
   import("@/components/dashboard/OverviewChart")
+    .then((m) => ({ default: m.OverviewChart }))
     .catch(() => ({ default: () => <div>Chart failed to load</div> }))
 );
 
-const ProjectsTable = lazy(() => 
+const ProjectsTable = lazy(() =>
   import("@/components/dashboard/ProjectsTable")
+    .then((m) => ({ default: m.ProjectsTable }))
     .catch(() => ({ default: () => <div>Projects table failed to load</div> }))
 );
 
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
-  const { profile, loading, error } = useAuth();
+  const { profile, isLoading } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Skeleton className="h-12 w-48" />
@@ -44,21 +46,6 @@ const Dashboard = () => {
     );
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <Alert variant="destructive">
-            <AlertDescription>
-              Erro ao carregar dados: {error.message}
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
