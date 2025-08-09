@@ -19,6 +19,7 @@ import StudentPerformance from '@/pages/StudentPerformance';
 import NotFound from '@/pages/NotFound';
 import RecuperarSenha from '@/pages/RecuperarSenha';
 import ResetarSenha from '@/pages/ResetarSenha';
+import Historico from '@/pages/Historico';
 
 function App() {
   return (
@@ -66,9 +67,19 @@ function App() {
               <Relatorios />
             </AuthGuard>
           } />
+          <Route path="/student-performance" element={
+            <AuthGuard>
+              <StudentPerformance />
+            </AuthGuard>
+          } />
           <Route path="/student-performance/:id" element={
             <AuthGuard>
               <StudentPerformance />
+            </AuthGuard>
+          } />
+          <Route path="/historico" element={
+            <AuthGuard>
+              <Historico />
             </AuthGuard>
           } />
           

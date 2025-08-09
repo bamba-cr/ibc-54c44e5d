@@ -15,17 +15,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
-const navigationItems = [
-  { icon: <LayoutDashboard className="w-4 h-4 mr-2" />, label: "Dashboard", path: "/dashboard" },
-  { icon: <Users className="w-4 h-4 mr-2" />, label: "Alunos", path: "/alunos" },
-  { icon: <CalendarCheck className="w-4 h-4 mr-2" />, label: "Frequência", path: "/frequencia" },
-  { icon: <GraduationCap className="w-4 h-4 mr-2" />, label: "Notas", path: "/notas" },
-  { icon: <FileBarChart className="w-4 h-4 mr-2" />, label: "Relatórios", path: "/relatorios" },
-];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
+
+  const baseItems = [
+    { icon: <LayoutDashboard className="w-4 h-4 mr-2" />, label: "Dashboard", path: "/dashboard" },
+    { icon: <Users className="w-4 h-4 mr-2" />, label: "Alunos", path: "/alunos" },
+    { icon: <CalendarCheck className="w-4 h-4 mr-2" />, label: "Frequência", path: "/frequencia" },
+    { icon: <GraduationCap className="w-4 h-4 mr-2" />, label: "Notas", path: "/notas" },
+  ];
+  const navigationItems = profile?.is_admin
+    ? [...baseItems, { icon: <FileBarChart className="w-4 h-4 mr-2" />, label: "Relatórios", path: "/relatorios" }]
+    : baseItems;
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
