@@ -18,7 +18,7 @@ export const AuthGuard = ({
   requireAdmin = false,
   redirectTo = '/auth' 
 }: AuthGuardProps) => {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -56,6 +56,13 @@ export const AuthGuard = ({
     }
   }, [user, profile, isLoading, requireAuth, requireAdmin, navigate, location, redirectTo]);
 
+  useEffect(() => {
+    if (requireAuth && user && !profile && !isLoading) {
+      console.log('AuthGuard - profile missing, attempting refresh');
+      refreshProfile();
+    }
+  }, [requireAuth, user, profile, isLoading, refreshProfile]);
+
   if (isLoading) {
     console.log('AuthGuard - rendering loading state');
     return (
@@ -63,6 +70,19 @@ export const AuthGuard = ({
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Se está logado mas o perfil ainda não foi carregado, mostrar loading
+  if (requireAuth && user && !profile) {
+    console.log('AuthGuard - user logged in but profile not loaded yet, showing loading');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-gray-600">Carregando perfil...</p>
         </div>
       </div>
     );

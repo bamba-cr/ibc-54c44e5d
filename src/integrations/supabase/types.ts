@@ -200,8 +200,10 @@ export type Database = {
           full_name: string | null
           id: string
           is_admin: boolean | null
+          last_login_at: string | null
           phone: string | null
           rejection_reason: string | null
+          role_id: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
           user_id: string | null
@@ -216,8 +218,10 @@ export type Database = {
           full_name?: string | null
           id: string
           is_admin?: boolean | null
+          last_login_at?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          role_id?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string | null
@@ -232,14 +236,24 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
+          last_login_at?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          role_id?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -262,6 +276,62 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: Database["public"]["Enums"]["permission_type"]
+          role_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission: Database["public"]["Enums"]["permission_type"]
+          role_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: Database["public"]["Enums"]["permission_type"]
+          role_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -383,6 +453,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          last_used_at: string | null
+          token_hash: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          last_used_at?: string | null
+          token_hash: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          token_hash?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       student_performance: {
@@ -410,9 +507,22 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_initial_admin: {
         Args: { admin_email: string }
         Returns: boolean
+      }
+      create_user_by_admin: {
+        Args: {
+          email_param: string
+          password_param: string
+          full_name_param: string
+          role_id_param: string
+        }
+        Returns: Json
       }
       find_user_by_identifier: {
         Args: { identifier: string }
@@ -482,6 +592,12 @@ export type Database = {
           created_at: string
         }[]
       }
+      get_user_permissions: {
+        Args: { user_uuid?: string }
+        Returns: {
+          permission: Database["public"]["Enums"]["permission_type"]
+        }[]
+      }
       get_user_profile: {
         Args: { user_uuid?: string }
         Returns: {
@@ -497,6 +613,13 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      has_permission: {
+        Args: {
+          user_uuid: string
+          permission_name: Database["public"]["Enums"]["permission_type"]
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -525,6 +648,21 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       error_type: "api" | "frontend" | "backend" | "database" | "auth" | "other"
+      permission_type:
+        | "read_students"
+        | "write_students"
+        | "delete_students"
+        | "read_projects"
+        | "write_projects"
+        | "delete_projects"
+        | "read_attendance"
+        | "write_attendance"
+        | "read_grades"
+        | "write_grades"
+        | "read_reports"
+        | "manage_users"
+        | "manage_roles"
+        | "admin_access"
       user_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -655,6 +793,22 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       error_type: ["api", "frontend", "backend", "database", "auth", "other"],
+      permission_type: [
+        "read_students",
+        "write_students",
+        "delete_students",
+        "read_projects",
+        "write_projects",
+        "delete_projects",
+        "read_attendance",
+        "write_attendance",
+        "read_grades",
+        "write_grades",
+        "read_reports",
+        "manage_users",
+        "manage_roles",
+        "admin_access",
+      ],
       user_status: ["pending", "approved", "rejected"],
     },
   },
