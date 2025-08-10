@@ -66,8 +66,8 @@ export const buscarHistorico = async (searchTerm: string): Promise<HistoricoResp
         grade, 
         period, 
         observations, 
-        students:student_id (id, name), 
-        projects:project_id (id, name, code)
+        student_id,
+        project_id
       `)
       .in("student_id", studentIds);
 
@@ -76,22 +76,38 @@ export const buscarHistorico = async (searchTerm: string): Promise<HistoricoResp
       throw new Error("Erro ao buscar notas: " + gradesError.message);
     }
 
+    // Busca dados dos projetos
+    const projectIds = [...new Set(gradesData?.map(g => g.project_id) || [])];
+    const { data: projectsData } = await supabase
+      .from("projects")
+      .select("id, name, code")
+      .in("id", projectIds);
+
+    // Mapas para facilitar a busca
+    const studentMap = new Map(studentData.map(s => [s.id, s]));
+    const projectMap = new Map(projectsData?.map(p => [p.id, p]) || []);
+
     // Formata os dados para o tipo HistoricoResponse
-    const formattedResults: HistoricoResponse[] = gradesData ? gradesData.map(item => ({
-      id: item.id,
-      student: {
-        id: item.students.id,
-        name: item.students.name
-      },
-      project: {
-        id: item.projects.id,
-        name: item.projects.name,
-        code: item.projects.code
-      },
-      grade: item.grade,
-      period: item.period,
-      observations: item.observations
-    })) : [];
+    const formattedResults: HistoricoResponse[] = gradesData ? gradesData.map(item => {
+      const student = studentMap.get(item.student_id);
+      const project = projectMap.get(item.project_id);
+      
+      return {
+        id: item.id,
+        student: {
+          id: student?.id || '',
+          name: student?.name || ''
+        },
+        project: {
+          id: project?.id || '',
+          name: project?.name || '',
+          code: project?.code || ''
+        },
+        grade: item.grade,
+        period: item.period,
+        observations: item.observations
+      };
+    }) : [];
 
     return formattedResults;
   } catch (error) {
