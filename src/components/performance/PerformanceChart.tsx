@@ -30,8 +30,7 @@ export const PerformanceChart = ({ studentId, projectId }: PerformanceChartProps
           grade,
           subject,
           period,
-          created_at,
-          students!inner(name)
+          created_at
         `)
         .order("created_at");
 
@@ -77,8 +76,7 @@ export const PerformanceChart = ({ studentId, projectId }: PerformanceChartProps
         .from("attendance")
         .select(`
           status,
-          date,
-          students!inner(name)
+          date
         `)
         .order("date");
 

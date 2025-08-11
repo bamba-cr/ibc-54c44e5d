@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
+import { StudentProfile } from '@/components/student/StudentProfile';
 
 type Student = Database['public']['Tables']['students']['Row'];
 
@@ -48,6 +49,7 @@ export const StudentsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [editForm, setEditForm] = useState<StudentFormValues>({
     name: "",
     age: "",
@@ -382,6 +384,7 @@ export const StudentsList = () => {
                             size="icon"
                             onClick={() => {
                               setSelectedStudent(student);
+                              setIsProfileOpen(true);
                             }}
                           >
                             <Eye className="h-4 w-4 text-green-500" />
@@ -558,6 +561,14 @@ export const StudentsList = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {selectedStudent && (
+        <StudentProfile
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          studentId={selectedStudent.id}
+        />
+      )}
     </Card>
   );
 };

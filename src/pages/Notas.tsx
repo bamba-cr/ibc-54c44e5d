@@ -93,18 +93,23 @@ const Notas = () => {
       grades: GradeEntry[];
       observations: string;
     }) => {
-      const gradePromises = gradeData.grades.map((grade) =>
-        supabase.from("grades").insert({
+      const gradesToInsert = gradeData.grades
+        .filter((g) => g.grade !== "" && !isNaN(Number(g.grade)))
+        .map((g) => ({
           student_id: gradeData.studentId,
           project_id: gradeData.projectId,
-          subject: grade.subject,
-          grade: grade.grade ? parseFloat(grade.grade) : null,
+          subject: g.subject,
+          grade: parseFloat(g.grade),
           period: gradeData.period,
           observations: gradeData.observations,
-        })
-      );
+        }));
 
-      await Promise.all(gradePromises);
+      if (gradesToInsert.length === 0) {
+        throw new Error("Nenhuma nota válida para salvar");
+      }
+
+      const { error } = await supabase.from("grades").insert(gradesToInsert);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast({
@@ -117,12 +122,16 @@ const Notas = () => {
       setPeriod("");
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["grades"] });
+      queryClient.invalidateQueries({ queryKey: ["student-grades", selectedStudent] });
+      queryClient.invalidateQueries({ queryKey: ["performanceData", selectedStudent, selectedProject] });
+      queryClient.invalidateQueries({ queryKey: ["rankings"] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
     },
     onError: (error) => {
       console.error("Error saving grades:", error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar as notas. Por favor, tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível salvar as notas. Por favor, tente novamente.",
         variant: "destructive",
       });
     },
