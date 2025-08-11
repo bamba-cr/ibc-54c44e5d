@@ -33,6 +33,16 @@ const subjects = [
   "Geografia",
 ] as const;
 
+const allowedPeriods = [
+  "1º Bimestre",
+  "2º Bimestre",
+  "3º Bimestre",
+  "4º Bimestre",
+  "1º Semestre",
+  "2º Semestre",
+  "Anual",
+] as const;
+
 interface GradeEntry {
   subject: string;
   grade: string;
@@ -49,6 +59,7 @@ const Notas = () => {
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
+  const [bulkGrade, setBulkGrade] = useState("");
 
   // Fetch projects from Supabase
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
@@ -199,6 +210,57 @@ const Notas = () => {
     return true;
   };
 
+  const applyToAll = () => {
+    const n = bulkGrade === "" ? NaN : Number(bulkGrade);
+    if (isNaN(n) || n < 0 || n > 10) {
+      toast({
+        title: "Valor inválido",
+        description: "A nota deve estar entre 0 e 10",
+        variant: "destructive",
+      });
+      return;
+    }
+    setGrades(subjects.map((subject) => ({ subject, grade: bulkGrade })));
+    toast({ title: "Notas aplicadas", description: "Valor aplicado a todas as disciplinas." });
+  };
+
+  const clearAll = () => {
+    setGrades(subjects.map((subject) => ({ subject, grade: "" })));
+    setBulkGrade("");
+    toast({ title: "Notas limpas", description: "Todos os campos foram limpos." });
+  };
+
+  const loadLastGrades = async () => {
+    if (!selectedStudent || !selectedProject) {
+      toast({ title: "Selecione aluno e projeto", variant: "destructive" });
+      return;
+    }
+    const { data, error } = await supabase
+      .from("grades")
+      .select("subject, grade, created_at")
+      .eq("student_id", selectedStudent)
+      .eq("project_id", selectedProject)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) {
+      console.error("Erro ao carregar últimas notas:", error);
+      toast({ title: "Erro ao carregar", description: "Não foi possível carregar últimas notas.", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({ title: "Sem registros", description: "Nenhuma nota anterior encontrada." });
+      return;
+    }
+    const latest = new Map<string, string>();
+    for (const row of data as any[]) {
+      if (!latest.has(row.subject) && row.grade !== null) {
+        latest.set(row.subject, String(row.grade));
+      }
+    }
+    setGrades(subjects.map((subject) => ({ subject, grade: latest.get(subject) ?? "" })));
+    toast({ title: "Notas carregadas", description: "Últimos valores aplicados." });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -286,17 +348,57 @@ const Notas = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1">Período</label>
-              <Input
-                type="text"
-                placeholder="Ex: 2024.1"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                required
-              />
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o período" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedPeriods.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Opções: 1º/2º/3º/4º Bimestre, 1º/2º Semestre, Anual</p>
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Notas por Disciplina</h2>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <h2 className="text-lg font-semibold">Notas por Disciplina</h2>
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    placeholder="Nota p/ todos"
+                    value={bulkGrade}
+                    onChange={(e) => setBulkGrade(e.target.value)}
+                    className="w-36"
+                  />
+                  <Button type="button" variant="secondary" onClick={applyToAll} disabled={bulkGrade === ""}>
+                    Aplicar a todos
+                  </Button>
+                  <Button type="button" variant="outline" onClick={clearAll}>
+                    Limpar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={loadLastGrades}
+                    disabled={!selectedStudent || !selectedProject}
+                  >
+                    Carregar últimas
+                  </Button>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Média parcial: {(() => {
+                  const nums = grades.map((g) => Number(g.grade)).filter((n) => !isNaN(n));
+                  const avg = nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2) : "--";
+                  return avg;
+                })()} ({grades.filter((g) => g.grade !== "").length}/{grades.length})
+              </div>
               {grades.map((grade) => (
                 <div key={grade.subject} className="flex items-center gap-4">
                   <label className="w-32 text-sm font-medium">{grade.subject}</label>
