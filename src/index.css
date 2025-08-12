@@ -228,3 +228,24 @@
 .new-white-bg {
   @apply bg-[#f7f7ff];
 }
+
+/* Acessibilidade: link para pular conteúdo */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  @apply m-2 px-3 py-2 rounded-md bg-background text-foreground ring-2 ring-primary transition-transform;
+}
+.skip-link:focus {
+  top: 8px;
+  z-index: 50;
+}
+
+/* Preferência do usuário: reduzir animações */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

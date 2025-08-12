@@ -29,7 +29,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3">
+    <header className="bg-white border-b border-gray-200 px-4 py-3" role="banner">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-bold text-primary-dark">IBC CONNECT</h1>
@@ -43,7 +43,7 @@ export const Header = () => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Abrir menu do usuário" aria-haspopup="menu">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
