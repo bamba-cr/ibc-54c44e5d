@@ -20,6 +20,7 @@ import NotFound from '@/pages/NotFound';
 import RecuperarSenha from '@/pages/RecuperarSenha';
 import ResetarSenha from '@/pages/ResetarSenha';
 import Historico from '@/pages/Historico';
+import { BottomNav } from '@/components/layout/BottomNav';
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function App() {
           
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <BottomNav />
       </Router>
       
       <Toaster />

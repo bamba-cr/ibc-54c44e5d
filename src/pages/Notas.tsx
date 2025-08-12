@@ -79,18 +79,27 @@ const Notas = () => {
   const { data: students, isLoading: isLoadingStudents } = useQuery({
     queryKey: ["students", selectedProject],
     queryFn: async () => {
-      if (!selectedProject) return [];
-      
-      const { data, error } = await supabase
+      if (!selectedProject) return [] as Array<{ id: string; name: string }>;
+
+      // 1) fetch student IDs linked to the project
+      const { data: links, error: linkError } = await supabase
         .from("student_projects")
-        .select(`
-          students(id, name)
-        `)
+        .select("student_id")
         .eq("project_id", selectedProject);
+      if (linkError) throw linkError;
 
-      if (error) throw error;
+      const ids = (links || []).map((l: any) => l.student_id).filter(Boolean);
+      if (ids.length === 0) return [] as Array<{ id: string; name: string }>;
 
-      return data?.map((entry) => entry.students) || [];
+      // 2) fetch students details
+      const { data: stu, error: stuError } = await supabase
+        .from("students")
+        .select("id, name")
+        .in("id", ids)
+        .order("name");
+      if (stuError) throw stuError;
+
+      return (stu || []) as Array<{ id: string; name: string }>;
     },
     enabled: !!selectedProject,
   });
@@ -140,9 +149,12 @@ const Notas = () => {
     },
     onError: (error) => {
       console.error("Error saving grades:", error);
+      const message = (error && typeof error === 'object' && 'message' in (error as any))
+        ? String((error as any).message)
+        : (error instanceof Error ? error.message : "Não foi possível salvar as notas. Por favor, tente novamente.");
       toast({
         title: "Erro ao salvar",
-        description: error instanceof Error ? error.message : "Não foi possível salvar as notas. Por favor, tente novamente.",
+        description: message,
         variant: "destructive",
       });
     },
