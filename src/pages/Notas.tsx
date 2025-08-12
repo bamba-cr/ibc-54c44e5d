@@ -128,7 +128,9 @@ const Notas = () => {
         throw new Error("Nenhuma nota válida para salvar");
       }
 
-      const { error } = await supabase.from("grades").insert(gradesToInsert);
+      const { error } = await supabase
+        .from("grades")
+        .upsert(gradesToInsert, { onConflict: "student_id,project_id,period,subject" });
       if (error) throw error;
     },
     onSuccess: () => {
