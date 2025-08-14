@@ -81,6 +81,11 @@ function App() {
                 <StudentPerformance />
               </AuthGuard>
             } />
+            <Route path="/consulta-individual/:id" element={
+              <AuthGuard>
+                <StudentPerformance />
+              </AuthGuard>
+            } />
             <Route path="/historico" element={
               <AuthGuard>
                 <Historico />
