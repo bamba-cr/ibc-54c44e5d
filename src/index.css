@@ -241,38 +241,6 @@
   z-index: 50;
 }
 
-/* Melhorias de acessibilidade para tooltips em dispositivos móveis */
-@media (hover: none) and (pointer: coarse) {
-  [data-radix-tooltip-trigger] {
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  [data-radix-tooltip-content] {
-    animation-duration: 0.2s;
-  }
-}
-
-/* Melhor contraste para elementos focados */
-*:focus-visible {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Indicadores visuais para elementos interativos */
-button:not(:disabled):hover,
-[role="button"]:not([aria-disabled="true"]):hover {
-  transform: translateY(-1px);
-  transition: transform 0.2s ease;
-}
-
-/* Melhor feedback visual para campos de formulário */
-input:focus,
-textarea:focus,
-select:focus {
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
-}
-
 /* Preferência do usuário: reduzir animações */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

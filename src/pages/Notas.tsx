@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GradeSearchForm } from "@/components/grades/GradeSearchForm";
-import { ExistingGradesTable } from "@/components/grades/ExistingGradesTable";
-import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 import {
   Select,
   SelectContent,
@@ -16,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, BookOpen, Calculator, FileText } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,8 +56,6 @@ const Notas = () => {
   const [period, setPeriod] = useState("");
   const [observations, setObservations] = useState("");
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredStudents, setFilteredStudents] = useState<Array<{ id: string; name: string }>>([]);
   const [grades, setGrades] = useState<GradeEntry[]>(
     subjects.map((subject) => ({ subject, grade: "" }))
   );
@@ -108,30 +103,6 @@ const Notas = () => {
     },
     enabled: !!selectedProject,
   });
-
-  // Filter students based on search term
-  useEffect(() => {
-    if (!students) {
-      setFilteredStudents([]);
-      return;
-    }
-
-    if (!searchTerm.trim()) {
-      setFilteredStudents(students);
-      return;
-    }
-
-    const filtered = students.filter(student =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredStudents(filtered);
-  }, [students, searchTerm]);
-
-  const handleSearch = () => {
-    // Trigger search logic if needed
-    console.log("Searching for:", searchTerm);
-  };
 
   // Mutation to save grades
   const saveMutation = useMutation({
@@ -324,164 +295,168 @@ const Notas = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex items-center gap-2 mb-8">
-        <BookOpen className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">Lançamento de Notas</h1>
-      </div>
-
-      <GradeSearchForm
-        projects={projects || []}
-        students={filteredStudents}
-        selectedProject={selectedProject}
-        selectedStudent={selectedStudent}
-        searchTerm={searchTerm}
-        onProjectChange={setSelectedProject}
-        onStudentChange={setSelectedStudent}
-        onSearchTermChange={setSearchTerm}
-        onSearch={handleSearch}
-        isLoading={isLoadingStudents}
-      />
-
-      {selectedStudent && selectedProject && (
-        <ExistingGradesTable
-          studentId={selectedStudent}
-          projectId={selectedProject}
-        />
-      )}
-
-      <div className="space-y-6">
-        {selectedStudent && selectedProject && (
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <Calculator className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">Lançar Novas Notas</h2>
+    <div className="container mx-auto p-6 animate-fadeIn">
+      <h1 className="text-2xl font-bold mb-6">Boletim Escolar</h1>
+      
+      <Card className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Projeto</label>
+              <Select
+                value={selectedProject}
+                onValueChange={(value) => {
+                  setSelectedProject(value);
+                  setSelectedStudent(""); // Reset student when project changes
+                }}
+                disabled={isLoadingProjects}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingProjects ? (
+                    <SelectItem value="loading" disabled>
+                      Carregando projetos...
+                    </SelectItem>
+                  ) : (
+                    projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Período</label>
-                  <TooltipWrapper content="Selecione o período letivo para o qual está lançando as notas">
-                    <Select value={period} onValueChange={setPeriod}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o período" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allowedPeriods.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TooltipWrapper>
-                  <p className="text-xs text-muted-foreground mt-1">Opções: 1º/2º/3º/4º Bimestre, 1º/2º Semestre, Anual</p>
-                </div>
 
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <BookOpen className="h-5 w-5" />
-                      Notas por Disciplina
-                    </h3>
-                    <div className="flex-1" />
-                    <div className="flex items-center gap-2">
-                      <TooltipWrapper content="Digite uma nota para aplicar a todas as disciplinas">
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          min="0"
-                          max="10"
-                          step="0.1"
-                          placeholder="Nota p/ todos"
-                          value={bulkGrade}
-                          onChange={(e) => setBulkGrade(e.target.value)}
-                          className="w-36"
-                        />
-                      </TooltipWrapper>
-                      <TooltipWrapper content="Aplicar a nota digitada para todas as disciplinas">
-                        <Button type="button" variant="secondary" onClick={applyToAll} disabled={bulkGrade === ""}>
-                          Aplicar a todos
-                        </Button>
-                      </TooltipWrapper>
-                      <TooltipWrapper content="Limpar todas as notas digitadas">
-                        <Button type="button" variant="outline" onClick={clearAll}>
-                          Limpar
-                        </Button>
-                      </TooltipWrapper>
-                      <TooltipWrapper content="Carregar as últimas notas registradas para este aluno">
-                        <Button
-                          type="button"
-                          onClick={loadLastGrades}
-                          disabled={!selectedStudent || !selectedProject}
-                        >
-                          Carregar últimas
-                        </Button>
-                      </TooltipWrapper>
-                    </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
-                    Média parcial: {(() => {
-                      const nums = grades.map((g) => Number(g.grade)).filter((n) => !isNaN(n));
-                      const avg = nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2) : "--";
-                      return avg;
-                    })()} ({grades.filter((g) => g.grade !== "").length}/{grades.length})
-                  </div>
-                  {grades.map((grade) => (
-                    <div key={grade.subject} className="flex items-center gap-4">
-                      <label className="w-32 text-sm font-medium">{grade.subject}</label>
-                      <TooltipWrapper content={`Digite a nota de ${grade.subject} (0 a 10)`}>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="10"
-                          step="0.1"
-                          placeholder="0-10"
-                          value={grade.grade}
-                          onChange={(e) => handleGradeChange(grade.subject, e.target.value)}
-                          className="w-24"
-                        />
-                      </TooltipWrapper>
-                    </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Aluno</label>
+              <Select
+                value={selectedStudent}
+                onValueChange={setSelectedStudent}
+                disabled={!selectedProject || isLoadingStudents}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !selectedProject 
+                      ? "Selecione um projeto primeiro" 
+                      : "Selecione o aluno"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingStudents ? (
+                    <SelectItem value="loading" disabled>
+                      Carregando alunos...
+                    </SelectItem>
+                  ) : (
+                    students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Período</label>
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o período" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedPeriods.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
-                </div>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Opções: 1º/2º/3º/4º Bimestre, 1º/2º Semestre, Anual</p>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1 flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Observações
-                  </label>
-                  <TooltipWrapper content="Adicione observações sobre o desempenho do aluno neste período">
-                    <Textarea
-                      placeholder="Observações adicionais sobre o desempenho do aluno"
-                      value={observations}
-                      onChange={(e) => setObservations(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </TooltipWrapper>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <h2 className="text-lg font-semibold">Notas por Disciplina</h2>
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    placeholder="Nota p/ todos"
+                    value={bulkGrade}
+                    onChange={(e) => setBulkGrade(e.target.value)}
+                    className="w-36"
+                  />
+                  <Button type="button" variant="secondary" onClick={applyToAll} disabled={bulkGrade === ""}>
+                    Aplicar a todos
+                  </Button>
+                  <Button type="button" variant="outline" onClick={clearAll}>
+                    Limpar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={loadLastGrades}
+                    disabled={!selectedStudent || !selectedProject}
+                  >
+                    Carregar últimas
+                  </Button>
                 </div>
               </div>
+              <div className="text-sm text-muted-foreground">
+                Média parcial: {(() => {
+                  const nums = grades.map((g) => Number(g.grade)).filter((n) => !isNaN(n));
+                  const avg = nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2) : "--";
+                  return avg;
+                })()} ({grades.filter((g) => g.grade !== "").length}/{grades.length})
+              </div>
+              {grades.map((grade) => (
+                <div key={grade.subject} className="flex items-center gap-4">
+                  <label className="w-32 text-sm font-medium">{grade.subject}</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.1"
+                    placeholder="0-10"
+                    value={grade.grade}
+                    onChange={(e) => handleGradeChange(grade.subject, e.target.value)}
+                    className="w-24"
+                  />
+                </div>
+              ))}
+            </div>
 
-              <TooltipWrapper content="Salvar todas as notas digitadas no sistema">
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={saveMutation.isPending}
-                >
-                  {saveMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    "Salvar Boletim"
-                  )}
-                </Button>
-              </TooltipWrapper>
-            </form>
-          </Card>
-        )}
-      </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Observações</label>
+              <Textarea
+                placeholder="Observações adicionais sobre o desempenho do aluno"
+                value={observations}
+                onChange={(e) => setObservations(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              "Salvar Boletim"
+            )}
+          </Button>
+        </form>
+      </Card>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

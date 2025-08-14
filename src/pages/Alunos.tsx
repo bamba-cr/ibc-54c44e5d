@@ -22,8 +22,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
-import { StudentProfile } from "@/components/student/StudentProfile";
 import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -53,7 +51,6 @@ const Alunos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { toast } = useToast();
   
   const [editForm, setEditForm] = useState<StudentFormValues>({
@@ -414,57 +411,48 @@ const Alunos = () => {
                         <TableCell>{student.guardian_phone || "-"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <TooltipWrapper content="Visualizar perfil completo do aluno">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedStudent(student);
-                                  setIsProfileOpen(true);
-                                }}
-                              >
-                                <Eye className="h-4 w-4 text-green-600" />
-                              </Button>
-                            </TooltipWrapper>
-                            <TooltipWrapper content="Editar informações do aluno">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedStudent(student);
-                                  setEditForm({
-                                    name: student.name,
-                                    age: student.age?.toString() || "",
-                                    birthDate: student.birth_date || "",
-                                    rg: student.rg || "",
-                                    cpf: student.cpf || "",
-                                    address: student.address || "",
-                                    city: student.city || "",
-                                    guardianName: student.guardian_name || "",
-                                    guardianRelationship: student.guardian_relationship || "",
-                                    guardianCpf: student.guardian_cpf || "",
-                                    guardianRg: student.guardian_rg || "",
-                                    guardianPhone: student.guardian_phone || "",
-                                    guardianEmail: student.guardian_email || "",
-                                    projects: [],
-                                    observations: student.notes || "",
-                                    photo: null
-                                  });
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 text-blue-600" />
-                              </Button>
-                            </TooltipWrapper>
-                            <TooltipWrapper content="Remover aluno do sistema (ação irreversível)">
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => handleDeleteStudent(student.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipWrapper>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedStudent(student);
+                                setEditForm({
+                                  name: student.name,
+                                  age: student.age?.toString() || "",
+                                  birthDate: student.birth_date || "",
+                                  rg: student.rg || "",
+                                  cpf: student.cpf || "",
+                                  address: student.address || "",
+                                  city: student.city || "",
+                                  guardianName: student.guardian_name || "",
+                                  guardianRelationship: student.guardian_relationship || "",
+                                  guardianCpf: student.guardian_cpf || "",
+                                  guardianRg: student.guardian_rg || "",
+                                  guardianPhone: student.guardian_phone || "",
+                                  guardianEmail: student.guardian_email || "",
+                                  projects: [],
+                                  observations: student.notes || "",
+                                  photo: null
+                                });
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteStudent(student.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/consulta-individual/${student.id}`)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -629,14 +617,6 @@ const Alunos = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {selectedStudent && (
-        <StudentProfile
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          studentId={selectedStudent.id}
-        />
-      )}
     </div>
   );
 };
