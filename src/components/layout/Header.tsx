@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, Shield, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 
 export const Header = () => {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -34,23 +35,27 @@ export const Header = () => {
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-bold text-primary-dark">IBC CONNECT</h1>
           {profile.is_admin && (
-            <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              <Shield className="h-3 w-3" />
-              <span>Admin</span>
-            </div>
+            <TooltipWrapper content="Você tem privilégios de administrador">
+              <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                <Shield className="h-3 w-3" />
+                <span>Admin</span>
+              </div>
+            </TooltipWrapper>
           )}
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Abrir menu do usuário" aria-haspopup="menu">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+            <TooltipWrapper content="Abrir menu do usuário">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Abrir menu do usuário" aria-haspopup="menu">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </TooltipWrapper>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">

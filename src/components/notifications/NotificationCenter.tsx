@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { TooltipWrapper } from "@/components/ui/tooltip-wrapper";
 
 interface Notification {
   id: string;
@@ -77,17 +78,19 @@ export const NotificationCenter = () => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
-            >
-              {unreadCount}
-            </Badge>
-          )}
-        </Button>
+        <TooltipWrapper content={`${unreadCount > 0 ? `${unreadCount} notificações não lidas` : 'Nenhuma notificação nova'}`}>
+          <Button variant="outline" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
+              >
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </TooltipWrapper>
       </PopoverTrigger>
       <PopoverContent className="w-80" align="end">
         <div className="space-y-4">
