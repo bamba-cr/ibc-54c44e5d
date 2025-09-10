@@ -10,6 +10,7 @@ import { PhotoUpload } from "./PhotoUpload";
 import { StudentPersonalInfo } from "./StudentPersonalInfo";
 import { GuardianInfo } from "./GuardianInfo";
 import { ProjectSelection } from "./ProjectSelection";
+import { PoloSelection } from "./PoloSelection";
 import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -28,6 +29,7 @@ interface StudentFormValues {
   cpf: string;
   address: string;
   city: string;
+  poloId: string;
   guardianName: string;
   guardianRelationship: string;
   guardianCpf: string;
@@ -52,6 +54,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
     cpf: initialValues?.cpf || "",
     address: initialValues?.address || "",
     city: initialValues?.city || "",
+    poloId: initialValues?.polo_id || "",
     guardianName: initialValues?.guardian_name || "",
     guardianRelationship: initialValues?.guardian_relationship || "",
     guardianCpf: initialValues?.guardian_cpf || "",
@@ -83,10 +86,10 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
   };
 
   const validateForm = () => {
-    if (!formValues.name || !formValues.birthDate || !formValues.address || !formValues.city) {
+    if (!formValues.name || !formValues.birthDate || !formValues.address || !formValues.city || !formValues.poloId) {
       toast({
         title: "Erro de validação",
-        description: "Por favor, preencha todos os campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios incluindo o polo",
         variant: "destructive",
       });
       return false;
@@ -148,6 +151,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         cpf: formValues.cpf,
         address: formValues.address,
         city: formValues.city,
+        polo_id: formValues.poloId,
         guardian_name: formValues.guardianName,
         guardian_relationship: formValues.guardianRelationship,
         guardian_cpf: formValues.guardianCpf,
@@ -174,6 +178,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
           cpf: studentData.cpf,
           address: studentData.address,
           city: studentData.city,
+          polo_id: studentData.polo_id,
           guardian_name: studentData.guardian_name,
           guardian_relationship: studentData.guardian_relationship,
           guardian_cpf: studentData.guardian_cpf,
@@ -214,6 +219,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         cpf: "",
         address: "",
         city: "",
+        poloId: "",
         guardianName: "",
         guardianRelationship: "",
         guardianCpf: "",
@@ -260,6 +266,11 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
             <GuardianInfo
               values={formValues}
               onChange={handleInputChange}
+            />
+
+            <PoloSelection
+              selectedPolo={formValues.poloId}
+              onPoloChange={(poloId) => setFormValues(prev => ({ ...prev, poloId }))}
             />
 
             <ProjectSelection

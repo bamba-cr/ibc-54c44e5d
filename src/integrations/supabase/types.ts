@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -65,6 +65,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       error_logs: {
         Row: {
@@ -186,6 +210,50 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polos: {
+        Row: {
+          address: string | null
+          city_id: string
+          coordinator_email: string | null
+          coordinator_name: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city_id: string
+          coordinator_email?: string | null
+          coordinator_name?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city_id?: string
+          coordinator_email?: string | null
+          coordinator_name?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "polos_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
             referencedColumns: ["id"]
           },
         ]
@@ -390,6 +458,7 @@ export type Database = {
           name: string
           notes: string | null
           photo_url: string | null
+          polo_id: string | null
           rg: string | null
         }
         Insert: {
@@ -409,6 +478,7 @@ export type Database = {
           name: string
           notes?: string | null
           photo_url?: string | null
+          polo_id?: string | null
           rg?: string | null
         }
         Update: {
@@ -428,9 +498,18 @@ export type Database = {
           name?: string
           notes?: string | null
           photo_url?: string | null
+          polo_id?: string | null
           rg?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_polo_id_fkey"
+            columns: ["polo_id"]
+            isOneToOne: false
+            referencedRelation: "polos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -518,8 +597,8 @@ export type Database = {
       create_user_by_admin: {
         Args: {
           email_param: string
-          password_param: string
           full_name_param: string
+          password_param: string
           role_id_param: string
         }
         Returns: Json
@@ -527,69 +606,69 @@ export type Database = {
       find_user_by_identifier: {
         Args: { identifier: string }
         Returns: {
-          user_id: string
           email: string
+          user_id: string
           username: string
         }[]
       }
       get_admin_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
-          email: string
-          username: string
-          role_id: string
           created_at: string
+          email: string
+          role_id: string
+          user_id: string
+          username: string
         }[]
       }
       get_error_logs_with_details: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          user_id: string
-          user_email: string
-          error_type: Database["public"]["Enums"]["error_type"]
-          message: string
-          stack_trace: string
           additional_data: Json
-          route: string
           created_at: string
-          resolved: boolean
+          error_type: Database["public"]["Enums"]["error_type"]
+          id: string
+          message: string
           resolution_notes: string
+          resolved: boolean
+          route: string
+          stack_trace: string
+          user_email: string
+          user_id: string
         }[]
       }
       get_pending_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          user_id: string
-          email: string
-          username: string
-          full_name: string
           created_at: string
+          email: string
+          full_name: string
+          id: string
           status: Database["public"]["Enums"]["user_status"]
+          user_id: string
+          username: string
         }[]
       }
       get_project_rankings: {
         Args: { project_id_param: string }
         Returns: {
+          attendance_rank: number
+          attendance_rate: number
+          average_grade: number
+          grade_rank: number
           student_id: string
           student_name: string
-          average_grade: number
-          attendance_rate: number
-          grade_rank: number
-          attendance_rank: number
         }[]
       }
       get_user_events: {
         Args: { user_id_param: string }
         Returns: {
-          id: string
-          title: string
+          created_at: string
           date: string
           description: string
+          id: string
+          title: string
           type: string
-          created_at: string
         }[]
       }
       get_user_permissions: {
@@ -601,30 +680,30 @@ export type Database = {
       get_user_profile: {
         Args: { user_uuid?: string }
         Returns: {
-          id: string
-          user_id: string
-          email: string
-          username: string
-          full_name: string
           avatar_url: string
-          phone: string
-          is_admin: boolean
-          status: Database["public"]["Enums"]["user_status"]
           created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_admin: boolean
+          phone: string
+          status: Database["public"]["Enums"]["user_status"]
           updated_at: string
+          user_id: string
+          username: string
         }[]
       }
       has_permission: {
         Args: {
-          user_uuid: string
           permission_name: Database["public"]["Enums"]["permission_type"]
+          user_uuid: string
         }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -641,7 +720,7 @@ export type Database = {
         Returns: boolean
       }
       reject_user: {
-        Args: { target_user_id: string; reason?: string }
+        Args: { reason?: string; target_user_id: string }
         Returns: boolean
       }
     }
