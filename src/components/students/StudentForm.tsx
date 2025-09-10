@@ -28,7 +28,7 @@ interface StudentFormValues {
   rg: string;
   cpf: string;
   address: string;
-  city: string;
+  cityId: string;
   poloId: string;
   guardianName: string;
   guardianRelationship: string;
@@ -53,7 +53,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
     rg: initialValues?.rg || "",
     cpf: initialValues?.cpf || "",
     address: initialValues?.address || "",
-    city: initialValues?.city || "",
+    cityId: initialValues?.city || "",
     poloId: initialValues?.polo_id || "",
     guardianName: initialValues?.guardian_name || "",
     guardianRelationship: initialValues?.guardian_relationship || "",
@@ -86,10 +86,10 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
   };
 
   const validateForm = () => {
-    if (!formValues.name || !formValues.birthDate || !formValues.address || !formValues.city || !formValues.poloId) {
+    if (!formValues.name || !formValues.birthDate || !formValues.address || !formValues.cityId || !formValues.poloId) {
       toast({
         title: "Erro de validação",
-        description: "Por favor, preencha todos os campos obrigatórios incluindo o polo",
+        description: "Por favor, preencha todos os campos obrigatórios incluindo cidade e polo",
         variant: "destructive",
       });
       return false;
@@ -150,7 +150,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         rg: formValues.rg,
         cpf: formValues.cpf,
         address: formValues.address,
-        city: formValues.city,
+        city_id: formValues.cityId,
         polo_id: formValues.poloId,
         guardian_name: formValues.guardianName,
         guardian_relationship: formValues.guardianRelationship,
@@ -177,7 +177,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
           rg: studentData.rg,
           cpf: studentData.cpf,
           address: studentData.address,
-          city: studentData.city,
+          city_id: studentData.city_id,
           polo_id: studentData.polo_id,
           guardian_name: studentData.guardian_name,
           guardian_relationship: studentData.guardian_relationship,
@@ -218,7 +218,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         rg: "",
         cpf: "",
         address: "",
-        city: "",
+        cityId: "",
         poloId: "",
         guardianName: "",
         guardianRelationship: "",
@@ -258,7 +258,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
             <StudentPersonalInfo
               values={formValues}
               onChange={handleInputChange}
-              onCityChange={(value) => setFormValues(prev => ({ ...prev, city: value }))}
+              onCityChange={(cityId) => setFormValues(prev => ({ ...prev, cityId }))}
             />
           </div>
 
