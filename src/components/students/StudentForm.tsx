@@ -53,7 +53,7 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
     rg: initialValues?.rg || "",
     cpf: initialValues?.cpf || "",
     address: initialValues?.address || "",
-    cityId: initialValues?.city || "",
+    cityId: initialValues?.city_id || "",
     poloId: initialValues?.polo_id || "",
     guardianName: initialValues?.guardian_name || "",
     guardianRelationship: initialValues?.guardian_relationship || "",

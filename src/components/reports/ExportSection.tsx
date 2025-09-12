@@ -10,7 +10,9 @@ import type { Database } from '@/integrations/supabase/types';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-type Student = Database['public']['Tables']['students']['Row'];
+type Student = Database['public']['Tables']['students']['Row'] & {
+  cities?: { name: string; state: string };
+};
 
 interface ExportSectionProps {
   students: Student[] | null;
@@ -250,7 +252,7 @@ export const ExportSection = ({ students }: ExportSectionProps) => {
       id: student.id,
       name: student.name,
       age: student.age || '',
-      city: student.city || '',
+      city: student.cities?.name || '',
       birth_date: student.birth_date || '',
       email: student.guardian_email || '',
       phone: student.guardian_phone || ''

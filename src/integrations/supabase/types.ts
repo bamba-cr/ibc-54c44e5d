@@ -445,7 +445,7 @@ export type Database = {
           address: string
           age: number | null
           birth_date: string
-          city: string
+          city_id: string | null
           cpf: string | null
           created_at: string
           guardian_cpf: string | null
@@ -465,7 +465,7 @@ export type Database = {
           address: string
           age?: number | null
           birth_date: string
-          city: string
+          city_id?: string | null
           cpf?: string | null
           created_at?: string
           guardian_cpf?: string | null
@@ -485,7 +485,7 @@ export type Database = {
           address?: string
           age?: number | null
           birth_date?: string
-          city?: string
+          city_id?: string | null
           cpf?: string | null
           created_at?: string
           guardian_cpf?: string | null
@@ -502,6 +502,13 @@ export type Database = {
           rg?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_students_city"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "students_polo_id_fkey"
             columns: ["polo_id"]

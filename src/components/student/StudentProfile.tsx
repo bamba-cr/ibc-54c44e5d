@@ -30,7 +30,8 @@ interface StudentData {
   name: string;
   age: number;
   birth_date: string;
-  city: string;
+  city_id: string;
+  cities?: { name: string; state: string };
   address: string;
   cpf?: string;
   rg?: string;
@@ -69,7 +70,7 @@ export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfilePro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("*")
+        .select("*, cities(name, state)")
         .eq("id", studentId)
         .single();
       
@@ -195,7 +196,7 @@ export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfilePro
                       </Badge>
                       <Badge variant="outline">
                         <MapPin className="h-3 w-3 mr-1" />
-                        {student.city}
+                        {student.cities?.name || 'N/A'}
                       </Badge>
                     </div>
                   </div>
@@ -253,7 +254,7 @@ export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfilePro
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Cidade</label>
-                      <p className="text-sm">{student.city}</p>
+                      <p className="text-sm">{student.cities?.name || 'N/A'}</p>
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-sm font-medium text-muted-foreground">Endereço</label>

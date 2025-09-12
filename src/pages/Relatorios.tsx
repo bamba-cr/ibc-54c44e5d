@@ -23,7 +23,7 @@ const Relatorios = () => {
     queryKey: ["students"],
     queryFn: async () => {
       console.log('Fetching students data...');
-      const { data, error } = await supabase.from("students").select("*");
+      const { data, error } = await supabase.from("students").select("*, cities(name, state)");
       if (error) {
         console.error('Error fetching students:', error);
         throw error;

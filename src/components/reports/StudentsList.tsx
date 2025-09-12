@@ -24,7 +24,7 @@ interface StudentFormValues {
   rg: string;
   cpf: string;
   address: string;
-  city: string;
+  cityId: string;
   guardianName: string;
   guardianRelationship: string;
   guardianCpf: string;
@@ -57,7 +57,7 @@ export const StudentsList = () => {
     rg: "",
     cpf: "",
     address: "",
-    city: "",
+    cityId: "",
     guardianName: "",
     guardianRelationship: "",
     guardianCpf: "",
@@ -107,10 +107,10 @@ export const StudentsList = () => {
   const { data: students, isLoading, refetch: fetchStudents } = useQuery({
     queryKey: ["students", filters],
     queryFn: async () => {
-      let query = supabase.from("students").select("*");
+      let query = supabase.from("students").select("*, cities(name, state)");
       if (filters.name) query = query.ilike("name", `%${filters.name}%`);
       if (filters.age) query = query.eq("age", parseInt(filters.age));
-      if (filters.city) query = query.ilike("city", `%${filters.city}%`);
+      if (filters.city) query = query.ilike("cities.name", `%${filters.city}%`);
       if (filters.birth_date) query = query.eq("birth_date", filters.birth_date);
       const { data, error } = await query;
       if (error) throw error;
@@ -148,7 +148,7 @@ export const StudentsList = () => {
         rg: editForm.rg,
         cpf: editForm.cpf,
         address: editForm.address,
-        city: editForm.city,
+        city_id: editForm.cityId,
         guardian_name: editForm.guardianName,
         guardian_relationship: editForm.guardianRelationship,
         guardian_cpf: editForm.guardianCpf,
@@ -338,7 +338,7 @@ export const StudentsList = () => {
                         <div className="space-y-1">
                           <h3 className="font-medium text-lg">{student.name}</h3>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>{student.city || 'N/A'}</span>
+                            <span>{student.cities?.name || 'N/A'}</span>
                             <span>{student.age ? `${student.age} anos` : 'Idade não informada'}</span>
                             <span>{student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'Data não informada'}</span>
                           </div>
@@ -356,7 +356,7 @@ export const StudentsList = () => {
                                 rg: student.rg || "",
                                 cpf: student.cpf || "",
                                 address: student.address || "",
-                                city: student.city || "",
+                                cityId: student.city_id || "",
                                 guardianName: student.guardian_name || "",
                                 guardianRelationship: student.guardian_relationship || "",
                                 guardianCpf: student.guardian_cpf || "",
@@ -486,8 +486,8 @@ export const StudentsList = () => {
                     <Label htmlFor="city" className="text-sm font-medium">Cidade</Label>
                     <Input
                       id="city"
-                      value={editForm.city}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                      value={editForm.cityId}
+                      onChange={(e) => setEditForm({ ...editForm, cityId: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">

@@ -33,7 +33,7 @@ interface StudentFormValues {
   rg: string;
   cpf: string;
   address: string;
-  city: string;
+  cityId: string;
   guardianName: string;
   guardianRelationship: string;
   guardianCpf: string;
@@ -60,7 +60,7 @@ const Alunos = () => {
     rg: "",
     cpf: "",
     address: "",
-    city: "",
+    cityId: "",
     guardianName: "",
     guardianRelationship: "",
     guardianCpf: "",
@@ -293,7 +293,7 @@ const Alunos = () => {
         rg: editForm.rg,
         cpf: editForm.cpf,
         address: editForm.address,
-        city: editForm.city,
+        city_id: editForm.cityId,
         guardian_name: editForm.guardianName,
         guardian_relationship: editForm.guardianRelationship,
         guardian_cpf: editForm.guardianCpf,
@@ -423,7 +423,7 @@ const Alunos = () => {
                                   rg: student.rg || "",
                                   cpf: student.cpf || "",
                                   address: student.address || "",
-                                  city: student.city || "",
+                                  cityId: student.city_id || "",
                                   guardianName: student.guardian_name || "",
                                   guardianRelationship: student.guardian_relationship || "",
                                   guardianCpf: student.guardian_cpf || "",
@@ -542,8 +542,8 @@ const Alunos = () => {
                     <Label htmlFor="city" className="text-sm font-medium">Cidade</Label>
                     <Input
                       id="city"
-                      value={editForm.city}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                      value={editForm.cityId}
+                      onChange={(e) => setEditForm({ ...editForm, cityId: e.target.value })}
                     />
                   </div>
                   <div className="grid gap-2">
