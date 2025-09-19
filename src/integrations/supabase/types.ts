@@ -214,6 +214,33 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          attempt_time: string | null
+          created_at: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          success: boolean | null
+        }
+        Insert: {
+          attempt_time?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+        }
+        Update: {
+          attempt_time?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       polos: {
         Row: {
           address: string | null
@@ -593,6 +620,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      check_login_rate_limit: {
+        Args: { user_email: string; user_ip?: string }
+        Returns: boolean
+      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -722,12 +753,20 @@ export type Database = {
         Args: { user_id?: string }
         Returns: boolean
       }
+      log_login_attempt: {
+        Args: { user_email: string; user_ip?: string; was_successful: boolean }
+        Returns: undefined
+      }
       promote_to_admin: {
         Args: { target_user_id: string }
         Returns: boolean
       }
       reject_user: {
         Args: { reason?: string; target_user_id: string }
+        Returns: boolean
+      }
+      validate_cpf: {
+        Args: { cpf_input: string }
         Returns: boolean
       }
     }

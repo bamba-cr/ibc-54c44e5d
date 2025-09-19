@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, Shield } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
+import { sanitizeEmail } from "@/utils/validateCPF";
+import { checkRateLimit, logLoginAttempt } from "@/utils/rateLimiter";
 
 
 export const SignInForm = () => {
@@ -16,6 +18,11 @@ export const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    remaining: number;
+    resetTime: number;
+    blocked: boolean;
+  } | null>(null);
   const { signIn, isLoading } = useAuth();
   const { toast } = useToast();
 
@@ -23,10 +30,13 @@ export const SignInForm = () => {
     const newErrors = { email: "", password: "" };
     let isValid = true;
 
-    if (!email.trim()) {
+    // Sanitizar email
+    const sanitizedEmail = sanitizeEmail(email);
+
+    if (!sanitizedEmail.trim()) {
       newErrors.email = "Email é obrigatório";
       isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(sanitizedEmail)) {
       newErrors.email = "Email inválido";
       isValid = false;
     }
@@ -48,15 +58,51 @@ export const SignInForm = () => {
     
     if (!validateForm()) return;
 
+    const sanitizedEmail = sanitizeEmail(email);
+    
+    // Verificar rate limiting antes do login
+    try {
+      const rateLimit = await checkRateLimit(sanitizedEmail, 'login');
+      
+      if (!rateLimit.allowed) {
+        const resetTime = new Date(rateLimit.resetTime);
+        const minutes = Math.ceil((rateLimit.resetTime - Date.now()) / (1000 * 60));
+        
+        setRateLimitInfo({
+          remaining: 0,
+          resetTime: rateLimit.resetTime,
+          blocked: true
+        });
+        
+        toast({
+          title: "🚫 Muitas tentativas de login",
+          description: `Tente novamente em ${minutes} minutos (${resetTime.toLocaleTimeString()})`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setRateLimitInfo({
+        remaining: rateLimit.remaining,
+        resetTime: rateLimit.resetTime,
+        blocked: false
+      });
+    } catch (error) {
+      console.error('Erro ao verificar rate limit:', error);
+    }
+
     if (rememberMe) {
-      localStorage.setItem("remember_me", "1");
+      localStorage.setItem("remember_me", sanitizedEmail);
     } else {
       localStorage.removeItem("remember_me");
     }
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(sanitizedEmail, password);
 
     if (error) {
+      // Registrar tentativa falhada
+      await logLoginAttempt(sanitizedEmail, false);
+      
       if (error.message === "Invalid login credentials") {
         toast({
           title: "Credenciais inválidas",
@@ -71,6 +117,9 @@ export const SignInForm = () => {
         });
       }
     } else {
+      // Registrar tentativa bem-sucedida
+      await logLoginAttempt(sanitizedEmail, true);
+      
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo ao IBC CONNECT",
@@ -88,9 +137,10 @@ export const SignInForm = () => {
           placeholder="seu@email.com"
           value={email}
           onChange={(e) => {
-            setEmail(e.target.value);
+            setEmail(sanitizeEmail(e.target.value));
             if (errors.email) setErrors({ ...errors, email: "" });
           }}
+          maxLength={254}
           className={errors.email ? "border-red-500" : ""}
           disabled={isLoading}
         />
@@ -134,25 +184,34 @@ export const SignInForm = () => {
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="remember"
-            checked={rememberMe}
-            onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-            disabled={isLoading}
-          />
-          <Label htmlFor="remember">Lembrar-me</Label>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+              disabled={isLoading}
+            />
+            <Label htmlFor="remember">Lembrar-me</Label>
+          </div>
+          <Link to="/recuperar-senha" className="text-sm text-primary hover:underline">
+            Esqueci minha senha
+          </Link>
         </div>
-        <Link to="/recuperar-senha" className="text-sm text-primary hover:underline">
-          Esqueci minha senha
-        </Link>
+        
+        {rateLimitInfo && !rateLimitInfo.blocked && rateLimitInfo.remaining < 3 && (
+          <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded">
+            <Shield className="h-4 w-4" />
+            Restam {rateLimitInfo.remaining} tentativas
+          </div>
+        )}
       </div>
 
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || (rateLimitInfo?.blocked || false)}
       >
         {isLoading ? (
           <>

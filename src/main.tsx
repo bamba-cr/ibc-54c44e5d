@@ -3,6 +3,12 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./index.css";
+import { setSecurityHeaders, preventClickjacking, monitorSuspiciousActivity } from "./utils/securityHeaders";
+
+// Configurar segurança na inicialização
+setSecurityHeaders();
+preventClickjacking();
+monitorSuspiciousActivity();
 
 // Create a client
 const queryClient = new QueryClient({
