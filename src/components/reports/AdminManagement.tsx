@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { AddAdminForm } from "./admin/AddAdminForm";
+import { RegisterAdminForm } from "./admin/RegisterAdminForm";
 import { AdminList } from "./admin/AdminList";
 import { UserManagement } from "./admin/UserManagement";
 import { CitiesManagement } from "./admin/CitiesManagement";
@@ -43,7 +43,7 @@ export const AdminManagement = () => {
 
         <TabsContent value="admins">
           <div className="space-y-6">
-            <AddAdminForm onAdminAdded={handleAdminAdded} />
+            <RegisterAdminForm onAdminAdded={handleAdminAdded} />
             <AdminList refreshTrigger={refreshTrigger} />
           </div>
         </TabsContent>
