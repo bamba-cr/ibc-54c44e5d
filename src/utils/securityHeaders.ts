@@ -70,7 +70,7 @@ export const preventClickjacking = (): void => {
     if (window.top !== window.self) {
       // Possível tentativa de clickjacking
       console.warn('Possível tentativa de clickjacking detectada');
-      window.top!.location = window.self.location;
+      window.top!.location.href = window.self.location.href;
     }
   } catch (e) {
     // Em caso de erro, redirecionar para página inicial

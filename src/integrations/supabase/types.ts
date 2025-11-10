@@ -616,22 +616,25 @@ export type Database = {
       }
     }
     Functions: {
-      approve_user: {
-        Args: { target_user_id: string }
-        Returns: boolean
+      approve_user: { Args: { target_user_id: string }; Returns: boolean }
+      calculate_attendance_rate: {
+        Args: { project_id_param?: string; student_id_param: string }
+        Returns: number
+      }
+      calculate_student_average: {
+        Args: {
+          period_param?: string
+          project_id_param?: string
+          student_id_param: string
+        }
+        Returns: number
       }
       check_login_rate_limit: {
         Args: { user_email: string; user_ip?: string }
         Returns: boolean
       }
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      create_initial_admin: {
-        Args: { admin_email: string }
-        Returns: boolean
-      }
+      cleanup_expired_sessions: { Args: never; Returns: number }
+      create_initial_admin: { Args: { admin_email: string }; Returns: boolean }
       create_user_by_admin: {
         Args: {
           email_param: string
@@ -650,7 +653,7 @@ export type Database = {
         }[]
       }
       get_admin_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -659,8 +662,45 @@ export type Database = {
           username: string
         }[]
       }
+      get_attendance_report: {
+        Args: {
+          end_date?: string
+          project_id_param: string
+          start_date?: string
+        }
+        Returns: {
+          absent_count: number
+          attendance_rate: number
+          present_count: number
+          student_id: string
+          student_name: string
+          total_classes: number
+        }[]
+      }
+      get_birthday_students: {
+        Args: { month_param?: number }
+        Returns: {
+          age: number
+          birth_date: string
+          city_name: string
+          id: string
+          name: string
+          polo_name: string
+        }[]
+      }
+      get_dashboard_stats: {
+        Args: never
+        Returns: {
+          pending_users: number
+          recent_students: number
+          total_cities: number
+          total_polos: number
+          total_projects: number
+          total_students: number
+        }[]
+      }
       get_error_logs_with_details: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           additional_data: Json
           created_at: string
@@ -676,7 +716,7 @@ export type Database = {
         }[]
       }
       get_pending_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -696,6 +736,66 @@ export type Database = {
           grade_rank: number
           student_id: string
           student_name: string
+        }[]
+      }
+      get_project_statistics: {
+        Args: { project_id_param: string }
+        Returns: {
+          average_attendance: number
+          average_grade: number
+          project_name: string
+          total_attendance_records: number
+          total_grades: number
+          total_students: number
+        }[]
+      }
+      get_student_details: {
+        Args: { student_id_param: string }
+        Returns: {
+          address: string
+          age: number
+          attendance_summary: Json
+          birth_date: string
+          city: Json
+          cpf: string
+          grades_summary: Json
+          guardian: Json
+          id: string
+          name: string
+          photo_url: string
+          polo: Json
+          projects: Json
+          rg: string
+        }[]
+      }
+      get_student_report_card: {
+        Args: { project_id_param?: string; student_id_param: string }
+        Returns: {
+          grade: number
+          observations: string
+          period: string
+          project_id: string
+          project_name: string
+          subject: string
+        }[]
+      }
+      get_students_by_polo: {
+        Args: { polo_id_param: string }
+        Returns: {
+          address: string
+          age: number
+          birth_date: string
+          city_name: string
+          cpf: string
+          guardian_email: string
+          guardian_name: string
+          guardian_phone: string
+          id: string
+          name: string
+          photo_url: string
+          polo_name: string
+          projects: Json
+          rg: string
         }[]
       }
       get_user_events: {
@@ -745,30 +845,18 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      is_user_approved: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { user_uuid?: string }; Returns: boolean }
+      is_user_approved: { Args: { user_id?: string }; Returns: boolean }
       log_login_attempt: {
         Args: { user_email: string; user_ip?: string; was_successful: boolean }
         Returns: undefined
       }
-      promote_to_admin: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
+      promote_to_admin: { Args: { target_user_id: string }; Returns: boolean }
       reject_user: {
         Args: { reason?: string; target_user_id: string }
         Returns: boolean
       }
-      validate_cpf: {
-        Args: { cpf_input: string }
-        Returns: boolean
-      }
+      validate_cpf: { Args: { cpf_input: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
