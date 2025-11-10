@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Trash2, RefreshCw, AlertCircle } from "lucide-react";
+import { Shield, Trash2, RefreshCw, AlertCircle, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { EditAdminDialog } from "./EditAdminDialog";
 
 interface AdminUser {
   user_id: string;
@@ -35,6 +36,13 @@ export const AdminList = ({ refreshTrigger }: AdminListProps) => {
     userId: "",
     username: "",
     roleId: ""
+  });
+  const [editDialog, setEditDialog] = useState<{
+    open: boolean;
+    admin: AdminUser | null;
+  }>({
+    open: false,
+    admin: null
   });
   const { toast } = useToast();
 
@@ -130,6 +138,17 @@ export const AdminList = ({ refreshTrigger }: AdminListProps) => {
 
   const isCurrentUser = (userId: string) => userId === currentUserId;
 
+  const openEditDialog = (admin: AdminUser) => {
+    setEditDialog({
+      open: true,
+      admin
+    });
+  };
+
+  const handleEditSuccess = () => {
+    fetchAdmins();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -164,7 +183,7 @@ export const AdminList = ({ refreshTrigger }: AdminListProps) => {
                 <TableHead>Usuário</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Adicionado em</TableHead>
-                <TableHead className="w-20 text-right">Ações</TableHead>
+                <TableHead className="w-32 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -183,18 +202,32 @@ export const AdminList = ({ refreshTrigger }: AdminListProps) => {
                     {new Date(admin.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell className="text-right">
-                    {!isCurrentUser(admin.user_id) ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openConfirmDialog(admin.user_id, admin.username, admin.role_id)}
-                        className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
+                    <div className="flex justify-end gap-1">
+                      {!isCurrentUser(admin.user_id) ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(admin)}
+                            className="h-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                            title="Editar administrador"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openConfirmDialog(admin.user_id, admin.username, admin.role_id)}
+                            className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            title="Remover privilégios de administrador"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -219,6 +252,13 @@ export const AdminList = ({ refreshTrigger }: AdminListProps) => {
         title="Confirmar remoção"
         description={`Você está prestes a remover os privilégios de administrador de ${confirmDialog.username}. Essa ação não pode ser desfeita.`}
         onConfirm={() => handleRemoveAdmin(confirmDialog.userId, confirmDialog.roleId)}
+      />
+
+      <EditAdminDialog
+        open={editDialog.open}
+        onOpenChange={(open) => setEditDialog({...editDialog, open})}
+        admin={editDialog.admin}
+        onSuccess={handleEditSuccess}
       />
     </Card>
   );
