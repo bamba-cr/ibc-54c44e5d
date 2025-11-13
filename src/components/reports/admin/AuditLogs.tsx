@@ -37,26 +37,47 @@ export const AuditLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select(`
-          *,
-          profiles!audit_logs_user_id_fkey(email),
-          target_profiles:profiles!audit_logs_target_user_id_fkey(email)
-        `)
-        .eq('entity_type', 'admin')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      
+      // Usar supabase diretamente sem tipagem para tabela nova
+      const response = await fetch(
+        `https://jyugggqkpgjwvuufhdwc.supabase.co/rest/v1/audit_logs?entity_type=eq.admin&order=created_at.desc&limit=100`,
+        {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5dWdnZ3FrcGdqd3Z1dWZoZHdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzMjM0NTgsImV4cCI6MjA1Mzg5OTQ1OH0.-9Klhq-JKJebV8XvgduY3WguR00vJ5-YPZMuIlbAT5Y',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to fetch logs');
+      
+      const data = await response.json();
 
-      const formattedLogs = data.map((log: any) => ({
-        ...log,
-        user_email: log.profiles?.email,
-        target_user_email: log.target_profiles?.email,
-      }));
+      // Buscar emails dos usuários separadamente
+      const userIds = [...new Set([
+        ...data.map((log: any) => log.user_id),
+        ...data.map((log: any) => log.target_user_id)
+      ].filter(Boolean))];
 
-      setLogs(formattedLogs);
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, email')
+          .in('user_id', userIds);
+
+        const emailMap = new Map(profiles?.map((p: any) => [p.user_id, p.email]) || []);
+
+        const formattedLogs = data.map((log: any) => ({
+          ...log,
+          user_email: emailMap.get(log.user_id),
+          target_user_email: emailMap.get(log.target_user_id),
+        }));
+
+        setLogs(formattedLogs);
+      } else {
+        setLogs(data);
+      }
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
       toast.error('Erro ao carregar logs de auditoria');
