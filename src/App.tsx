@@ -20,6 +20,7 @@ import NotFound from '@/pages/NotFound';
 import RecuperarSenha from '@/pages/RecuperarSenha';
 import ResetarSenha from '@/pages/ResetarSenha';
 import Historico from '@/pages/Historico';
+import Perfil from '@/pages/Perfil';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 function App() {
@@ -89,6 +90,11 @@ function App() {
             <Route path="/historico" element={
               <AuthGuard>
                 <Historico />
+              </AuthGuard>
+            } />
+            <Route path="/perfil" element={
+              <AuthGuard>
+                <Perfil />
               </AuthGuard>
             } />
             
