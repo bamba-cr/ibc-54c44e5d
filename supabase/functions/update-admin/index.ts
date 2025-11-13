@@ -51,6 +51,15 @@ serve(async (req) => {
     // Obter dados da requisição
     const { user_id, email, full_name, username, password } = await req.json();
 
+    // Obter dados originais do usuário para auditoria
+    const { data: originalUser, error: fetchError } = await supabaseClient.auth.admin.getUserById(user_id);
+    if (fetchError || !originalUser) {
+      return new Response(
+        JSON.stringify({ error: 'Usuário não encontrado' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Validar dados
     if (!user_id) {
       return new Response(
@@ -143,9 +152,56 @@ serve(async (req) => {
       }
     }
 
+    // Registrar log de auditoria
+    const changedFields: string[] = [];
+    const oldValues: any = {};
+    const newValues: any = {};
+
+    if (email && email !== originalUser.user.email) {
+      changedFields.push('email');
+      oldValues.email = originalUser.user.email;
+      newValues.email = email;
+    }
+    if (full_name !== undefined && full_name !== originalUser.user.user_metadata?.full_name) {
+      changedFields.push('full_name');
+      oldValues.full_name = originalUser.user.user_metadata?.full_name;
+      newValues.full_name = full_name;
+    }
+    if (username !== undefined && username !== originalUser.user.user_metadata?.username) {
+      changedFields.push('username');
+      oldValues.username = originalUser.user.user_metadata?.username;
+      newValues.username = username;
+    }
+    if (password) {
+      changedFields.push('password');
+      newValues.password = '***REDACTED***';
+    }
+
+    if (changedFields.length > 0) {
+      const { error: auditError } = await supabaseClient
+        .from('audit_logs')
+        .insert({
+          user_id: currentUser.id,
+          target_user_id: user_id,
+          action: 'UPDATE',
+          entity_type: 'admin',
+          entity_id: user_id,
+          old_values: oldValues,
+          new_values: newValues,
+          changed_fields: changedFields,
+          ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+          user_agent: req.headers.get('user-agent'),
+        });
+
+      if (auditError) {
+        console.error('Error logging audit:', auditError);
+      }
+    }
+
     console.log('Admin updated successfully:', {
       id: user_id,
       email: updatedUser.user.email,
+      changedFields,
     });
 
     return new Response(

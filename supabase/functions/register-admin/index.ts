@@ -137,6 +137,30 @@ serve(async (req) => {
       );
     }
 
+    // Registrar log de auditoria
+    const { error: auditError } = await supabaseClient
+      .from('audit_logs')
+      .insert({
+        user_id: currentUser.id,
+        target_user_id: newUser.user.id,
+        action: 'CREATE',
+        entity_type: 'admin',
+        entity_id: newUser.user.id,
+        new_values: {
+          email,
+          full_name,
+          username,
+          is_admin: true,
+        },
+        changed_fields: ['email', 'full_name', 'username', 'is_admin', 'status'],
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
+        user_agent: req.headers.get('user-agent'),
+      });
+
+    if (auditError) {
+      console.error('Error logging audit:', auditError);
+    }
+
     console.log('Admin created successfully:', {
       id: newUser.user.id,
       email: newUser.user.email,
