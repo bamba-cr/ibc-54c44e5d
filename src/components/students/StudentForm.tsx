@@ -11,6 +11,7 @@ import { StudentPersonalInfo } from "./StudentPersonalInfo";
 import { GuardianInfo } from "./GuardianInfo";
 import { ProjectSelection } from "./ProjectSelection";
 import { PoloSelection } from "./PoloSelection";
+import { differenceInYears } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'];
@@ -70,10 +71,21 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    // Se mudou a data de nascimento, calcular idade automaticamente
+    if (name === "birthDate" && value) {
+      const age = differenceInYears(new Date(), new Date(value));
+      setFormValues((prev) => ({
+        ...prev,
+        birthDate: value,
+        age: age.toString(),
+      }));
+    } else {
+      setFormValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleProjectChange = (projectId: string, checked: boolean) => {

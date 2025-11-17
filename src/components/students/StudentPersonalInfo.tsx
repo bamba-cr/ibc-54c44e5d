@@ -35,19 +35,6 @@ export const StudentPersonalInfo = ({ values, onChange, onCityChange }: StudentP
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="age">Idade</Label>
-          <Input
-            id="age"
-            name="age"
-            type="number"
-            value={values.age}
-            onChange={onChange}
-            placeholder="Idade"
-            min="0"
-            max="120"
-          />
-        </div>
-        <div>
           <Label htmlFor="birthDate">Data de Nascimento *</Label>
           <Input
             id="birthDate"
@@ -56,6 +43,19 @@ export const StudentPersonalInfo = ({ values, onChange, onCityChange }: StudentP
             value={values.birthDate}
             onChange={onChange}
             required
+          />
+        </div>
+        <div>
+          <Label htmlFor="age">Idade</Label>
+          <Input
+            id="age"
+            name="age"
+            type="number"
+            value={values.age}
+            onChange={onChange}
+            placeholder="Calculada automaticamente"
+            readOnly
+            className="bg-muted"
           />
         </div>
       </div>
