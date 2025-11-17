@@ -3,11 +3,10 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./index.css";
-import { setSecurityHeaders, preventClickjacking, monitorSuspiciousActivity } from "./utils/securityHeaders";
+import { setSecurityHeaders, monitorSuspiciousActivity } from "./utils/securityHeaders";
 
-// Configurar segurança na inicialização
+// Configurar segurança na inicialização (sem preventClickjacking pois causa loop no iframe do Lovable)
 setSecurityHeaders();
-preventClickjacking();
 monitorSuspiciousActivity();
 
 // Create a client
