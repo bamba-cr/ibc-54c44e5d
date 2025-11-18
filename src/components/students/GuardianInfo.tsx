@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import InputMask from "react-input-mask";
 
 interface GuardianInfoProps {
   values: {
@@ -42,33 +43,60 @@ export const GuardianInfo = ({ values, onChange }: GuardianInfoProps) => {
 
       <div>
         <Label htmlFor="guardianCpf">CPF do Responsável</Label>
-        <Input
-          id="guardianCpf"
-          name="guardianCpf"
+        <InputMask
+          mask="999.999.999-99"
           value={values.guardianCpf}
           onChange={onChange}
-        />
+        >
+          {/* @ts-ignore */}
+          {(inputProps: any) => (
+            <Input
+              {...inputProps}
+              id="guardianCpf"
+              name="guardianCpf"
+              placeholder="000.000.000-00"
+            />
+          )}
+        </InputMask>
       </div>
 
       <div>
         <Label htmlFor="guardianRg">RG do Responsável</Label>
-        <Input
-          id="guardianRg"
-          name="guardianRg"
+        <InputMask
+          mask="99.999.999-9"
           value={values.guardianRg}
           onChange={onChange}
-        />
+        >
+          {/* @ts-ignore */}
+          {(inputProps: any) => (
+            <Input
+              {...inputProps}
+              id="guardianRg"
+              name="guardianRg"
+              placeholder="00.000.000-0"
+            />
+          )}
+        </InputMask>
       </div>
 
       <div>
         <Label htmlFor="guardianPhone">Telefone do Responsável*</Label>
-        <Input
-          id="guardianPhone"
-          name="guardianPhone"
+        <InputMask
+          mask="(99) 99999-9999"
           value={values.guardianPhone}
           onChange={onChange}
-          required
-        />
+        >
+          {/* @ts-ignore */}
+          {(inputProps: any) => (
+            <Input
+              {...inputProps}
+              id="guardianPhone"
+              name="guardianPhone"
+              placeholder="(00) 00000-0000"
+              required
+            />
+          )}
+        </InputMask>
       </div>
 
       <div>
