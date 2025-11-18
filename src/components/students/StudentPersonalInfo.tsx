@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CitySelection } from "./CitySelection";
+import InputMask from "react-input-mask";
 
 interface StudentPersonalInfoProps {
   values: {
@@ -63,23 +64,39 @@ export const StudentPersonalInfo = ({ values, onChange, onCityChange }: StudentP
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="rg">RG</Label>
-          <Input
-            id="rg"
-            name="rg"
+          <InputMask
+            mask="99.999.999-9"
             value={values.rg}
             onChange={onChange}
-            placeholder="RG"
-          />
+          >
+            {/* @ts-ignore */}
+            {(inputProps: any) => (
+              <Input
+                {...inputProps}
+                id="rg"
+                name="rg"
+                placeholder="00.000.000-0"
+              />
+            )}
+          </InputMask>
         </div>
         <div>
           <Label htmlFor="cpf">CPF</Label>
-          <Input
-            id="cpf"
-            name="cpf"
+          <InputMask
+            mask="999.999.999-99"
             value={values.cpf}
             onChange={onChange}
-            placeholder="000.000.000-00"
-          />
+          >
+            {/* @ts-ignore */}
+            {(inputProps: any) => (
+              <Input
+                {...inputProps}
+                id="cpf"
+                name="cpf"
+                placeholder="000.000.000-00"
+              />
+            )}
+          </InputMask>
         </div>
       </div>
 
