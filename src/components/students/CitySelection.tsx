@@ -47,7 +47,11 @@ export const CitySelection = ({ selectedCity, onCityChange }: CitySelectionProps
   return (
     <div className="space-y-2">
       <Label htmlFor="city">Cidade *</Label>
-      <Select value={selectedCity} onValueChange={onCityChange} disabled={isLoading}>
+      <Select 
+        value={isLoading ? "" : selectedCity} 
+        onValueChange={onCityChange} 
+        disabled={isLoading}
+      >
         <SelectTrigger>
           <SelectValue placeholder={isLoading ? "Carregando cidades..." : "Selecione uma cidade"} />
         </SelectTrigger>
