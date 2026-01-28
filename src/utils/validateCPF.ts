@@ -67,6 +67,67 @@ export function validateCPF(cpf: string): boolean {
   return true;
 }
 
+// Validação de RG (formato brasileiro básico)
+export function validateRG(rg: string): boolean {
+  if (!rg) return false;
+  
+  // Remove caracteres não numéricos (exceto X que pode aparecer no dígito verificador)
+  const cleanRG = rg.replace(/[^\dXx]/g, '').toUpperCase();
+  
+  // RG deve ter entre 7 e 9 caracteres
+  if (cleanRG.length < 7 || cleanRG.length > 9) return false;
+  
+  // Verificar se não são todos dígitos iguais
+  const allSame = cleanRG.split('').every(char => char === cleanRG[0]);
+  if (allSame) return false;
+  
+  return true;
+}
+
+// Validação de Data de Nascimento
+export function validateBirthDate(dateString: string): { valid: boolean; message?: string } {
+  if (!dateString) {
+    return { valid: false, message: "Data de nascimento é obrigatória" };
+  }
+  
+  const date = new Date(dateString);
+  
+  // Verificar se é uma data válida
+  if (isNaN(date.getTime())) {
+    return { valid: false, message: "Data inválida" };
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Data não pode ser no futuro
+  if (date > today) {
+    return { valid: false, message: "Data de nascimento não pode ser no futuro" };
+  }
+  
+  // Calcular idade
+  const ageDiff = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  const dayDiff = today.getDate() - date.getDate();
+  
+  let age = ageDiff;
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age--;
+  }
+  
+  // Idade mínima: 2 anos
+  if (age < 2) {
+    return { valid: false, message: "Idade mínima é 2 anos" };
+  }
+  
+  // Idade máxima: 120 anos
+  if (age > 120) {
+    return { valid: false, message: "Data de nascimento inválida (idade maior que 120 anos)" };
+  }
+  
+  return { valid: true };
+}
+
 // Validação de email mais robusta
 export const validateEmail = (email: string): boolean => {
   if (!email) return false;

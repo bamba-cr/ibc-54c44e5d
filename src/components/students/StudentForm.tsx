@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { validateCPF, sanitizeInput, sanitizeDocument, sanitizeEmail } from "@/utils/validateCPF";
+import { validateCPF, validateRG, validateBirthDate, sanitizeInput, sanitizeDocument, sanitizeEmail } from "@/utils/validateCPF";
 import { supabase } from "@/integrations/supabase/client";
 import { PhotoUpload } from "./PhotoUpload";
 import { StudentPersonalInfo } from "./StudentPersonalInfo";
@@ -107,15 +107,58 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
       return false;
     }
 
-    if (formValues.cpf && !validateCPF(formValues.cpf)) {
+    // Validar Data de Nascimento
+    const birthDateValidation = validateBirthDate(formValues.birthDate);
+    if (!birthDateValidation.valid) {
       toast({
-        title: "CPF inválido",
-        description: "Por favor, insira um CPF válido",
+        title: "Data de nascimento inválida",
+        description: birthDateValidation.message,
         variant: "destructive",
       });
       return false;
     }
 
+    // Validar CPF do aluno (se preenchido)
+    if (formValues.cpf && !validateCPF(formValues.cpf)) {
+      toast({
+        title: "CPF do aluno inválido",
+        description: "Por favor, insira um CPF válido para o aluno",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validar RG do aluno (se preenchido)
+    if (formValues.rg && !validateRG(formValues.rg)) {
+      toast({
+        title: "RG do aluno inválido",
+        description: "RG deve ter entre 7 e 9 dígitos",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validar CPF do responsável (se preenchido)
+    if (formValues.guardianCpf && !validateCPF(formValues.guardianCpf)) {
+      toast({
+        title: "CPF do responsável inválido",
+        description: "Por favor, insira um CPF válido para o responsável",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validar RG do responsável (se preenchido)
+    if (formValues.guardianRg && !validateRG(formValues.guardianRg)) {
+      toast({
+        title: "RG do responsável inválido",
+        description: "RG deve ter entre 7 e 9 dígitos",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validar email do responsável (se preenchido)
     if (formValues.guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.guardianEmail)) {
       toast({
         title: "Email inválido",
