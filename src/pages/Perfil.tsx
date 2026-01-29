@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,9 +23,19 @@ import {
   Phone, 
   Briefcase,
   Users,
-  Settings
+  Settings,
+  MapPin,
+  Calendar,
+  FileText,
+  Heart
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+
+const BRAZILIAN_STATES = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+];
 
 const Perfil = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -34,6 +45,14 @@ const Perfil = () => {
     full_name: "",
     username: "",
     phone: "",
+    bio: "",
+    specialty: "",
+    birth_date: "",
+    address: "",
+    city: "",
+    state: "",
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -41,17 +60,58 @@ const Perfil = () => {
 
   useEffect(() => {
     if (user && profile) {
+      // Buscar dados adicionais do perfil
+      fetchExtendedProfile();
+    }
+  }, [user, profile]);
+
+  const fetchExtendedProfile = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('bio, specialty, birth_date, address, city, state, emergency_contact_name, emergency_contact_phone')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (data) {
       setFormData({
         email: user.email || "",
-        full_name: profile.full_name || "",
-        username: profile.username || "",
-        phone: profile.phone || "",
+        full_name: profile?.full_name || "",
+        username: profile?.username || "",
+        phone: profile?.phone || "",
+        bio: data.bio || "",
+        specialty: data.specialty || "",
+        birth_date: data.birth_date || "",
+        address: data.address || "",
+        city: data.city || "",
+        state: data.state || "",
+        emergency_contact_name: data.emergency_contact_name || "",
+        emergency_contact_phone: data.emergency_contact_phone || "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } else {
+      setFormData({
+        email: user.email || "",
+        full_name: profile?.full_name || "",
+        username: profile?.username || "",
+        phone: profile?.phone || "",
+        bio: "",
+        specialty: "",
+        birth_date: "",
+        address: "",
+        city: "",
+        state: "",
+        emergency_contact_name: "",
+        emergency_contact_phone: "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
     }
-  }, [user, profile]);
+  };
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -101,7 +161,7 @@ const Perfil = () => {
       });
       if (metadataError) throw metadataError;
 
-      // Atualizar tabela profiles
+      // Atualizar tabela profiles com todos os campos
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -109,6 +169,14 @@ const Perfil = () => {
           username: formData.username,
           email: formData.email,
           phone: formData.phone,
+          bio: formData.bio,
+          specialty: formData.specialty,
+          birth_date: formData.birth_date || null,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          emergency_contact_name: formData.emergency_contact_name,
+          emergency_contact_phone: formData.emergency_contact_phone,
         })
         .eq('user_id', user.id);
 
@@ -277,6 +345,46 @@ const Perfil = () => {
                         placeholder="Seu nome de usuário"
                       />
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="birth_date">Data de Nascimento</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="birth_date"
+                          type="date"
+                          value={formData.birth_date}
+                          onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="specialty">Especialidade / Área de Atuação</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="specialty"
+                          value={formData.specialty}
+                          onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                          placeholder="Ex: Educação Física, Música, etc."
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Biografia / Sobre Mim</Label>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      placeholder="Conte um pouco sobre você, sua experiência e interesses..."
+                      rows={4}
+                      className="resize-none"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -318,6 +426,101 @@ const Perfil = () => {
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="(00) 00000-0000"
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Address Card */}
+              <Card className="bg-card/60 backdrop-blur-sm border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    Endereço
+                  </CardTitle>
+                  <CardDescription>
+                    Seu endereço residencial
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Endereço Completo</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Rua, número, bairro..."
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="Sua cidade"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">Estado</Label>
+                      <Select
+                        value={formData.state}
+                        onValueChange={(value) => setFormData({ ...formData, state: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BRAZILIAN_STATES.map((state) => (
+                            <SelectItem key={state} value={state}>
+                              {state}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Emergency Contact Card */}
+              <Card className="bg-card/60 backdrop-blur-sm border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-primary" />
+                    Contato de Emergência
+                  </CardTitle>
+                  <CardDescription>
+                    Pessoa para contatar em caso de emergência
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergency_contact_name">Nome do Contato</Label>
+                      <Input
+                        id="emergency_contact_name"
+                        value={formData.emergency_contact_name}
+                        onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })}
+                        placeholder="Nome do familiar ou amigo"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="emergency_contact_phone">Telefone do Contato</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="emergency_contact_phone"
+                          type="tel"
+                          value={formData.emergency_contact_phone}
+                          onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
                           placeholder="(00) 00000-0000"
                           className="pl-10"
                         />
