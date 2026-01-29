@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminManagement } from '@/components/reports/AdminManagement';
-import { CalendarSection } from '@/components/reports/CalendarSection';
 import { StudentsList } from '@/components/reports/StudentsList';
 import { ExportSection } from '@/components/reports/ExportSection';
 import { ErrorLogsImproved } from '@/components/reports/ErrorLogsImproved';
@@ -87,21 +86,16 @@ const Relatorios = () => {
         animate={{ opacity: 1, y: 0 }} 
         className="text-4xl font-bold mb-8 text-primary border-b pb-4"
       >
-        Sistema de Gestão Acadêmica
+        Painel Administrativo
       </motion.h1>
       
-      <Tabs defaultValue="calendar" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 lg:w-[1000px] bg-white shadow-sm">
-          <TabsTrigger value="calendar">Calendário</TabsTrigger>
+      <Tabs defaultValue="students" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px] bg-white shadow-sm">
           <TabsTrigger value="students">Alunos</TabsTrigger>
-          <TabsTrigger value="reports">Relatórios</TabsTrigger>
+          <TabsTrigger value="reports">Exportar Dados</TabsTrigger>
           <TabsTrigger value="admin">Administração</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="logs">Logs do Sistema</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="calendar">
-          <CalendarSection />
-        </TabsContent>
 
         <TabsContent value="students">
           <div className="space-y-6">
