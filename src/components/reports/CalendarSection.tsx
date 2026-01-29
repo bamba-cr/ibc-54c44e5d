@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -37,18 +36,15 @@ export const CalendarSection = () => {
   
   const { toast } = useToast();
 
-  // Carregar eventos do banco de dados
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        // Obter ID do usuário atual se disponível
         const { data: { session } } = await supabase.auth.getSession();
         const userId = session?.user?.id || null;
         
         let query = supabase.from('events').select('*');
         
-        // Se houver um userId, filtrar por ele
         if (userId) {
           query = query.eq('user_id', userId);
         }
@@ -107,11 +103,9 @@ export const CalendarSection = () => {
     setLoading(true);
     
     try {
-      // Obter ID do usuário atual se disponível
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
       
-      // Criar evento no banco de dados
       const { data, error } = await supabase
         .from('events')
         .insert({
@@ -119,7 +113,7 @@ export const CalendarSection = () => {
           date: format(newEvent.date, 'yyyy-MM-dd'),
           type: newEvent.type,
           description: newEvent.description,
-          user_id: userId || '00000000-0000-0000-0000-000000000000' // Placeholder ou ID real
+          user_id: userId || '00000000-0000-0000-0000-000000000000'
         })
         .select();
         
@@ -139,7 +133,6 @@ export const CalendarSection = () => {
           description: `${newEvent.title} foi adicionado ao calendário.`
         });
         
-        // Resetar formulário
         setNewEvent({
           title: '',
           date: new Date(),
@@ -187,179 +180,168 @@ export const CalendarSection = () => {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }} 
-        animate={{ opacity: 1, x: 0 }} 
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-              Calendário de Atividades
-            </CardTitle>
-            <CardDescription>Gerencie eventos e compromissos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Calendar 
-              mode="single" 
-              selected={date} 
-              onSelect={(newDate) => newDate && setDate(newDate)} 
-              className="rounded-md border" 
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
+    <div className="grid gap-4 md:grid-cols-2 h-full">
+      <Card className="shadow-lg bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+            Calendário
+          </CardTitle>
+          <CardDescription>Selecione uma data</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <Calendar 
+            mode="single" 
+            selected={date} 
+            onSelect={(newDate) => newDate && setDate(newDate)} 
+            className="rounded-md border border-border" 
+          />
+        </CardContent>
+      </Card>
 
-      <motion.div 
-        initial={{ opacity: 0, x: 20 }} 
-        animate={{ opacity: 1, x: 0 }} 
-        transition={{ delay: 0.2 }}
-      >
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-primary" />
-                Eventos
-              </div>
-              <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="ml-auto">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Novo Evento
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo Evento</DialogTitle>
-                    <DialogDescription>
-                      Preencha os detalhes do evento abaixo.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
-                        Título
-                      </Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        value={newEvent.title}
-                        onChange={handleInputChange}
-                        className="col-span-3"
-                        placeholder="Digite o título do evento"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="type" className="text-right">
-                        Tipo
-                      </Label>
-                      <Select
-                        value={newEvent.type}
-                        onValueChange={handleTypeChange}
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="meeting">Reunião</SelectItem>
-                          <SelectItem value="task">Tarefa</SelectItem>
-                          <SelectItem value="reminder">Lembrete</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="date" className="text-right">
-                        Data
-                      </Label>
-                      <div className="col-span-3">
-                        <Input
-                          id="date"
-                          name="date"
-                          type="date"
-                          value={format(newEvent.date, 'yyyy-MM-dd')}
-                          onChange={(e) => setNewEvent(prev => ({ 
-                            ...prev, 
-                            date: new Date(e.target.value) 
-                          }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="description" className="text-right">
-                        Descrição
-                      </Label>
-                      <Textarea
-                        id="description"
-                        name="description"
-                        value={newEvent.description || ''}
-                        onChange={handleInputChange}
-                        className="col-span-3"
-                        placeholder="Descreva o evento"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button 
-                      type="submit" 
-                      onClick={handleAddEvent}
-                      disabled={loading}
-                    >
-                      {loading ? "Adicionando..." : "Adicionar Evento"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardTitle>
-            <CardDescription>Atividades programadas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
-              <AnimatePresence>
-                {events.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500">
-                    Nenhum evento cadastrado
-                  </div>
-                ) : (
-                  events.map((event, index) => (
-                    <motion.div 
-                      key={event.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-all"
-                      style={{ borderLeft: `4px solid ${event.color}` }}
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium">{event.title}</h4>
-                        <p className="text-sm text-gray-500">
-                          {format(event.date, 'dd/MM/yyyy')}
-                          {event.description && (
-                            <span className="block mt-1 text-xs">
-                              {event.description.substring(0, 60)}
-                              {event.description.length > 60 ? '...' : ''}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDeleteEvent(event.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </motion.div>
-                  ))
-                )}
-              </AnimatePresence>
+      <Card className="shadow-lg bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+              Eventos
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="ml-auto">
+                  <PlusCircle className="h-4 w-4 mr-1" />
+                  Novo
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Evento</DialogTitle>
+                  <DialogDescription>
+                    Preencha os detalhes do evento abaixo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="text-right">
+                      Título
+                    </Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      value={newEvent.title}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                      placeholder="Digite o título do evento"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right">
+                      Tipo
+                    </Label>
+                    <Select
+                      value={newEvent.type}
+                      onValueChange={handleTypeChange}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="meeting">Reunião</SelectItem>
+                        <SelectItem value="task">Tarefa</SelectItem>
+                        <SelectItem value="reminder">Lembrete</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="text-right">
+                      Data
+                    </Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="date"
+                        name="date"
+                        type="date"
+                        value={format(newEvent.date, 'yyyy-MM-dd')}
+                        onChange={(e) => setNewEvent(prev => ({ 
+                          ...prev, 
+                          date: new Date(e.target.value) 
+                        }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="description" className="text-right">
+                      Descrição
+                    </Label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      value={newEvent.description || ''}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                      placeholder="Descreva o evento"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    type="submit" 
+                    onClick={handleAddEvent}
+                    disabled={loading}
+                  >
+                    {loading ? "Adicionando..." : "Adicionar Evento"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </CardTitle>
+          <CardDescription>Atividades programadas</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+            <AnimatePresence>
+              {events.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  Nenhum evento cadastrado
+                </div>
+              ) : (
+                events.map((event, index) => (
+                  <motion.div 
+                    key={event.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-all"
+                    style={{ borderLeft: `4px solid ${event.color}` }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-foreground truncate">{event.title}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {format(event.date, 'dd/MM/yyyy')}
+                        {event.description && (
+                          <span className="block mt-1 text-xs truncate">
+                            {event.description.substring(0, 60)}
+                            {event.description.length > 60 ? '...' : ''}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => handleDeleteEvent(event.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

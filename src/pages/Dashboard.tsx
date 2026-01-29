@@ -161,24 +161,12 @@ const Dashboard = () => {
         </section>
 
         {/* Tools & Resources Row */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Student Search */}
-          <div>
-            <SectionHeader 
-              icon={<Users className="h-5 w-5" />}
-              title="Buscar Alunos"
-              description="Encontre e visualize perfis"
-            />
-            <StudentSearchCard />
-          </div>
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Student Search - 1 column */}
+          <StudentSearchCard />
 
-          {/* Calendar */}
-          <div>
-            <SectionHeader 
-              icon={<Calendar className="h-5 w-5" />}
-              title="Calendário de Eventos"
-              description="Próximos eventos e lembretes"
-            />
+          {/* Calendar Section - 2 columns */}
+          <div className="xl:col-span-2">
             <CalendarSection />
           </div>
         </section>
