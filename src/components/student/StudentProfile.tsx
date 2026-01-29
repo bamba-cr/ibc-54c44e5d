@@ -13,7 +13,9 @@ import {
   BookOpen, 
   Award,
   Users,
-  FileText
+  FileText,
+  Camera,
+  X
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +66,7 @@ interface AttendanceData {
 }
 
 export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfileProps) => {
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   // Buscar dados do estudante
   const { data: student, isLoading: loadingStudent } = useQuery({
     queryKey: ["student", studentId],
@@ -177,12 +180,22 @@ export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfilePro
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={student.photo_url} />
-                    <AvatarFallback className="text-lg">
-                      {getInitials(student.name)}
-                    </AvatarFallback>
-                  </Avatar>
+                                <div 
+                                  className="relative cursor-pointer group"
+                                  onClick={() => student.photo_url && setShowPhotoModal(true)}
+                                >
+                                  <Avatar className="h-20 w-20 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all">
+                                    <AvatarImage src={student.photo_url} className="object-cover" />
+                                    <AvatarFallback className="text-lg bg-primary/10">
+                                      {getInitials(student.name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  {student.photo_url && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Camera className="h-6 w-6 text-white" />
+                                    </div>
+                                  )}
+                                </div>
                   
                   <div className="flex-1 space-y-2">
                     <h3 className="text-2xl font-bold">{student.name}</h3>
@@ -401,6 +414,31 @@ export const StudentProfile = ({ studentId, isOpen, onClose }: StudentProfilePro
           <p className="text-center text-muted-foreground">Estudante não encontrado</p>
         )}
       </DialogContent>
+
+      {/* Modal para visualizar foto ampliada */}
+      {student?.photo_url && (
+        <Dialog open={showPhotoModal} onOpenChange={setShowPhotoModal}>
+          <DialogContent className="sm:max-w-lg p-2 bg-transparent border-none shadow-none">
+            <div className="relative">
+              <button
+                onClick={() => setShowPhotoModal(false)}
+                className="absolute -top-2 -right-2 z-10 bg-background rounded-full p-1 shadow-lg hover:bg-muted transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <img
+                src={student.photo_url}
+                alt={`Foto de ${student.name}`}
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-b-lg">
+                <p className="text-white font-semibold text-lg">{student.name}</p>
+                <p className="text-white/80 text-sm">{student.age} anos</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };
