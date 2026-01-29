@@ -10,6 +10,8 @@ interface ConfirmDialogProps {
   description: string;
   onConfirm: () => void;
   isLoading?: boolean;
+  confirmText?: string;
+  variant?: "destructive" | "default";
 }
 
 export const ConfirmDialog = ({ 
@@ -18,7 +20,9 @@ export const ConfirmDialog = ({
   title, 
   description, 
   onConfirm, 
-  isLoading = false 
+  isLoading = false,
+  confirmText = "Confirmar remoção",
+  variant = "destructive"
 }: ConfirmDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,11 +45,11 @@ export const ConfirmDialog = ({
             Cancelar
           </Button>
           <Button 
-            variant="destructive" 
+            variant={variant}
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Removendo..." : "Confirmar remoção"}
+            {isLoading ? "Processando..." : confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>
