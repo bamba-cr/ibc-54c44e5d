@@ -197,20 +197,26 @@ export const StudentForm = ({ initialValues, onSubmit, onCancel }: StudentFormPr
         photoUrl = publicUrl;
       }
 
-      // Format data properly for submission
+      // Format data properly for submission - clean CPF/RG to only digits or null
+      const cleanCpf = formValues.cpf ? formValues.cpf.replace(/\D/g, '') : null;
+      const cleanRg = formValues.rg ? formValues.rg.replace(/\D/g, '') : null;
+      const cleanGuardianCpf = formValues.guardianCpf ? formValues.guardianCpf.replace(/\D/g, '') : null;
+      const cleanGuardianRg = formValues.guardianRg ? formValues.guardianRg.replace(/\D/g, '') : null;
+      
+      // Only send CPF if it has 11 digits (valid format), otherwise null
       const studentData = {
         name: formValues.name,
         age: formValues.age ? parseInt(formValues.age) : null,
         birth_date: formValues.birthDate,
-        rg: formValues.rg || null,
-        cpf: formValues.cpf || null,
+        rg: cleanRg && cleanRg.length >= 7 ? cleanRg : null,
+        cpf: cleanCpf && cleanCpf.length === 11 ? cleanCpf : null,
         address: formValues.address,
         city_id: formValues.cityId || null,
         polo_id: formValues.poloId || null,
         guardian_name: formValues.guardianName || null,
         guardian_relationship: formValues.guardianRelationship || null,
-        guardian_cpf: formValues.guardianCpf || null,
-        guardian_rg: formValues.guardianRg || null,
+        guardian_cpf: cleanGuardianCpf && cleanGuardianCpf.length === 11 ? cleanGuardianCpf : null,
+        guardian_rg: cleanGuardianRg && cleanGuardianRg.length >= 7 ? cleanGuardianRg : null,
         guardian_phone: formValues.guardianPhone || null,
         guardian_email: formValues.guardianEmail || null,
         notes: formValues.observations || null,
