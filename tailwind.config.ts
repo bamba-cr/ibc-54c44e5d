@@ -26,18 +26,16 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#6765e0", // Roxo da paleta
-          dark: "#5854c7",
-          light: "#8a88e8",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#00fe9b", // Verde neon da paleta
-          dark: "#00d583",
-          light: "#39ffb2",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         accent: {
-          DEFAULT: "#00041f", // Preto azulado da paleta
-          foreground: "#f7f7ff",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -55,6 +53,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* Cores do tema roxo/magenta */
+        lavender: "hsl(270 39% 96%)",
+        "deep-purple": "hsl(281 70% 14%)",
+        "neon-magenta": "hsl(289 100% 50%)",
+        fuchsia: "hsl(300 100% 50%)",
+        "pearly-white": "hsl(268 100% 96%)",
+        "lilac-gray": "hsl(260 13% 74%)",
       },
       borderRadius: {
         lg: "var(--radius)",

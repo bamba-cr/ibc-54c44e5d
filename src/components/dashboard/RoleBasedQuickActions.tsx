@@ -102,18 +102,18 @@ export const RoleBasedQuickActions = ({ role, isAdmin }: RoleBasedQuickActionsPr
   const actions = getActionsForRole();
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
+    <Card className="p-6 bg-card/80 dark:bg-card/60 backdrop-blur-sm border-border">
+      <h3 className="text-lg font-semibold mb-4 text-foreground">Ações Rápidas</h3>
       <div className="grid grid-cols-2 gap-4">
         {actions.map((action, index) => (
           <Button
             key={index}
             variant="outline"
-            className={`flex flex-col items-center gap-2 h-auto py-4 transition-all duration-200 ${action.color}`}
+            className={`flex flex-col items-center gap-2 h-auto py-4 transition-all duration-200 border-border hover:border-primary/50 ${action.color}`}
             onClick={() => navigate(action.path)}
           >
-            {action.icon}
-            <span className="font-medium">{action.title}</span>
+            <span className="text-primary">{action.icon}</span>
+            <span className="font-medium text-foreground">{action.title}</span>
             <span className="text-xs text-muted-foreground text-center">{action.description}</span>
           </Button>
         ))}

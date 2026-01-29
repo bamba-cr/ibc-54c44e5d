@@ -45,12 +45,18 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Background decorations for dark mode */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
+      </div>
+      
       <Navbar />
 
       <header className="container mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold text-foreground">
               Bem-vindo ao IBC Connect{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -72,14 +78,14 @@ const Dashboard = () => {
 
       <section className="container mx-auto px-4 mt-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-xl font-bold mb-4">Evolução do Impacto</h2>
+          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
+            <h2 className="text-xl font-bold mb-4 text-foreground">Evolução do Impacto</h2>
             <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
               {isClient && <OverviewChart />}
             </Suspense>
           </div>
-          <div>
-            <h2 className="text-xl font-bold mb-4">Atividades Recentes</h2>
+          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
+            <h2 className="text-xl font-bold mb-4 text-foreground">Atividades Recentes</h2>
             <RecentActivity />
           </div>
         </div>
@@ -93,11 +99,11 @@ const Dashboard = () => {
       <section className="container mx-auto px-4 mt-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <h2 className="text-xl font-bold mb-4">Buscar Alunos</h2>
+            <h2 className="text-xl font-bold mb-4 text-foreground">Buscar Alunos</h2>
             <StudentSearchCard />
           </div>
           <div>
-            <h2 className="text-xl font-bold mb-4">Calendário de Eventos</h2>
+            <h2 className="text-xl font-bold mb-4 text-foreground">Calendário de Eventos</h2>
             <CalendarSection />
           </div>
         </div>
@@ -106,10 +112,12 @@ const Dashboard = () => {
       {/* Projetos em Andamento - visível apenas para Coordenador e Admin */}
       {isCoordOrAdmin && (
         <section className="container mx-auto px-4 mt-8 mb-8">
-          <h2 className="text-xl font-bold mb-4">Projetos em Andamento</h2>
-          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-            {isClient && <ProjectsTable />}
-          </Suspense>
+          <h2 className="text-xl font-bold mb-4 text-foreground">Projetos em Andamento</h2>
+          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              {isClient && <ProjectsTable />}
+            </Suspense>
+          </div>
         </section>
       )}
 
