@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { RoleBasedQuickActions } from "@/components/dashboard/RoleBasedQuickActions";
-import { RoleBadge } from "@/components/dashboard/RoleBadge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { CalendarSection } from "@/components/reports/CalendarSection";
 import { StudentSearchCard } from "@/components/dashboard/StudentSearchCard";
 import { BirthdayWidget } from "@/components/dashboard/BirthdayWidget";
@@ -109,7 +111,17 @@ const Dashboard = () => {
               }
             </p>
           </div>
-          <RoleBadge role={userRole} isAdmin={isAdmin} />
+          <Button asChild variant="ghost" className="flex items-center gap-2 h-auto py-2 px-3">
+            <Link to="/perfil">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "User"} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                  {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden sm:inline text-sm font-medium">{profile?.full_name?.split(' ')[0] || 'Perfil'}</span>
+            </Link>
+          </Button>
         </header>
 
         <Separator className="bg-border/50" />
