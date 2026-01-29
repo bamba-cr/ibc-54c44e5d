@@ -8,6 +8,16 @@ import { RoleBasedQuickActions } from "@/components/dashboard/RoleBasedQuickActi
 import { RoleBadge } from "@/components/dashboard/RoleBadge";
 import { CalendarSection } from "@/components/reports/CalendarSection";
 import { StudentSearchCard } from "@/components/dashboard/StudentSearchCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { 
+  LayoutDashboard, 
+  TrendingUp, 
+  Users, 
+  Calendar,
+  Zap,
+  FolderKanban
+} from "lucide-react";
 
 // Handle potential import errors
 const OverviewChart = lazy(() =>
@@ -22,6 +32,26 @@ const ProjectsTable = lazy(() =>
     .catch(() => ({ default: () => <div>Projects table failed to load</div> }))
 );
 
+interface SectionHeaderProps {
+  icon: React.ReactNode;
+  title: string;
+  description?: string;
+}
+
+const SectionHeader = ({ icon, title, description }: SectionHeaderProps) => (
+  <div className="flex items-center gap-3 mb-4">
+    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+      {icon}
+    </div>
+    <div>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const [isClient, setIsClient] = useState(false);
   const { profile, isLoading } = useAuth();
@@ -34,7 +64,10 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Skeleton className="h-12 w-48" />
+        <div className="space-y-4 w-full max-w-md px-4">
+          <Skeleton className="h-12 w-48 mx-auto" />
+          <Skeleton className="h-4 w-32 mx-auto" />
+        </div>
       </div>
     );
   }
@@ -45,21 +78,27 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background decorations for dark mode */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+      {/* Background decorations */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
       </div>
       
       <Navbar />
 
-      <header className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Bem-vindo ao IBC Connect{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
-            </h1>
-            <p className="text-muted-foreground mt-2">
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6 space-y-8">
+        
+        {/* Header Section */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                Bem-vindo{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
+              </h1>
+            </div>
+            <p className="text-muted-foreground text-sm sm:text-base">
               {isAdmin 
                 ? "Painel administrativo completo do sistema."
                 : userRole === 'coordenador'
@@ -69,60 +108,102 @@ const Dashboard = () => {
             </p>
           </div>
           <RoleBadge role={userRole} isAdmin={isAdmin} />
-        </div>
-      </header>
+        </header>
 
-      <section className="container mx-auto px-4 mt-8">
-        <DashboardStats />
-      </section>
+        <Separator className="bg-border/50" />
 
-      <section className="container mx-auto px-4 mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 text-foreground">Evolução do Impacto</h2>
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              {isClient && <OverviewChart />}
-            </Suspense>
-          </div>
-          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
-            <h2 className="text-xl font-bold mb-4 text-foreground">Atividades Recentes</h2>
-            <RecentActivity />
-          </div>
-        </div>
-      </section>
+        {/* Stats Overview */}
+        <section>
+          <SectionHeader 
+            icon={<TrendingUp className="h-5 w-5" />}
+            title="Visão Geral"
+            description="Estatísticas do sistema"
+          />
+          <DashboardStats />
+        </section>
 
-      <section className="container mx-auto px-4 mt-8">
-        <RoleBasedQuickActions role={userRole} isAdmin={isAdmin} />
-      </section>
+        {/* Quick Actions */}
+        <section>
+          <SectionHeader 
+            icon={<Zap className="h-5 w-5" />}
+            title="Ações Rápidas"
+            description="Acesse as principais funcionalidades"
+          />
+          <RoleBasedQuickActions role={userRole} isAdmin={isAdmin} />
+        </section>
 
-      {/* Busca de Alunos e Calendário - visível para todos */}
-      <section className="container mx-auto px-4 mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Analytics & Activity Row */}
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Chart - Takes 2 columns on xl */}
+          <Card className="xl:col-span-2 bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Evolução do Impacto</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Suspense fallback={<Skeleton className="h-[280px] w-full" />}>
+                {isClient && <OverviewChart />}
+              </Suspense>
+            </CardContent>
+          </Card>
+
+          {/* Recent Activity - Takes 1 column on xl */}
+          <Card className="bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Atividades Recentes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentActivity />
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Tools & Resources Row */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Student Search */}
           <div>
-            <h2 className="text-xl font-bold mb-4 text-foreground">Buscar Alunos</h2>
+            <SectionHeader 
+              icon={<Users className="h-5 w-5" />}
+              title="Buscar Alunos"
+              description="Encontre e visualize perfis"
+            />
             <StudentSearchCard />
           </div>
+
+          {/* Calendar */}
           <div>
-            <h2 className="text-xl font-bold mb-4 text-foreground">Calendário de Eventos</h2>
+            <SectionHeader 
+              icon={<Calendar className="h-5 w-5" />}
+              title="Calendário de Eventos"
+              description="Próximos eventos e lembretes"
+            />
             <CalendarSection />
           </div>
-        </div>
-      </section>
-
-      {/* Projetos em Andamento - visível apenas para Coordenador e Admin */}
-      {isCoordOrAdmin && (
-        <section className="container mx-auto px-4 mt-8 mb-8">
-          <h2 className="text-xl font-bold mb-4 text-foreground">Projetos em Andamento</h2>
-          <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm rounded-xl p-6 border border-border">
-            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-              {isClient && <ProjectsTable />}
-            </Suspense>
-          </div>
         </section>
-      )}
 
-      {/* Espaçamento inferior para mobile nav */}
-      <div className="h-20 md:hidden" />
+        {/* Projects Table - Only for Coord/Admin */}
+        {isCoordOrAdmin && (
+          <section>
+            <SectionHeader 
+              icon={<FolderKanban className="h-5 w-5" />}
+              title="Projetos em Andamento"
+              description="Acompanhe o status dos projetos"
+            />
+            <Card className="bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+              <CardContent className="pt-6">
+                <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                  {isClient && <ProjectsTable />}
+                </Suspense>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+        {/* Bottom spacing for mobile nav */}
+        <div className="h-20 md:hidden" />
+      </main>
     </div>
   );
 };
