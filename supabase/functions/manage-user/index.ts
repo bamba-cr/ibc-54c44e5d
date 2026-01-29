@@ -484,6 +484,26 @@ async function deleteUser(supabaseClient: any, body: any, currentUser: any, req:
     console.error('Error deleting user sessions:', deleteSessionsError);
   }
 
+  // 4. Deletar perfil do usuário (a tabela profiles tem FK para auth.users)
+  const { error: deleteProfileError } = await supabaseClient
+    .from('profiles')
+    .delete()
+    .eq('id', user_id);
+
+  if (deleteProfileError) {
+    console.error('Error deleting user profile:', deleteProfileError);
+  }
+
+  // Também tentar deletar pelo user_id caso o id seja diferente
+  const { error: deleteProfileError2 } = await supabaseClient
+    .from('profiles')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (deleteProfileError2) {
+    console.error('Error deleting user profile by user_id:', deleteProfileError2);
+  }
+
   // Deletar usuário do auth
   const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(user_id);
 
