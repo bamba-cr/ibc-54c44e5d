@@ -3,28 +3,29 @@ import { useNavigate } from "react-router-dom";
 import { StudentForm } from "@/components/students/StudentForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { Search, User, Edit, Trash2, Loader2, Eye } from "lucide-react";
+import { Search, Users, Edit, Trash2, Loader2, Eye, UserPlus, MapPin, Phone, Mail, Filter, Download } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Navbar } from "@/components/layout/Navbar";
+import { StudentProfile } from "@/components/student/StudentProfile";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Database } from "@/integrations/supabase/types";
 
-type Student = Database['public']['Tables']['students']['Row'];
+type Student = Database['public']['Tables']['students']['Row'] & {
+  cities?: { name: string; state: string } | null;
+  polos?: { name: string } | null;
+};
 
 interface StudentFormValues {
   name: string;
@@ -49,8 +50,13 @@ const Alunos = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProject, setSelectedProject] = useState<string>("all");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const [editForm, setEditForm] = useState<StudentFormValues>({
@@ -93,11 +99,11 @@ const Alunos = () => {
   }, [navigate]);
 
   const { data: students, isLoading, error: fetchError, refetch } = useQuery({
-    queryKey: ["students"],
+    queryKey: ["students-full"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("*")
+        .select("*, cities(name, state), polos(name)")
         .order("name");
       
       if (error) {
@@ -122,6 +128,18 @@ const Alunos = () => {
     }
   });
 
+  const { data: studentProjectsData } = useQuery({
+    queryKey: ["all-student-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("student_projects")
+        .select("student_id, project_id");
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const { data: studentProjects } = useQuery({
     queryKey: ["studentProjects", selectedStudent?.id],
     queryFn: async () => {
@@ -135,14 +153,6 @@ const Alunos = () => {
       return data.map(sp => sp.project_id);
     },
     enabled: !!selectedStudent?.id,
-    meta: {
-      onSuccess: (data: string[]) => {
-        setEditForm(prev => ({
-          ...prev,
-          projects: data || []
-        }));
-      }
-    }
   });
 
   useEffect(() => {
@@ -154,12 +164,14 @@ const Alunos = () => {
     }
   }, [studentProjects]);
 
-  const handleDeleteStudent = async (id: string) => {
+  const handleDeleteStudent = async () => {
+    if (!studentToDelete) return;
+    
     try {
       const { error } = await supabase
         .from("students")
         .delete()
-        .eq("id", id);
+        .eq("id", studentToDelete.id);
       
       if (error) throw error;
       
@@ -168,6 +180,8 @@ const Alunos = () => {
         description: "Aluno removido com sucesso.",
       });
       
+      setIsDeleteDialogOpen(false);
+      setStudentToDelete(null);
       refetch();
     } catch (error: any) {
       console.error("Erro ao remover aluno:", error);
@@ -180,8 +194,6 @@ const Alunos = () => {
   };
 
   const handleStudentSubmit = async (data: any) => {
-    console.log("Dados do aluno recebidos:", data);
-
     try {
       const studentData = {
         name: data.name,
@@ -202,19 +214,12 @@ const Alunos = () => {
         photo_url: data.photo_url
       };
 
-      console.log("Dados formatados para inserção:", studentData);
-
       const { data: insertedData, error } = await supabase
         .from("students")
         .insert([studentData])
         .select();
 
-      if (error) {
-        console.error("Erro ao cadastrar aluno:", error);
-        throw error;
-      }
-
-      console.log("Aluno cadastrado com sucesso:", insertedData);
+      if (error) throw error;
 
       if (data.projects && data.projects.length > 0 && insertedData?.[0]?.id) {
         const studentId = insertedData[0].id;
@@ -223,14 +228,11 @@ const Alunos = () => {
           project_id: projectId
         }));
 
-        console.log("Relacionando aluno a projetos:", projectRelations);
-
         const { error: projectError } = await supabase
           .from("student_projects")
           .insert(projectRelations);
 
         if (projectError) {
-          console.error("Erro ao relacionar aluno com projetos:", projectError);
           toast({
             title: "Atenção",
             description: "Aluno cadastrado, mas houve um erro ao relacionar com os projetos.",
@@ -246,7 +248,7 @@ const Alunos = () => {
 
       refetch();
     } catch (error: any) {
-      console.error("Erro completo ao cadastrar aluno:", error);
+      console.error("Erro ao cadastrar aluno:", error);
       toast({
         title: "Erro!",
         description: error.message || "Não foi possível cadastrar o aluno.",
@@ -348,73 +350,201 @@ const Alunos = () => {
     }
   };
 
-  const filteredStudents = students?.filter(student => 
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (student.guardian_email && student.guardian_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (student.cpf && student.cpf.includes(searchTerm))
-  );
+  // Filter students by search and project
+  const filteredStudents = students?.filter(student => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.guardian_email && student.guardian_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.cpf && student.cpf.includes(searchTerm));
+    
+    if (selectedProject === "all") return matchesSearch;
+    
+    const studentProjectIds = studentProjectsData
+      ?.filter(sp => sp.student_id === student.id)
+      .map(sp => sp.project_id) || [];
+    
+    return matchesSearch && studentProjectIds.includes(selectedProject);
+  });
+
+  const getStudentInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  const getStudentProjects = (studentId: string) => {
+    const projectIds = studentProjectsData
+      ?.filter(sp => sp.student_id === studentId)
+      .map(sp => sp.project_id) || [];
+    
+    return projects?.filter(p => projectIds.includes(p.id)) || [];
+  };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      {fetchError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>Erro ao carregar alunos</AlertTitle>
-          <AlertDescription>
-            {fetchError.message || "Não foi possível carregar a lista de alunos."}
-          </AlertDescription>
-        </Alert>
-      )}
+    <div className="min-h-screen bg-background">
+      <Navbar />
       
-      <Tabs defaultValue="lista" className="max-w-5xl mx-auto">
-        <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">
-          <TabsTrigger value="lista">Lista de Alunos</TabsTrigger>
-          <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
-        </TabsList>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {fetchError && (
+          <Alert variant="destructive">
+            <AlertTitle>Erro ao carregar alunos</AlertTitle>
+            <AlertDescription>
+              {fetchError.message || "Não foi possível carregar a lista de alunos."}
+            </AlertDescription>
+          </Alert>
+        )}
         
-        <TabsContent value="lista">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">Alunos Cadastrados</CardTitle>
-              <div className="flex gap-4 mt-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome, email ou CPF..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Button variant="default" onClick={() => refetch()}>
-                  Atualizar
-                </Button>
+        <Tabs defaultValue="lista" className="w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Users className="h-6 w-6 text-primary" />
               </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Gestão de Alunos</h1>
+                <p className="text-sm text-muted-foreground">
+                  {students?.length || 0} alunos cadastrados
+                </p>
+              </div>
+            </div>
+            
+            <TabsList className="bg-muted">
+              <TabsTrigger value="lista" className="data-[state=active]:bg-background">
+                <Users className="h-4 w-4 mr-2" />
+                Lista
+              </TabsTrigger>
+              <TabsTrigger value="cadastro" className="data-[state=active]:bg-background">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Cadastro
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="lista" className="space-y-4">
+            {/* Filters */}
+            <Card className="bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome, email ou CPF..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-background"
+                    />
+                  </div>
+                  <Select value={selectedProject} onValueChange={setSelectedProject}>
+                    <SelectTrigger className="w-full sm:w-[200px] bg-background">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Filtrar por projeto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os projetos</SelectItem>
+                      {projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" onClick={() => refetch()}>
+                    Atualizar
+                  </Button>
                 </div>
-              ) : filteredStudents?.length ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email do Responsável</TableHead>
-                      <TableHead>Telefone do Responsável</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.guardian_email || "-"}</TableCell>
-                        <TableCell>{student.guardian_phone || "-"}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
+              </CardContent>
+            </Card>
+
+            {/* Students Grid */}
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredStudents?.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence>
+                  {filteredStudents.map((student, index) => (
+                    <motion.div
+                      key={student.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Card className="bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border hover:shadow-lg transition-all duration-200 group">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="h-14 w-14 border-2 border-primary/20">
+                              <AvatarImage src={student.photo_url || undefined} alt={student.name} />
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                {getStudentInitials(student.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground truncate">
+                                {student.name}
+                              </h3>
+                              
+                              {student.cities && (
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span className="truncate">
+                                    {student.cities.name}, {student.cities.state}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {student.age && (
+                                <p className="text-sm text-muted-foreground">
+                                  {student.age} anos
+                                </p>
+                              )}
+                              
+                              {/* Projects badges */}
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {getStudentProjects(student.id).slice(0, 2).map((project) => (
+                                  <Badge key={project.id} variant="secondary" className="text-xs">
+                                    {project.name}
+                                  </Badge>
+                                ))}
+                                {getStudentProjects(student.id).length > 2 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{getStudentProjects(student.id).length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Contact info */}
+                          <div className="mt-4 pt-3 border-t border-border space-y-1">
+                            {student.guardian_phone && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3" />
+                                <span className="truncate">{student.guardian_phone}</span>
+                              </div>
+                            )}
+                            {student.guardian_email && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate">{student.guardian_email}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedStudentId(student.id);
+                                setIsProfileOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver
+                            </Button>
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => {
                                 setSelectedStudent(student);
@@ -439,186 +569,215 @@ const Alunos = () => {
                                 setIsEditDialogOpen(true);
                               }}
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
                             </Button>
-                            <Button 
-                              variant="destructive" 
+                            <Button
+                              variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteStudent(student.id)}
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setStudentToDelete(student);
+                                setIsDeleteDialogOpen(true);
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/consulta-individual/${student.id}`)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <User className="h-10 w-10 mx-auto text-muted-foreground opacity-50" />
-                  <p className="mt-2 text-muted-foreground">
-                    {searchTerm ? "Nenhum aluno encontrado" : "Nenhum aluno cadastrado"}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="cadastro">
-          <StudentForm onSubmit={handleStudentSubmit} />
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>Editar Aluno</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name" className="text-sm font-medium">Nome</Label>
-                    <Input
-                      id="name"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="age" className="text-sm font-medium">Idade</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={editForm.age}
-                      onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="birthDate" className="text-sm font-medium">Data de Nascimento</Label>
-                    <Input
-                      id="birthDate"
-                      type="date"
-                      value={editForm.birthDate}
-                      onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="rg" className="text-sm font-medium">RG</Label>
-                    <Input
-                      id="rg"
-                      value={editForm.rg}
-                      onChange={(e) => setEditForm({ ...editForm, rg: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="cpf" className="text-sm font-medium">CPF</Label>
-                    <Input
-                      id="cpf"
-                      value={editForm.cpf}
-                      onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="address" className="text-sm font-medium">Endereço</Label>
-                    <Input
-                      id="address"
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="city" className="text-sm font-medium">Cidade</Label>
-                    <Input
-                      id="city"
-                      value={editForm.cityId}
-                      onChange={(e) => setEditForm({ ...editForm, cityId: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="guardianName" className="text-sm font-medium">Nome do Responsável</Label>
-                    <Input
-                      id="guardianName"
-                      value={editForm.guardianName}
-                      onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="guardianPhone" className="text-sm font-medium">Telefone do Responsável</Label>
-                    <Input
-                      id="guardianPhone"
-                      value={editForm.guardianPhone}
-                      onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="guardianEmail" className="text-sm font-medium">Email do Responsável</Label>
-                    <Input
-                      id="guardianEmail"
-                      type="email"
-                      value={editForm.guardianEmail}
-                      onChange={(e) => setEditForm({ ...editForm, guardianEmail: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2 mt-2">
-                <Label className="text-sm font-medium">Projetos</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 bg-gray-50">
-                  {projects?.map((project) => (
-                    <div key={project.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`project-${project.id}`}
-                        checked={editForm.projects.includes(project.id)}
-                        onCheckedChange={(checked) => 
-                          handleProjectChange(project.id, checked as boolean)
-                        }
-                      />
-                      <Label 
-                        htmlFor={`project-${project.id}`} 
-                        className="text-sm capitalize cursor-pointer"
-                      >
-                        {project.name}
-                      </Label>
-                    </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   ))}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Card className="bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+                    <p className="mt-4 text-lg font-medium text-foreground">
+                      {searchTerm ? "Nenhum aluno encontrado" : "Nenhum aluno cadastrado"}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {searchTerm 
+                        ? "Tente ajustar os filtros de busca" 
+                        : "Comece cadastrando um novo aluno"
+                      }
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="cadastro">
+            <StudentForm onSubmit={handleStudentSubmit} />
+          </TabsContent>
+        </Tabs>
+
+        {/* Student Profile Modal */}
+        {selectedStudentId && (
+          <StudentProfile 
+            studentId={selectedStudentId} 
+            isOpen={isProfileOpen} 
+            onClose={() => setIsProfileOpen(false)} 
+          />
+        )}
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>Editar Aluno</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Nome</Label>
+                      <Input
+                        id="name"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="age">Idade</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        value={editForm.age}
+                        onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="birthDate">Data de Nascimento</Label>
+                      <Input
+                        id="birthDate"
+                        type="date"
+                        value={editForm.birthDate}
+                        onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        value={editForm.cpf}
+                        onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="rg">RG</Label>
+                      <Input
+                        id="rg"
+                        value={editForm.rg}
+                        onChange={(e) => setEditForm({ ...editForm, rg: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="address">Endereço</Label>
+                      <Input
+                        id="address"
+                        value={editForm.address}
+                        onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="guardianName">Nome do Responsável</Label>
+                      <Input
+                        id="guardianName"
+                        value={editForm.guardianName}
+                        onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="guardianPhone">Telefone do Responsável</Label>
+                      <Input
+                        id="guardianPhone"
+                        value={editForm.guardianPhone}
+                        onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="guardianEmail">Email do Responsável</Label>
+                      <Input
+                        id="guardianEmail"
+                        type="email"
+                        value={editForm.guardianEmail}
+                        onChange={(e) => setEditForm({ ...editForm, guardianEmail: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="photo">Foto</Label>
+                      <Input
+                        id="photo"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setEditForm({ ...editForm, photo: e.target.files?.[0] || null })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Projetos</Label>
+                  <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-muted/50">
+                    {projects?.map((project) => (
+                      <div key={project.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`project-${project.id}`}
+                          checked={editForm.projects.includes(project.id)}
+                          onCheckedChange={(checked) => handleProjectChange(project.id, checked as boolean)}
+                        />
+                        <Label htmlFor={`project-${project.id}`} className="text-sm font-normal">
+                          {project.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="observations" className="text-sm font-medium">Observações</Label>
-                <Input
-                  id="observations"
-                  value={editForm.observations}
-                  onChange={(e) => setEditForm({ ...editForm, observations: e.target.value })}
-                />
-              </div>
-            </div>
-          </ScrollArea>
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleEditStudent}>
-              Salvar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+            </ScrollArea>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleEditStudent}>
+                Salvar Alterações
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar Exclusão</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o aluno <strong>{studentToDelete?.name}</strong>? 
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteStudent}>
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bottom spacing for mobile nav */}
+        <div className="h-20 md:hidden" />
+      </main>
     </div>
   );
 };
