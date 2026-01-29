@@ -38,14 +38,14 @@ export const StudentSearchCard = () => {
 
   return (
     <>
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="shadow-lg h-full bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-primary" />
             Buscar Alunos
           </CardTitle>
           <CardDescription>
-            Pesquise e visualize o perfil dos alunos
+            Pesquise e visualize perfis
           </CardDescription>
         </CardHeader>
         <CardContent>
