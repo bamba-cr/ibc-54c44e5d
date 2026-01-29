@@ -1,20 +1,11 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import {
-  Calendar,
-  GraduationCap,
-  Award,
-  TrendingUp,
-} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { RoleBasedQuickActions } from "@/components/dashboard/RoleBasedQuickActions";
+import { RoleBadge } from "@/components/dashboard/RoleBadge";
 
 // Handle potential import errors
 const OverviewChart = lazy(() =>
@@ -46,19 +37,31 @@ const Dashboard = () => {
     );
   }
 
+  const userRole = profile?.role || 'user';
+  const isAdmin = profile?.is_admin || false;
+  const isCoordOrAdmin = isAdmin || userRole === 'coordenador';
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <header className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold">
-          Bem-vindo ao IBC Connect{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Acompanhe o progresso educacional e cultural dos jovens de nossa
-          comunidade em tempo real.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Bem-vindo ao IBC Connect{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              {isAdmin 
+                ? "Painel administrativo completo do sistema."
+                : userRole === 'coordenador'
+                ? "Gerencie alunos, projetos e acompanhe o progresso."
+                : "Registre frequência e notas dos alunos."
+              }
+            </p>
+          </div>
+          <RoleBadge role={userRole} isAdmin={isAdmin} />
+        </div>
       </header>
 
       <section className="container mx-auto px-4 mt-8">
@@ -81,73 +84,21 @@ const Dashboard = () => {
       </section>
 
       <section className="container mx-auto px-4 mt-8">
-        <h2 className="text-xl font-bold mb-4">Ações Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Registrar Presença",
-              description:
-                "Faça o controle de presença dos alunos nos projetos e atividades.",
-              icon: <Calendar size={24} />,
-              link: "/frequencia",
-              color: "from-primary/10 to-primary/5",
-            },
-            {
-              title: "Lançar Notas",
-              description:
-                "Atualize o desempenho acadêmico dos alunos no sistema.",
-              icon: <Award size={24} />,
-              link: "/notas",
-              color: "from-secondary/10 to-secondary/5",
-            },
-            {
-              title: "Performance",
-              description:
-                "Acompanhe o desempenho e conquistas dos alunos.",
-              icon: <TrendingUp size={24} />,
-              link: "/student-performance",
-              color: "from-blue-500/10 to-blue-500/5",
-            },
-            {
-              title: "Histórico",
-              description:
-                "Consulte o histórico acadêmico dos alunos.",
-              icon: <GraduationCap size={24} />,
-              link: "/historico",
-              color: "from-purple-500/10 to-purple-500/5",
-            },
-          ].map((action, index) => (
-            <Card
-              key={index}
-              className={`border-none shadow-md bg-gradient-to-br ${action.color}`}
-            >
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                {action.icon}
-                <Link to={action.link}>
-                  <Button variant="ghost" size="sm">
-                    Acessar
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-lg font-bold">
-                  {action.title}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {action.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <RoleBasedQuickActions role={userRole} isAdmin={isAdmin} />
       </section>
 
-      <section className="container mx-auto px-4 mt-8 mb-8">
-        <h2 className="text-xl font-bold mb-4">Projetos em Andamento</h2>
-        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-          {isClient && <ProjectsTable />}
-        </Suspense>
-      </section>
+      {/* Projetos em Andamento - visível apenas para Coordenador e Admin */}
+      {isCoordOrAdmin && (
+        <section className="container mx-auto px-4 mt-8 mb-8">
+          <h2 className="text-xl font-bold mb-4">Projetos em Andamento</h2>
+          <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+            {isClient && <ProjectsTable />}
+          </Suspense>
+        </section>
+      )}
+
+      {/* Espaçamento inferior para mobile nav */}
+      <div className="h-20 md:hidden" />
     </div>
   );
 };

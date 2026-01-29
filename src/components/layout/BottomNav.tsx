@@ -12,14 +12,24 @@ export const BottomNav = () => {
 
   if (!user || isHidden) return null;
 
+  const userRole = profile?.role || 'user';
+  const isAdmin = profile?.is_admin || false;
+  const isCoordOrAdmin = isAdmin || userRole === 'coordenador';
+
+  // Items base - todos podem ver
   const items = [
     { to: "/dashboard", label: "Início", icon: LayoutDashboard },
-    { to: "/alunos", label: "Alunos", icon: Users },
     { to: "/frequencia", label: "Frequência", icon: CalendarCheck },
     { to: "/notas", label: "Notas", icon: GraduationCap },
   ];
 
-  if (profile?.is_admin) {
+  // Alunos - apenas Coordenador e Admin podem gerenciar
+  if (isCoordOrAdmin) {
+    items.splice(1, 0, { to: "/alunos", label: "Alunos", icon: Users });
+  }
+
+  // Relatórios - apenas Admin
+  if (isAdmin) {
     items.push({ to: "/relatorios", label: "Relatórios", icon: FileBarChart });
   }
 
