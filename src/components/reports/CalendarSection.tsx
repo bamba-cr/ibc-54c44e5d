@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Trash2, PlusCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar as CalendarIcon, Trash2, PlusCircle, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -12,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
+import { BulkEventImport } from '@/components/events/BulkEventImport';
 
 interface Event {
   id: string;
@@ -23,6 +26,7 @@ interface Event {
 }
 
 export const CalendarSection = () => {
+  const { profile } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
@@ -179,8 +183,27 @@ export const CalendarSection = () => {
     }
   };
 
+  const canBulkImport = profile?.is_admin || profile?.role === 'coordenador';
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 h-full">
+    <Tabs defaultValue="calendar" className="h-full">
+      <div className="flex items-center justify-between mb-4">
+        <TabsList>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            Calendário
+          </TabsTrigger>
+          {canBulkImport && (
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Importar
+            </TabsTrigger>
+          )}
+        </TabsList>
+      </div>
+
+      <TabsContent value="calendar" className="mt-0">
+        <div className="grid gap-4 md:grid-cols-2 h-full">
       <Card className="shadow-lg bg-card/60 dark:bg-card/40 backdrop-blur-sm border-border">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -343,5 +366,13 @@ export const CalendarSection = () => {
         </CardContent>
       </Card>
     </div>
+      </TabsContent>
+
+      {canBulkImport && (
+        <TabsContent value="import" className="mt-0">
+          <BulkEventImport />
+        </TabsContent>
+      )}
+    </Tabs>
   );
 };
