@@ -332,11 +332,17 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           approved_at: string | null
           approved_by: string | null
           avatar_url: string | null
+          bio: string | null
+          birth_date: string | null
+          city: string | null
           created_at: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string | null
           id: string
           is_admin: boolean | null
@@ -344,17 +350,25 @@ export type Database = {
           phone: string | null
           rejection_reason: string | null
           role_id: string | null
+          specialty: string | null
+          state: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
           user_id: string | null
           username: string | null
         }
         Insert: {
+          address?: string | null
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
+          city?: string | null
           created_at?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           id: string
           is_admin?: boolean | null
@@ -362,17 +376,25 @@ export type Database = {
           phone?: string | null
           rejection_reason?: string | null
           role_id?: string | null
+          specialty?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string | null
           username?: string | null
         }
         Update: {
+          address?: string | null
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
+          city?: string | null
           created_at?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
@@ -380,6 +402,8 @@ export type Database = {
           phone?: string | null
           rejection_reason?: string | null
           role_id?: string | null
+          specialty?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string | null

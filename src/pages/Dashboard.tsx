@@ -9,6 +9,7 @@ import { RoleBadge } from "@/components/dashboard/RoleBadge";
 import { CalendarSection } from "@/components/reports/CalendarSection";
 import { StudentSearchCard } from "@/components/dashboard/StudentSearchCard";
 import { BirthdayWidget } from "@/components/dashboard/BirthdayWidget";
+import { ProfileQuickCard } from "@/components/dashboard/ProfileQuickCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -162,7 +163,10 @@ const Dashboard = () => {
         </section>
 
         {/* Tools & Resources Row */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-6">
+          {/* Profile Quick Card - 1 column */}
+          <ProfileQuickCard />
+
           {/* Birthday Widget - 1 column */}
           <BirthdayWidget />
 
