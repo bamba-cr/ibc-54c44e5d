@@ -6,8 +6,9 @@ import { UserManagement } from "./admin/UserManagement";
 import { CitiesManagement } from "./admin/CitiesManagement";
 import { PolosManagement } from "./admin/PolosManagement";
 import { AuditLogs } from "./admin/AuditLogs";
+import { RoleManagement } from "./admin/RoleManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, UserPlus, MapPin, Building2, FileText } from "lucide-react";
+import { Shield, Users, UserPlus, MapPin, Building2, FileText, UserCog } from "lucide-react";
 
 export const AdminManagement = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -19,10 +20,14 @@ export const AdminManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 lg:w-[1000px]">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 lg:w-[1200px]">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Usuários
+          </TabsTrigger>
+          <TabsTrigger value="roles" className="flex items-center gap-2">
+            <UserCog className="h-4 w-4" />
+            Funções
           </TabsTrigger>
           <TabsTrigger value="admins" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -44,6 +49,10 @@ export const AdminManagement = () => {
 
         <TabsContent value="users">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="roles">
+          <RoleManagement />
         </TabsContent>
 
         <TabsContent value="admins">
