@@ -6,6 +6,8 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { RoleBasedQuickActions } from "@/components/dashboard/RoleBasedQuickActions";
 import { RoleBadge } from "@/components/dashboard/RoleBadge";
+import { CalendarSection } from "@/components/reports/CalendarSection";
+import { StudentSearchCard } from "@/components/dashboard/StudentSearchCard";
 
 // Handle potential import errors
 const OverviewChart = lazy(() =>
@@ -85,6 +87,20 @@ const Dashboard = () => {
 
       <section className="container mx-auto px-4 mt-8">
         <RoleBasedQuickActions role={userRole} isAdmin={isAdmin} />
+      </section>
+
+      {/* Busca de Alunos e Calendário - visível para todos */}
+      <section className="container mx-auto px-4 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-xl font-bold mb-4">Buscar Alunos</h2>
+            <StudentSearchCard />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold mb-4">Calendário de Eventos</h2>
+            <CalendarSection />
+          </div>
+        </div>
       </section>
 
       {/* Projetos em Andamento - visível apenas para Coordenador e Admin */}
