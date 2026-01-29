@@ -662,6 +662,13 @@ export type Database = {
     }
     Functions: {
       approve_user: { Args: { target_user_id: string }; Returns: boolean }
+      assign_user_role: {
+        Args: {
+          new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: boolean
+      }
       calculate_attendance_rate: {
         Args: { project_id_param?: string; student_id_param: string }
         Returns: number
@@ -876,6 +883,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_user_role: { Args: { user_uuid?: string }; Returns: string }
       has_permission: {
         Args: {
           permission_name: Database["public"]["Enums"]["permission_type"]
@@ -891,6 +899,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { user_uuid?: string }; Returns: boolean }
+      is_coordenador_or_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
+      is_instrutor_or_above: { Args: { user_uuid?: string }; Returns: boolean }
       is_user_approved: { Args: { user_id?: string }; Returns: boolean }
       log_login_attempt: {
         Args: { user_email: string; user_ip?: string; was_successful: boolean }
@@ -904,7 +917,7 @@ export type Database = {
       validate_cpf: { Args: { cpf_input: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "coordenador" | "instrutor"
       error_type: "api" | "frontend" | "backend" | "database" | "auth" | "other"
       permission_type:
         | "read_students"
@@ -1049,7 +1062,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "coordenador", "instrutor"],
       error_type: ["api", "frontend", "backend", "database", "auth", "other"],
       permission_type: [
         "read_students",

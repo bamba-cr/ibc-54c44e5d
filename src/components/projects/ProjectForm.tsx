@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,20 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Project {
+  id: string;
+  name: string;
+  code: string;
+  description: string | null;
+}
+
 interface ProjectFormProps {
+  project?: Project | null;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
+export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formValues, setFormValues] = useState({
@@ -21,6 +29,18 @@ export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
     code: "",
     description: "",
   });
+
+  const isEditing = !!project;
+
+  useEffect(() => {
+    if (project) {
+      setFormValues({
+        name: project.name,
+        code: project.code,
+        description: project.description || "",
+      });
+    }
+  }, [project]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -47,16 +67,30 @@ export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("projects")
-        .insert([formValues]);
+      if (isEditing) {
+        const { error } = await supabase
+          .from("projects")
+          .update(formValues)
+          .eq("id", project.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Sucesso!",
-        description: "Projeto cadastrado com sucesso",
-      });
+        toast({
+          title: "Sucesso!",
+          description: "Projeto atualizado com sucesso",
+        });
+      } else {
+        const { error } = await supabase
+          .from("projects")
+          .insert([formValues]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso!",
+          description: "Projeto cadastrado com sucesso",
+        });
+      }
 
       if (onSuccess) {
         onSuccess();
@@ -69,8 +103,8 @@ export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
       });
     } catch (error: any) {
       toast({
-        title: "Erro ao cadastrar projeto",
-        description: error.message || "Ocorreu um erro ao cadastrar o projeto",
+        title: isEditing ? "Erro ao atualizar projeto" : "Erro ao cadastrar projeto",
+        description: error.message || "Ocorreu um erro ao salvar o projeto",
         variant: "destructive",
       });
     } finally {
@@ -80,7 +114,9 @@ export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
 
   return (
     <Card className="max-w-xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Novo Projeto</h2>
+      <h2 className="text-2xl font-bold mb-6">
+        {isEditing ? "Editar Projeto" : "Novo Projeto"}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="name">Nome do Projeto</Label>
@@ -125,7 +161,7 @@ export const ProjectForm = ({ onSuccess, onCancel }: ProjectFormProps) => {
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Salvando..." : "Cadastrar Projeto"}
+            {isLoading ? "Salvando..." : isEditing ? "Salvar Alterações" : "Cadastrar Projeto"}
           </Button>
         </div>
       </form>

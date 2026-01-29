@@ -3,6 +3,8 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+type UserRole = 'admin' | 'coordenador' | 'instrutor' | 'user';
+
 interface UserProfile {
   id: string;
   user_id: string;
@@ -14,6 +16,7 @@ interface UserProfile {
   is_admin: boolean;
   status: 'pending' | 'approved' | 'rejected';
   rejection_reason?: string | null;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +56,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserProfile = async (userId: string) => {
     try {
       console.log('Fetching profile for user:', userId);
+      
+      // Buscar perfil
       const { data, error } = await supabase
         .rpc('get_user_profile', { user_uuid: userId });
       
@@ -61,7 +66,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
       
-      console.log('Profile data received:', data);
+      // Buscar role do usuário
+      const { data: roleData } = await supabase
+        .rpc('get_user_role', { user_uuid: userId });
+      
+      console.log('Profile data received:', data, 'Role:', roleData);
       if (data && data.length > 0) {
         // Cast para incluir rejection_reason que pode não estar nos tipos gerados ainda
         const profileData = data[0] as any;
@@ -76,6 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           is_admin: profileData.is_admin,
           status: profileData.status,
           rejection_reason: profileData.rejection_reason || null,
+          role: (roleData as UserRole) || 'user',
           created_at: profileData.created_at,
           updated_at: profileData.updated_at
         };
