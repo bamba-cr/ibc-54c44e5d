@@ -20,15 +20,29 @@ export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { signOut, profile } = useAuth();
 
+  const userRole = profile?.role || 'user';
+  const isAdmin = profile?.is_admin || false;
+  const isCoordOrAdmin = isAdmin || userRole === 'coordenador';
+
+  // Items base para todos os usuários autenticados
   const baseItems = [
     { icon: <LayoutDashboard className="w-4 h-4 mr-2" />, label: "Dashboard", path: "/dashboard" },
-    { icon: <Users className="w-4 h-4 mr-2" />, label: "Alunos", path: "/alunos" },
     { icon: <CalendarCheck className="w-4 h-4 mr-2" />, label: "Frequência", path: "/frequencia" },
     { icon: <GraduationCap className="w-4 h-4 mr-2" />, label: "Notas", path: "/notas" },
   ];
-  const navigationItems = profile?.is_admin
-    ? [...baseItems, { icon: <FileBarChart className="w-4 h-4 mr-2" />, label: "Relatórios", path: "/relatorios" }]
-    : baseItems;
+
+  // Construir navegação baseada na função
+  const navigationItems = [...baseItems];
+  
+  // Alunos - apenas Coordenador e Admin
+  if (isCoordOrAdmin) {
+    navigationItems.splice(1, 0, { icon: <Users className="w-4 h-4 mr-2" />, label: "Alunos", path: "/alunos" });
+  }
+  
+  // Relatórios - apenas Admin
+  if (isAdmin) {
+    navigationItems.push({ icon: <FileBarChart className="w-4 h-4 mr-2" />, label: "Relatórios", path: "/relatorios" });
+  }
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
