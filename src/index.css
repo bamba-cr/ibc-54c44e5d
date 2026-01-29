@@ -37,26 +37,63 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 231 83% 6%;
+    /* Light Mode - Lavanda e Roxo Profundo */
+    --background: 270 39% 98%;
+    --foreground: 281 70% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 231 83% 6%;
+    --card-foreground: 281 70% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 231 83% 6%;
-    --primary: 243 71% 64%;
-    --primary-foreground: 240 10% 99%;
-    --secondary: 157 100% 50%;
-    --secondary-foreground: 231 83% 6%;
-    --muted: 240 10% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 231 83% 6%;
-    --accent-foreground: 240 10% 99%;
+    --popover-foreground: 281 70% 14%;
+    --primary: 289 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 39% 96%;
+    --secondary-foreground: 281 70% 14%;
+    --muted: 270 20% 94%;
+    --muted-foreground: 0 0% 29%;
+    --accent: 281 70% 14%;
+    --accent-foreground: 270 39% 96%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 240 10% 99%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 243 71% 64%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 20% 88%;
+    --input: 270 20% 92%;
+    --ring: 289 100% 50%;
     --radius: 0.75rem;
+    
+    /* Cores adicionais Light */
+    --lavender: 270 39% 96%;
+    --deep-purple: 281 70% 14%;
+    --neon-magenta: 289 100% 50%;
+    --body-gray: 0 0% 29%;
+  }
+
+  .dark {
+    /* Dark Mode - Roxo Profundo e Fúcsia */
+    --background: 286 80% 9%;
+    --foreground: 268 100% 96%;
+    --card: 281 70% 12%;
+    --card-foreground: 268 100% 96%;
+    --popover: 281 70% 14%;
+    --popover-foreground: 268 100% 96%;
+    --primary: 300 100% 50%;
+    --primary-foreground: 286 80% 9%;
+    --secondary: 281 50% 20%;
+    --secondary-foreground: 268 100% 96%;
+    --muted: 281 40% 16%;
+    --muted-foreground: 260 13% 74%;
+    --accent: 300 100% 50%;
+    --accent-foreground: 286 80% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 281 40% 20%;
+    --input: 281 40% 18%;
+    --ring: 300 100% 50%;
+    
+    /* Cores adicionais Dark */
+    --deep-purple-black: 286 80% 9%;
+    --medium-purple: 281 70% 14%;
+    --fuchsia: 300 100% 50%;
+    --pearly-white: 268 100% 96%;
+    --lilac-gray: 260 13% 74%;
   }
 
   * {
@@ -64,7 +101,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-poppins;
+    @apply bg-background text-foreground font-poppins antialiased;
+  }
+
+  .dark body {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -73,15 +114,15 @@
 }
 
 .btn-primary {
-  @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 font-medium;
+  @apply bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all duration-200 font-medium shadow-lg hover:shadow-xl;
 }
 
 .btn-secondary {
-  @apply bg-secondary text-accent px-4 py-2 rounded-lg hover:opacity-90 transition-opacity duration-200 font-medium;
+  @apply bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all duration-200 font-medium;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200;
+  @apply bg-card rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200 border border-border;
 }
 
 .input-field {
@@ -93,17 +134,25 @@
 }
 
 .glass-card {
-  @apply bg-white/60 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl;
+  @apply bg-card/60 backdrop-blur-lg rounded-2xl border border-border shadow-xl;
 }
 
 .modern-gradient {
-  @apply bg-gradient-to-br from-primary/5 to-secondary/10;
+  @apply bg-gradient-to-br from-primary/5 via-background to-secondary/10;
 }
 
 .section-title {
-  @apply text-3xl font-bold mb-6 text-center text-gray-800;
+  @apply text-3xl font-bold mb-6 text-center text-foreground;
 }
 
+/* Hero gradient */
+.hero-gradient {
+  @apply bg-gradient-to-br from-background via-secondary/20 to-primary/10;
+}
+
+.dark .hero-gradient {
+  @apply bg-gradient-to-br from-background via-primary/20 to-accent/30;
+}
 /* Decorative elements */
 .blob-shape {
   @apply absolute rounded-full filter blur-3xl opacity-20 z-0;
@@ -114,11 +163,11 @@
 }
 
 .gradient-bg {
-  @apply bg-gradient-to-br from-primary/10 via-white to-secondary/20 min-h-screen;
+  @apply bg-gradient-to-br from-primary/10 via-background to-secondary/20 min-h-screen;
 }
 
 .card-gradient {
-  @apply bg-gradient-to-b from-white to-gray-50;
+  @apply bg-gradient-to-b from-card to-muted/50;
 }
 
 .wave-pattern {
@@ -151,11 +200,11 @@
 }
 
 .content-section {
-  @apply relative backdrop-blur-sm bg-white/80 rounded-2xl p-8 shadow-xl border border-white/50 z-10;
+  @apply relative backdrop-blur-sm bg-card/80 rounded-2xl p-8 shadow-xl border border-border z-10;
 }
 
 .hero-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.828-1.415 1.415L51.8 0h2.827zM5.373 0l-.83.828L5.96 2.243 8.2 0H5.374zM48.97 0l3.657 3.657-1.414 1.414L46.143 0h2.828zM11.03 0L7.372 3.657 8.787 5.07 13.857 0H11.03zm32.284 0L49.8 6.485 48.384 7.9l-7.9-7.9h2.83zM16.686 0L10.2 6.485 11.616 7.9l7.9-7.9h-2.83zm20.97 0l9.315 9.314-1.414 1.414L34.828 0h2.83zM22.344 0L13.03 9.314l1.414 1.414L25.172 0h-2.83zM32 0l12.142 12.142-1.414 1.414L30 .828 17.272 13.556l-1.414-1.414L28 0h4zM.284 0l28 28-1.414 1.414L0 2.544v2.83L25.456 30l-1.414 1.414-28-28L0 0h.284zM0 5.373l25.456 25.455-1.414 1.415L0 8.2v2.83l21.627 21.628-1.414 1.414L0 13.657v2.828l17.8 17.8-1.414 1.414L0 19.1v2.83l14.142 14.14L12.728 37.5 0 24.772v2.828l10.314 10.314L8.9 39.328 0 30.428v2.828l6.485 6.485-1.414 1.415L0 36.1v2.83l2.657 2.657L0 44.03v2.828L0 60h60L60 0H0v5.374zm60 54.627l-2.657-2.657 1.414-1.415L60 57.17v-2.83l-6.485-6.485 1.414-1.414 5.07 5.07v-2.827l-10.314-10.313 1.414-1.414L60 46.43v-2.83L45.858 29.456l1.415-1.414L60 40.67v-2.83l-17.8-17.8 1.414 1.414L60 35.4v-2.827l-21.628-21.628 1.414-1.414L60 30.42v-2.83L34.544 2.544l1.414-1.414L60 25.372V22.54L32 0l1.414 1.414 26.572 26.572V25.2L27.5 2.498l1.414-1.414L60 31.93v-2.83L28.57 0l1.414 1.414 30 30v-2.83L30 0h27.464l-9.9 9.9-1.414-1.416L60 0v2.654L48.97 0h2.83L60 8.485v2.83l-13.753-13.757 1.415 1.415L60 11.23v2.845L45.155 0h2.83L60 14.485v2.83l-17.8-17.8 1.414 1.414L60 17.14v2.827L40.97 0h2.83L60 20.487v2.83L43.657 6.97 45.07 5.556l15 15.028v-2.828L48.485 0h2.83L60 14.314v2.83L51.313 7.657l1.414-1.414L60 14v2.827l-10.97-10.97 1.415 1.414L60 17.142v2.83L48.243 7.657l1.415-1.414L60 16.97v2.83L54.627 14.4l1.414-1.415L60 19.9v2.83l-5.81-5.81 1.415-1.414 7 7v-2.83l-2-2 1.414-1.413 3.3 3.3v-2.83l-5.52-5.514 1.413-1.414 7.332 7.332v-2.83L58.4 14.343l1.414-1.414 5.113 5.113v-2.83L60 10.313v2.83L60 5.373zm-60 0v2.83l3-3L1.543 8.2 0 9.742z' fill='%236765e0' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.828-1.415 1.415L51.8 0h2.827zM5.373 0l-.83.828L5.96 2.243 8.2 0H5.374zM48.97 0l3.657 3.657-1.414 1.414L46.143 0h2.828zM11.03 0L7.372 3.657 8.787 5.07 13.857 0H11.03zm32.284 0L49.8 6.485 48.384 7.9l-7.9-7.9h2.83zM16.686 0L10.2 6.485 11.616 7.9l7.9-7.9h-2.83zm20.97 0l9.315 9.314-1.414 1.414L34.828 0h2.83zM22.344 0L13.03 9.314l1.414 1.414L25.172 0h-2.83zM32 0l12.142 12.142-1.414 1.414L30 .828 17.272 13.556l-1.414-1.414L28 0h4zM.284 0l28 28-1.414 1.414L0 2.544v2.83L25.456 30l-1.414 1.414-28-28L0 0h.284zM0 5.373l25.456 25.455-1.414 1.415L0 8.2v2.83l21.627 21.628-1.414 1.414L0 13.657v2.828l17.8 17.8-1.414 1.414L0 19.1v2.83l14.142 14.14L12.728 37.5 0 24.772v2.828l10.314 10.314L8.9 39.328 0 30.428v2.828l6.485 6.485-1.414 1.415L0 36.1v2.83l2.657 2.657L0 44.03v2.828L0 60h60L60 0H0v5.374zm60 54.627l-2.657-2.657 1.414-1.415L60 57.17v-2.83l-6.485-6.485 1.414-1.414 5.07 5.07v-2.827l-10.314-10.313 1.414-1.414L60 46.43v-2.83L45.858 29.456l1.415-1.414L60 40.67v-2.83l-17.8-17.8 1.414 1.414L60 35.4v-2.827l-21.628-21.628 1.414-1.414L60 30.42v-2.83L34.544 2.544l1.414-1.414L60 25.372V22.54L32 0l1.414 1.414 26.572 26.572V25.2L27.5 2.498l1.414-1.414L60 31.93v-2.83L28.57 0l1.414 1.414 30 30v-2.83L30 0h27.464l-9.9 9.9-1.414-1.416L60 0v2.654L48.97 0h2.83L60 8.485v2.83l-13.753-13.757 1.415 1.415L60 11.23v2.845L45.155 0h2.83L60 14.485v2.83l-17.8-17.8 1.414 1.414L60 17.14v2.827L40.97 0h2.83L60 20.487v2.83L43.657 6.97 45.07 5.556l15 15.028v-2.828L48.485 0h2.83L60 14.314v2.83L51.313 7.657l1.414-1.414L60 14v2.827l-10.97-10.97 1.415 1.414L60 17.142v2.83L48.243 7.657l1.415-1.414L60 16.97v2.83L54.627 14.4l1.414-1.415L60 19.9v2.83l-5.81-5.81 1.415-1.414 7 7v-2.83l-2-2 1.414-1.413 3.3 3.3v-2.83l-5.52-5.514 1.413-1.414 7.332 7.332v-2.83L58.4 14.343l1.414-1.414 5.113 5.113v-2.83L60 10.313v2.83L60 5.373zm-60 0v2.83l3-3L1.543 8.2 0 9.742z' fill='currentColor' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 /* New decorative elements */
@@ -164,7 +213,7 @@
 }
 
 .gradient-text {
-  @apply bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent;
+  @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
 }
 
 .floating {
@@ -182,7 +231,7 @@
 }
 
 .frosted-glass {
-  @apply bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg;
+  @apply bg-card/70 backdrop-blur-lg border border-border shadow-lg;
 }
 
 .animated-border {
@@ -196,8 +245,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to));
-  @apply bg-gradient-to-r from-primary to-secondary transition-all duration-300;
+  @apply bg-gradient-to-r from-primary to-accent transition-all duration-300;
 }
 
 .animated-border:hover::after {
@@ -213,20 +261,22 @@
   50% { opacity: 0.7; }
 }
 
-.new-accent-bg {
-  @apply bg-[#00041f];
+/* Neon glow effects */
+.neon-glow {
+  @apply shadow-[0_0_20px_hsl(var(--primary)/0.5)];
 }
 
-.new-primary-bg {
-  @apply bg-[#6765e0];
+.dark .neon-glow {
+  @apply shadow-[0_0_30px_hsl(var(--primary)/0.6),0_0_60px_hsl(var(--primary)/0.3)];
 }
 
-.new-secondary-bg {
-  @apply bg-[#00fe9b];
+/* Gradient text for both modes */
+.text-gradient {
+  @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
 }
 
-.new-white-bg {
-  @apply bg-[#f7f7ff];
+.dark .text-gradient {
+  @apply bg-gradient-to-r from-primary via-fuchsia to-primary bg-clip-text text-transparent;
 }
 
 /* Acessibilidade: link para pular conteúdo */

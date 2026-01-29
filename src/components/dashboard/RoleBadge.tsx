@@ -14,7 +14,7 @@ export const RoleBadge = ({ role, isAdmin }: RoleBadgeProps) => {
         label: "Administrador",
         icon: <Shield className="h-3 w-3" />,
         variant: "destructive" as const,
-        className: "bg-red-500 hover:bg-red-600"
+        className: "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
       };
     }
 
@@ -24,21 +24,21 @@ export const RoleBadge = ({ role, isAdmin }: RoleBadgeProps) => {
           label: "Coordenador",
           icon: <Users className="h-3 w-3" />,
           variant: "default" as const,
-          className: "bg-blue-500 hover:bg-blue-600"
+          className: "bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
         };
       case 'instrutor':
         return {
           label: "Instrutor",
           icon: <GraduationCap className="h-3 w-3" />,
           variant: "secondary" as const,
-          className: "bg-green-500 hover:bg-green-600 text-white"
+          className: "bg-accent hover:bg-accent/90 text-accent-foreground"
         };
       default:
         return {
           label: "Usuário",
           icon: <User className="h-3 w-3" />,
           variant: "outline" as const,
-          className: ""
+          className: "border-border text-foreground"
         };
     }
   };

@@ -1,6 +1,4 @@
-
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
@@ -22,17 +20,17 @@ export const DashboardHeader = ({
       className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
     >
       <div className="text-center md:text-left">
-        <h1 className="text-4xl font-milker text-primary-dark">{title}</h1>
-        <p className="text-gray-600 mt-1 font-montserrat">
+        <h1 className="text-4xl font-milker text-gradient">{title}</h1>
+        <p className="text-muted-foreground mt-1 font-poppins">
           {subtitle}
         </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
             placeholder="Buscar..." 
-            className="pl-10 w-[200px] bg-white/80 backdrop-blur border-gray-200 focus:border-primary" 
+            className="pl-10 w-[200px] bg-card/80 backdrop-blur border-border focus:border-primary" 
           />
         </div>
         <NotificationCenter />
