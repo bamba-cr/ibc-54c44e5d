@@ -80,17 +80,17 @@ const Relatorios = () => {
   console.log('Rendering Relatorios page');
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50">
+    <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-background">
       <motion.h1 
         initial={{ opacity: 0, y: -20 }} 
         animate={{ opacity: 1, y: 0 }} 
-        className="text-4xl font-bold mb-8 text-primary border-b pb-4"
+        className="text-4xl font-bold mb-8 text-primary border-b border-border pb-4"
       >
         Painel Administrativo
       </motion.h1>
       
       <Tabs defaultValue="students" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px] bg-white shadow-sm">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 lg:w-[800px] bg-card shadow-sm">
           <TabsTrigger value="students">Alunos</TabsTrigger>
           <TabsTrigger value="reports">Exportar Dados</TabsTrigger>
           <TabsTrigger value="admin">Administração</TabsTrigger>

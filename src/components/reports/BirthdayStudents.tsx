@@ -82,7 +82,7 @@ export const BirthdayStudents = () => {
             {birthdayStudents.map((student) => (
               <div
                 key={student.id}
-                className="flex items-center gap-3 p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 hover:shadow-md transition-shadow"
+                className="flex items-center gap-3 p-4 border border-border rounded-lg bg-gradient-to-r from-primary/5 to-accent/10 hover:shadow-md transition-shadow"
               >
                 <div className="flex-shrink-0">
                   {student.photo_url ? (

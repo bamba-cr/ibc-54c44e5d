@@ -274,35 +274,35 @@ export const StudentsList = () => {
         <CardDescription>Pesquise e gerencie informações dos alunos</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
-            <Filter className="h-5 w-5 text-gray-400" />
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 bg-muted p-4 rounded-lg">
+            <Filter className="h-5 w-5 text-muted-foreground" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
               <Input 
                 placeholder="Nome" 
                 value={filters.name} 
                 onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                className="bg-white"
+                className="bg-input"
               />
               <Input 
                 placeholder="Idade" 
                 value={filters.age} 
                 onChange={(e) => setFilters({ ...filters, age: e.target.value })}
                 type="number"
-                className="bg-white"
+                className="bg-input"
               />
               <Input 
                 placeholder="Cidade" 
                 value={filters.city} 
                 onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                className="bg-white"
+                className="bg-input"
               />
               <Input 
                 placeholder="Data de Nascimento" 
                 value={filters.birth_date} 
                 onChange={(e) => setFilters({ ...filters, birth_date: e.target.value })}
                 type="date"
-                className="bg-white"
+                className="bg-input"
               />
             </div>
             <Button 
@@ -332,12 +332,12 @@ export const StudentsList = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-all"
+                      className="bg-card p-4 rounded-lg border border-border shadow-sm hover:shadow-md transition-all"
                     >
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                          <h3 className="font-medium text-lg">{student.name}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <h3 className="font-medium text-lg text-foreground">{student.name}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>{student.cities?.name || 'N/A'}</span>
                             <span>{student.age ? `${student.age} anos` : 'Idade não informada'}</span>
                             <span>{student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'Data não informada'}</span>
@@ -403,7 +403,7 @@ export const StudentsList = () => {
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     Página {currentPage} de {totalPages}
                   </span>
                   <Button 
