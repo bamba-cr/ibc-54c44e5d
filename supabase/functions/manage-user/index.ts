@@ -453,13 +453,44 @@ async function deleteUser(supabaseClient: any, body: any, currentUser: any, req:
     );
   }
 
-  // Deletar usuário
+  // Deletar dados relacionados antes de deletar o usuário
+  // 1. Deletar eventos do usuário
+  const { error: deleteEventsError } = await supabaseClient
+    .from('events')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (deleteEventsError) {
+    console.error('Error deleting user events:', deleteEventsError);
+  }
+
+  // 2. Deletar roles do usuário
+  const { error: deleteRolesError } = await supabaseClient
+    .from('user_roles')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (deleteRolesError) {
+    console.error('Error deleting user roles:', deleteRolesError);
+  }
+
+  // 3. Deletar sessões do usuário
+  const { error: deleteSessionsError } = await supabaseClient
+    .from('user_sessions')
+    .delete()
+    .eq('user_id', user_id);
+
+  if (deleteSessionsError) {
+    console.error('Error deleting user sessions:', deleteSessionsError);
+  }
+
+  // Deletar usuário do auth
   const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(user_id);
 
   if (deleteError) {
     console.error('Error deleting user:', deleteError);
     return new Response(
-      JSON.stringify({ error: deleteError.message }),
+      JSON.stringify({ error: 'Erro ao deletar usuário. Verifique se não há dados vinculados.' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
