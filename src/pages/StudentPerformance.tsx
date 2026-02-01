@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import { toast } from 'sonner';
 import ProjectRankings from '@/components/performance/ProjectRankings';
 import StudentDetails from '@/components/performance/StudentDetails';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BackToDashboard } from '@/components/ui/back-to-dashboard';
 
 const StudentPerformance = () => {
   const { id } = useParams();
@@ -140,6 +140,8 @@ const StudentPerformance = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        <BackToDashboard className="mb-4" />
+        
         <h1 className="text-3xl font-bold mb-8 text-primary flex items-center gap-2">
           <GraduationCap className="h-8 w-8" />
           Desempenho dos Alunos

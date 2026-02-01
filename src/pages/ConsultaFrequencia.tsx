@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,6 +30,7 @@ import { buscarFrequenciaPorData, type FrequenciaResponse } from "@/services/his
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 
 type Project = {
   id: string;
@@ -114,12 +114,14 @@ const ConsultaFrequencia = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 min-h-screen bg-gray-50/50">
+    <div className="container mx-auto p-4 md:p-6 min-h-screen bg-background">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl mx-auto"
       >
+        <BackToDashboard className="mb-4" />
+        
         <h1 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
           <CalendarIcon className="h-8 w-8 text-primary" />
           Consulta de Frequência

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 
 interface Student {
   id: string;
@@ -199,7 +200,8 @@ const Frequencia = () => {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 bg-background min-h-screen">
+      <BackToDashboard className="mb-4" />
       <h1 className="text-2xl font-bold mb-8">Registro de Frequência</h1>
 
       <div className="space-y-6">

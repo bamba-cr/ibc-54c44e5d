@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +12,7 @@ import { BirthdayStudents } from '@/components/reports/BirthdayStudents';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShieldAlert } from 'lucide-react';
+import { BackToDashboard } from '@/components/ui/back-to-dashboard';
 
 const Relatorios = () => {
   const navigate = useNavigate();
@@ -81,6 +81,8 @@ const Relatorios = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 min-h-screen bg-background">
+      <BackToDashboard className="mb-4" />
+      
       <motion.h1 
         initial={{ opacity: 0, y: -20 }} 
         animate={{ opacity: 1, y: 0 }} 

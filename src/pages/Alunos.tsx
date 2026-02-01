@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/layout/Navbar";
 import { StudentProfile } from "@/components/student/StudentProfile";
 import { motion, AnimatePresence } from "framer-motion";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 import type { Database } from "@/integrations/supabase/types";
 
 type Student = Database['public']['Tables']['students']['Row'] & {
@@ -382,6 +383,7 @@ const Alunos = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
+        <BackToDashboard />
         {fetchError && (
           <Alert variant="destructive">
             <AlertTitle>Erro ao carregar alunos</AlertTitle>

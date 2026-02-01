@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 
 const subjects = [
   "Matemática",
@@ -295,7 +296,8 @@ const Notas = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 animate-fadeIn">
+    <div className="container mx-auto p-6 animate-fadeIn bg-background min-h-screen">
+      <BackToDashboard className="mb-4" />
       <h1 className="text-2xl font-bold mb-6">Boletim Escolar</h1>
       
       <Card className="p-6">
