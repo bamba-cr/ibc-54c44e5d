@@ -134,7 +134,7 @@ const StudentPerformance = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 min-h-screen bg-gray-50">
+    <div className="container mx-auto p-4 min-h-screen bg-background">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
