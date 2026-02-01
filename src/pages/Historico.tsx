@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { StudentProfile } from "@/components/student/StudentProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 
 const Historico = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,6 +71,8 @@ const Historico = () => {
           transition={{ duration: 0.5 }}
           className="space-y-8"
         >
+          <BackToDashboard className="mb-4" />
+          
           {/* Cabeçalho com design harmonioso e novas cores */}
           <div className={`mb-4 ${isMobile ? 'text-center' : 'text-center sm:text-left'}`}>
             <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-primary flex items-center gap-2 ${isMobile ? 'justify-center' : 'sm:inline-flex'} tracking-tight`}>

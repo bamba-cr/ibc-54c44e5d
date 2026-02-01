@@ -30,6 +30,7 @@ import {
   Heart
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { BackToDashboard } from "@/components/ui/back-to-dashboard";
 
 const BRAZILIAN_STATES = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -254,6 +255,8 @@ const Perfil = () => {
         <Navbar />
         
         <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <BackToDashboard className="mb-4" />
+          
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-2">
