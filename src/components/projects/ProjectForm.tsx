@@ -1,11 +1,13 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
@@ -13,6 +15,7 @@ interface Project {
   name: string;
   code: string;
   description: string | null;
+  logo_url?: string | null;
 }
 
 interface ProjectFormProps {
@@ -24,6 +27,9 @@ interface ProjectFormProps {
 export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
     name: "",
     code: "",
@@ -39,8 +45,66 @@ export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) 
         code: project.code,
         description: project.description || "",
       });
+      if (project.logo_url) {
+        setLogoPreview(project.logo_url);
+      }
     }
   }, [project]);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Erro",
+          description: "A imagem deve ter no máximo 2MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  }, [toast]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg'] },
+    maxFiles: 1,
+    disabled: isLoading || uploadingLogo
+  });
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(project?.logo_url || null);
+  };
+
+  const uploadLogo = async (projectId: string): Promise<string | null> => {
+    if (!logoFile) return project?.logo_url || null;
+
+    setUploadingLogo(true);
+    try {
+      const fileExt = logoFile.name.split('.').pop();
+      const fileName = `project-logos/${projectId}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('student-photos')
+        .upload(fileName, logoFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('student-photos')
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      return null;
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -68,9 +132,14 @@ export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) 
 
     try {
       if (isEditing) {
+        let logoUrl = project.logo_url;
+        if (logoFile) {
+          logoUrl = await uploadLogo(project.id);
+        }
+
         const { error } = await supabase
           .from("projects")
-          .update(formValues)
+          .update({ ...formValues, logo_url: logoUrl })
           .eq("id", project.id);
 
         if (error) throw error;
@@ -80,11 +149,23 @@ export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) 
           description: "Projeto atualizado com sucesso",
         });
       } else {
-        const { error } = await supabase
+        const { data: newProject, error } = await supabase
           .from("projects")
-          .insert([formValues]);
+          .insert([formValues])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        if (logoFile && newProject) {
+          const logoUrl = await uploadLogo(newProject.id);
+          if (logoUrl) {
+            await supabase
+              .from("projects")
+              .update({ logo_url: logoUrl })
+              .eq("id", newProject.id);
+          }
+        }
 
         toast({
           title: "Sucesso!",
@@ -118,6 +199,56 @@ export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) 
         {isEditing ? "Editar Projeto" : "Novo Projeto"}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Logo Upload */}
+        <div className="space-y-2">
+          <Label>Logomarca do Projeto</Label>
+          <div
+            {...getRootProps()}
+            className={`
+              border-2 border-dashed rounded-lg p-4 text-center cursor-pointer
+              transition-colors duration-200
+              ${isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/50'}
+              ${isLoading || uploadingLogo ? 'opacity-50 pointer-events-none' : ''}
+            `}
+          >
+            <input {...getInputProps()} />
+            {logoPreview ? (
+              <div className="relative inline-block">
+                <Avatar className="h-20 w-20 mx-auto">
+                  <AvatarImage src={logoPreview} />
+                  <AvatarFallback>
+                    {formValues.code.substring(0, 2).toUpperCase() || 'PJ'}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeLogo();
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                {isDragActive ? (
+                  <p className="text-primary text-sm">Solte a imagem aqui</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-foreground">Arraste ou clique para selecionar</p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WEBP ou SVG (máx. 2MB)</p>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
         <div>
           <Label htmlFor="name">Nome do Projeto</Label>
           <Input
@@ -160,8 +291,13 @@ export const ProjectForm = ({ project, onSuccess, onCancel }: ProjectFormProps) 
               Cancelar
             </Button>
           )}
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Salvando..." : isEditing ? "Salvar Alterações" : "Cadastrar Projeto"}
+          <Button type="submit" disabled={isLoading || uploadingLogo}>
+            {isLoading || uploadingLogo ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : isEditing ? "Salvar Alterações" : "Cadastrar Projeto"}
           </Button>
         </div>
       </form>

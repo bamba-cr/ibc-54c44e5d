@@ -3,7 +3,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar as CalendarIcon, PlusCircle, Upload, Image } from 'lucide-react';
+import { Calendar as CalendarIcon, PlusCircle, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { BulkEventImport } from '@/components/events/BulkEventImport';
 import { EventList } from '@/components/events/EventList';
 import { EVENT_TYPE_COLORS, EventType } from '@/components/events/EventTypeColors';
-import { ProjectLogoUpload } from '@/components/projects/ProjectLogoUpload';
 
 interface Event {
   id: string;
@@ -27,18 +26,10 @@ interface Event {
   description?: string;
 }
 
-interface Project {
-  id: string;
-  name: string;
-  code: string;
-  logo_url?: string | null;
-}
-
 export const CalendarSection = () => {
   const { profile } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<Event[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
@@ -47,7 +38,7 @@ export const CalendarSection = () => {
     type: 'meeting',
     description: ''
   });
-  
+
   const { toast } = useToast();
 
   const fetchEvents = async () => {
@@ -88,23 +79,8 @@ export const CalendarSection = () => {
     }
   };
 
-  const fetchProjects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, name, code, logo_url')
-        .order('name');
-      
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar projetos:', error);
-    }
-  };
-
   useEffect(() => {
     fetchEvents();
-    fetchProjects();
   }, [toast]);
 
   const handleInputChange = (
@@ -223,10 +199,6 @@ export const CalendarSection = () => {
             </TabsTrigger>
           )}
         </TabsList>
-        
-        {canBulkImport && (
-          <ProjectLogoUpload projects={projects} onSuccess={fetchProjects} />
-        )}
       </div>
       
       {/* Event Type Legend */}

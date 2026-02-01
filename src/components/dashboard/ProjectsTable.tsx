@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Table,
@@ -10,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectForm } from "@/components/projects/ProjectForm";
@@ -31,6 +31,7 @@ interface Project {
   name: string;
   code: string;
   description: string | null;
+  logo_url: string | null;
   created_at: string;
 }
 
@@ -129,7 +130,17 @@ export const ProjectsTable = () => {
           <TableBody>
             {projects?.map((project) => (
               <TableRow key={project.id}>
-                <TableCell className="font-medium">{project.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={project.logo_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {project.code.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{project.name}</span>
+                  </div>
+                </TableCell>
                 <TableCell>{project.code}</TableCell>
                 <TableCell>{project.description}</TableCell>
                 <TableCell>
