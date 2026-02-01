@@ -3,35 +3,45 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar as CalendarIcon, Trash2, PlusCircle, Upload } from 'lucide-react';
+import { Calendar as CalendarIcon, PlusCircle, Upload, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { BulkEventImport } from '@/components/events/BulkEventImport';
+import { EventList } from '@/components/events/EventList';
+import { EVENT_TYPE_COLORS, EventType } from '@/components/events/EventTypeColors';
+import { ProjectLogoUpload } from '@/components/projects/ProjectLogoUpload';
 
 interface Event {
   id: string;
   title: string;
   date: Date;
-  type: 'meeting' | 'task' | 'reminder';
+  type: EventType;
   description?: string;
-  color?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  code: string;
+  logo_url?: string | null;
 }
 
 export const CalendarSection = () => {
   const { profile } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
   const [events, setEvents] = useState<Event[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newEvent, setNewEvent] = useState<Omit<Event, 'id' | 'color'>>({
+  const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
     title: '',
     date: new Date(),
     type: 'meeting',
@@ -40,47 +50,61 @@ export const CalendarSection = () => {
   
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || null;
-        
-        let query = supabase.from('events').select('*');
-        
-        if (userId) {
-          query = query.eq('user_id', userId);
-        }
-        
-        const { data, error } = await query.order('date', { ascending: false });
-          
-        if (error) throw error;
-        
-        if (data) {
-          const formattedEvents = data.map(event => ({
-            id: event.id,
-            title: event.title,
-            date: new Date(event.date),
-            type: event.type as 'meeting' | 'task' | 'reminder',
-            description: event.description,
-            color: ['#4CAF50', '#2196F3', '#FFC107', '#E91E63'][Math.floor(Math.random() * 4)]
-          }));
-          setEvents(formattedEvents);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar eventos:', error);
-        toast({
-          title: "Erro ao carregar eventos",
-          description: "Não foi possível carregar seus eventos. Tente novamente mais tarde.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || null;
+      
+      let query = supabase.from('events').select('*');
+      
+      if (userId) {
+        query = query.eq('user_id', userId);
       }
-    };
-    
+      
+      const { data, error } = await query.order('date', { ascending: true });
+        
+      if (error) throw error;
+      
+      if (data) {
+        const formattedEvents = data.map(event => ({
+          id: event.id,
+          title: event.title,
+          date: new Date(event.date),
+          type: event.type as EventType,
+          description: event.description
+        }));
+        setEvents(formattedEvents);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar eventos:', error);
+      toast({
+        title: "Erro ao carregar eventos",
+        description: "Não foi possível carregar seus eventos. Tente novamente mais tarde.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, code, logo_url')
+        .order('name');
+      
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar projetos:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchEvents();
+    fetchProjects();
   }, [toast]);
 
   const handleInputChange = (
@@ -91,7 +115,7 @@ export const CalendarSection = () => {
   };
 
   const handleTypeChange = (value: string) => {
-    setNewEvent(prev => ({ ...prev, type: value as 'meeting' | 'task' | 'reminder' }));
+    setNewEvent(prev => ({ ...prev, type: value as EventType }));
   };
 
   const handleAddEvent = async () => {
@@ -126,11 +150,10 @@ export const CalendarSection = () => {
       if (data && data[0]) {
         const newEventWithId: Event = {
           ...newEvent,
-          id: data[0].id,
-          color: ['#4CAF50', '#2196F3', '#FFC107', '#E91E63'][Math.floor(Math.random() * 4)]
+          id: data[0].id
         };
         
-        setEvents(prev => [newEventWithId, ...prev]);
+        setEvents(prev => [...prev, newEventWithId].sort((a, b) => a.date.getTime() - b.date.getTime()));
         
         toast({
           title: "Evento adicionado",
@@ -187,7 +210,7 @@ export const CalendarSection = () => {
 
   return (
     <Tabs defaultValue="calendar" className="h-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <TabsList>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4" />
@@ -200,6 +223,19 @@ export const CalendarSection = () => {
             </TabsTrigger>
           )}
         </TabsList>
+        
+        {canBulkImport && (
+          <ProjectLogoUpload projects={projects} onSuccess={fetchProjects} />
+        )}
+      </div>
+      
+      {/* Event Type Legend */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {Object.entries(EVENT_TYPE_COLORS).map(([type, config]) => (
+          <Badge key={type} variant="outline" className={`text-xs ${config.className}`}>
+            {config.icon} {config.label}
+          </Badge>
+        ))}
       </div>
 
       <TabsContent value="calendar" className="mt-0">
@@ -321,48 +357,7 @@ export const CalendarSection = () => {
           <CardDescription>Atividades programadas</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
-            <AnimatePresence>
-              {events.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  Nenhum evento cadastrado
-                </div>
-              ) : (
-                events.map((event, index) => (
-                  <motion.div 
-                    key={event.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-all"
-                    style={{ borderLeft: `4px solid ${event.color}` }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground truncate">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {format(event.date, 'dd/MM/yyyy')}
-                        {event.description && (
-                          <span className="block mt-1 text-xs truncate">
-                            {event.description.substring(0, 60)}
-                            {event.description.length > 60 ? '...' : ''}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </motion.div>
-                ))
-              )}
-            </AnimatePresence>
-          </div>
+          <EventList events={events} onDelete={handleDeleteEvent} />
         </CardContent>
       </Card>
     </div>
