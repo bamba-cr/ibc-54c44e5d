@@ -109,12 +109,16 @@ export const RoleBasedQuickActions = ({ role, isAdmin }: RoleBasedQuickActionsPr
           <Button
             key={index}
             variant="outline"
-            className={`flex flex-col items-center justify-center gap-1 sm:gap-2 h-auto min-h-[100px] sm:min-h-[120px] py-3 sm:py-4 px-2 sm:px-4 transition-all duration-200 border-border hover:border-primary/50 ${action.color}`}
+            className={`flex flex-col items-center justify-center gap-1 sm:gap-2 h-auto min-h-[108px] sm:min-h-[120px] py-3 sm:py-4 px-2 sm:px-4 transition-all duration-200 border-border hover:border-primary/50 overflow-hidden ${action.color}`}
             onClick={() => navigate(action.path)}
           >
             <span className="text-primary shrink-0">{action.icon}</span>
-            <span className="font-medium text-foreground text-xs sm:text-sm text-center leading-tight">{action.title}</span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight line-clamp-2">{action.description}</span>
+            <span className="w-full max-w-full font-medium text-foreground text-xs sm:text-sm text-center leading-tight whitespace-normal break-words">
+              {action.title}
+            </span>
+            <span className="w-full max-w-full text-[10px] sm:text-xs text-muted-foreground text-center leading-tight whitespace-normal break-words line-clamp-2">
+              {action.description}
+            </span>
           </Button>
         ))}
       </div>
