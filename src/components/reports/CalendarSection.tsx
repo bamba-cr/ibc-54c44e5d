@@ -32,6 +32,7 @@ export const CalendarSection = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const [filterType, setFilterType] = useState<EventType | 'all'>('all');
   const [newEvent, setNewEvent] = useState<Omit<Event, 'id'>>({
     title: '',
     date: new Date(),
@@ -40,6 +41,11 @@ export const CalendarSection = () => {
   });
 
   const { toast } = useToast();
+
+  // Filter events based on selected type
+  const filteredEvents = filterType === 'all' 
+    ? events 
+    : events.filter(event => event.type === filterType);
 
   const fetchEvents = async () => {
     try {
@@ -201,10 +207,26 @@ export const CalendarSection = () => {
         </TabsList>
       </div>
       
-      {/* Event Type Legend */}
+      {/* Event Type Filter */}
       <div className="flex flex-wrap gap-2 mb-4">
+        <Badge 
+          variant={filterType === 'all' ? 'default' : 'outline'} 
+          className={`text-xs cursor-pointer transition-all hover:scale-105 ${filterType === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+          onClick={() => setFilterType('all')}
+        >
+          📋 Todos
+        </Badge>
         {Object.entries(EVENT_TYPE_COLORS).map(([type, config]) => (
-          <Badge key={type} variant="outline" className={`text-xs ${config.className}`}>
+          <Badge 
+            key={type} 
+            variant={filterType === type ? 'default' : 'outline'} 
+            className={`text-xs cursor-pointer transition-all hover:scale-105 ${
+              filterType === type 
+                ? 'bg-primary text-primary-foreground' 
+                : `${config.className} hover:bg-muted`
+            }`}
+            onClick={() => setFilterType(type as EventType)}
+          >
             {config.icon} {config.label}
           </Badge>
         ))}
@@ -329,7 +351,7 @@ export const CalendarSection = () => {
           <CardDescription>Atividades programadas</CardDescription>
         </CardHeader>
         <CardContent>
-          <EventList events={events} onDelete={handleDeleteEvent} />
+          <EventList events={filteredEvents} onDelete={handleDeleteEvent} />
         </CardContent>
       </Card>
     </div>
